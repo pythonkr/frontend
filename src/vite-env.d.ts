@@ -1,4 +1,11 @@
 /// <reference types="vite/client" />
+
+declare module "*.svg?react" {
+  import React = require("react");
+  const component: React.FC<React.SVGProps<SVGSVGElement>>;
+  export default component;
+}
+
 interface ViteTypeOptions {
   strictImportEnv: unknown;
 }
