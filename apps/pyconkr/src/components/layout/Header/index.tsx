@@ -91,6 +91,10 @@ const HeaderContainer = styled.header`
   justify-content: space-between;
   align-items: center;
   position: relative;
+
+  ul {
+    list-style: none;
+  }
 `;
 
 const HeaderLogo = styled.div`

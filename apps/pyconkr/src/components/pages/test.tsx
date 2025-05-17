@@ -8,7 +8,7 @@ import { ShopTestPage } from "../../debug/page/shop_test";
 type SelectedTabType = "shop" | "mdi";
 
 export const Test: React.FC = () => {
-  const [selectedTab, setSelectedTab] = React.useState<SelectedTabType>("shop");
+  const [selectedTab, setSelectedTab] = React.useState<SelectedTabType>("mdi");
 
   return (
     <Box>

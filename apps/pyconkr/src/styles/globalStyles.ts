@@ -57,18 +57,6 @@ export const muiTheme = createTheme({
 export const globalStyles = css`
   @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
 
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-
-    -webkit-user-drag: none;
-    -khtml-user-drag: none;
-    -moz-user-drag: none;
-    -o-user-drag: none;
-    user-drag: none;
-  }
-
   html,
   body {
     font-family:
@@ -98,21 +86,15 @@ export const globalStyles = css`
     word-break: keep-all;
     overflow-wrap: break-all;
 
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
   }
 
   a {
     text-decoration: none;
     color: inherit;
-  }
-
-  button {
-    border: none;
-    background: none;
-    cursor: pointer;
-  }
-
-  ul,
-  ol {
-    list-style: none;
   }
 `;

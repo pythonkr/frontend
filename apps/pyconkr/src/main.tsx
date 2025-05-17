@@ -35,7 +35,8 @@ const queryClient = new QueryClient({
 });
 
 const CommonOptions: Common.Contexts.ContextOptions = {
-  baseUrl: import.meta.env.VITE_API_BASE_URL,
+  debug: import.meta.env.MODE === "development",
+  baseUrl: '.',
 };
 
 const ShopOptions: Shop.Contexts.ContextOptions = {
