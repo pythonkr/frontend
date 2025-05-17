@@ -10,13 +10,13 @@ import {
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 
 import * as Common from "@frontend/common";
-import * as Shop from "@frontend/shop";
+import ShopHooks from '../../hooks';
 
-export const ShopUserStatus: React.FC = () => {
+export const UserInfo: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
-  const signInWithEmailMutation = Shop.Hooks.useSignInWithEmailMutation();
-  const SignInWithSNSMutation = Shop.Hooks.useSignInWithSNSMutation();
-  const signOutMutation = Shop.Hooks.useSignOutMutation();
+  const signInWithEmailMutation = ShopHooks.useSignInWithEmailMutation();
+  const SignInWithSNSMutation = ShopHooks.useSignInWithSNSMutation();
+  const signOutMutation = ShopHooks.useSignOutMutation();
 
   const signInWithGoogle = () =>
     SignInWithSNSMutation.mutate({
@@ -42,7 +42,7 @@ export const ShopUserStatus: React.FC = () => {
 
   const WrappedUserStatus: React.FC = () => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    const { data } = Shop.Hooks.useUserStatus();
+    const { data } = ShopHooks.useUserStatus();
 
     return data && data.meta.is_authenticated === true ? (
       <Stack>
@@ -97,18 +97,9 @@ export const ShopUserStatus: React.FC = () => {
     );
   };
 
-  return (
-    <Stack>
-      <Typography variant="h5" gutterBottom>
-        User Status
-      </Typography>
-      <ErrorBoundary
-        fallback={<div>로그인 정보를 불러오는 중 문제가 발생했습니다.</div>}
-      >
-        <Suspense fallback={<CircularProgress />}>
-          <WrappedUserStatus />
-        </Suspense>
-      </ErrorBoundary>
-    </Stack>
-  );
+  return <ErrorBoundary fallback={<div>로그인 정보를 불러오는 중 문제가 발생했습니다.</div>}>
+    <Suspense fallback={<CircularProgress />}>
+      <WrappedUserStatus />
+    </Suspense>
+  </ErrorBoundary>;
 };

@@ -19,12 +19,15 @@ import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import * as Common from "@frontend/common";
-import * as Shop from "@frontend/shop";
+import ShopHooks from '../../hooks';
+import ShopSchemas from '../../schemas';
+import ShopUtils from '../../utils';
+import CommonComponents from '../common';
 
 const getCartAppendRequestPayload = (
-  product: Shop.Schemas.Product,
+  product: ShopSchemas.Product,
   formRef: React.RefObject<HTMLFormElement | null>
-): Shop.Schemas.CartItemAppendRequest => {
+): ShopSchemas.CartItemAppendRequest => {
   if (!Common.Utils.isFormValid(formRef.current))
     throw new Error("Form is not valid");
 
@@ -47,7 +50,7 @@ const getCartAppendRequestPayload = (
 };
 
 const getProductNotPurchasableReason = (
-  product: Shop.Schemas.Product
+  product: ShopSchemas.Product
 ): string | null => {
   // 상품이 구매 가능 기간 내에 있고, 상품이 매진되지 않았으며, 매진된 상품 옵션 재고가 없으면 true
   const now = new Date();
@@ -85,15 +88,15 @@ const NotPurchasable: React.FC<React.PropsWithChildren> = ({ children }) => {
   );
 };
 
-const ShopProductItem: React.FC<{
-  product: Shop.Schemas.Product;
+const ProductItem: React.FC<{
+  product: ShopSchemas.Product;
   onPaymentCompleted?: () => void;
 }> = ({ product, onPaymentCompleted }) => {
   const optionFormRef = React.useRef<HTMLFormElement>(null);
 
   const queryClient = useQueryClient();
-  const oneItemOrderStartMutation = Shop.Hooks.usePrepareOneItemOrderMutation();
-  const addItemToCartMutation = Shop.Hooks.useAddItemToCartMutation();
+  const oneItemOrderStartMutation = ShopHooks.usePrepareOneItemOrderMutation();
+  const addItemToCartMutation = ShopHooks.useAddItemToCartMutation();
 
   const addItemToCart = () =>
     addItemToCartMutation.mutate(
@@ -103,8 +106,8 @@ const ShopProductItem: React.FC<{
     oneItemOrderStartMutation.mutate(
       getCartAppendRequestPayload(product, optionFormRef),
       {
-        onSuccess: (order: Shop.Schemas.Order) => {
-          Shop.Utils.startPortOnePurchase(
+        onSuccess: (order: ShopSchemas.Order) => {
+          ShopUtils.startPortOnePurchase(
             order,
             () => {
               queryClient.invalidateQueries();
@@ -146,7 +149,7 @@ const ShopProductItem: React.FC<{
         <Common.Components.MDXRenderer text={product.description || ""} />
         <br />
         <Divider />
-        <Shop.Components.ShopSignInGuard
+        <CommonComponents.SignInGuard
           fallback={
             <NotPurchasable>
               로그인 후 장바구니에 담거나 구매할 수 있어요.
@@ -159,7 +162,7 @@ const ShopProductItem: React.FC<{
               <form ref={optionFormRef} onSubmit={formOnSubmit}>
                 <Stack spacing={2}>
                   {product.option_groups.map((group) => (
-                    <Shop.Components.OptionGroupInput
+                    <CommonComponents.OptionGroupInput
                       key={group.id}
                       optionGroup={group}
                       options={group.options}
@@ -174,13 +177,13 @@ const ShopProductItem: React.FC<{
               <br />
               <Typography variant="h6" sx={{ textAlign: "right" }}>
                 결제 금액:{" "}
-                <Shop.Components.PriceDisplay price={product.price} />
+                <CommonComponents.PriceDisplay price={product.price} />
               </Typography>
             </>
           ) : (
             <NotPurchasable>{notPurchasableReason}</NotPurchasable>
           )}
-        </Shop.Components.ShopSignInGuard>
+        </CommonComponents.SignInGuard>
       </AccordionDetails>
       {R.isNullish(notPurchasableReason) && (
         <AccordionActions sx={{ pt: "0", pb: "1rem", px: "2rem" }}>
@@ -196,30 +199,21 @@ const ShopProductItem: React.FC<{
   );
 };
 
-export const ShopProductList: React.FC = () => {
+export const ProductList: React.FC = () => {
   const WrappedProductList: React.FC = () => {
-    const { data } = Shop.Hooks.useProducts();
+    const { data } = ShopHooks.useProducts();
     return (
       <List>
         {data.map((product) => (
-          <ShopProductItem key={product.id} product={product} />
+          <ProductItem key={product.id} product={product} />
         ))}
       </List>
     );
   };
 
-  return (
-    <Stack>
-      <Typography variant="h5" gutterBottom>
-        Product List
-      </Typography>
-      <ErrorBoundary
-        fallback={<div>상품 목록을 불러오는 중 문제가 발생했습니다.</div>}
-      >
-        <Suspense fallback={<CircularProgress />}>
-          <WrappedProductList />
-        </Suspense>
-      </ErrorBoundary>
-    </Stack>
-  );
+  return <ErrorBoundary fallback={<div>상품 목록을 불러오는 중 문제가 발생했습니다.</div>}>
+    <Suspense fallback={<CircularProgress />}>
+      <WrappedProductList />
+    </Suspense>
+  </ErrorBoundary>;
 };

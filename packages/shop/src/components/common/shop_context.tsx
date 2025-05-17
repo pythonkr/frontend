@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import ShopContext from '../contexts';
+import ShopContext from '../../contexts';
 
 type ShopContextProps = {
   options: ShopContext.ContextOptions;

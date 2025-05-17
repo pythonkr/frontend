@@ -17,10 +17,13 @@ import {
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 
 import * as Common from "@frontend/common";
-import * as Shop from "@frontend/shop";
+import ShopHooks from '../../hooks';
+import ShopSchemas from '../../schemas';
+import ShopUtils from '../../utils';
+import CommonComponents from '../common';
 
 const PaymentHistoryStatusTranslated: {
-  [k in Shop.Schemas.PaymentHistoryStatus]: string;
+  [k in ShopSchemas.PaymentHistoryStatus]: string;
 } = {
   pending: "결제 대기중",
   completed: "결제 완료",
@@ -28,16 +31,16 @@ const PaymentHistoryStatusTranslated: {
   refunded: "환불됨",
 };
 
-const ShopOrderItem: React.FC<{
-  order: Shop.Schemas.Order;
+const OrderItem: React.FC<{
+  order: ShopSchemas.Order;
   disabled?: boolean;
 }> = ({ order, disabled }) => {
-  const orderRefundMutation = Shop.Hooks.useOrderRefundMutation();
-  const oneItemRefundMutation = Shop.Hooks.useOneItemRefundMutation();
-  const optionsOfOneItemInOrderPatchMutation = Shop.Hooks.useOptionsOfOneItemInOrderPatchMutation();
+  const orderRefundMutation = ShopHooks.useOrderRefundMutation();
+  const oneItemRefundMutation = ShopHooks.useOneItemRefundMutation();
+  const optionsOfOneItemInOrderPatchMutation = ShopHooks.useOptionsOfOneItemInOrderPatchMutation();
 
   const refundOrder = () => orderRefundMutation.mutate({ order_id: order.id });
-  const openReceipt = () => window.open(Shop.Utils.getReceiptUrlFromOrder(order), "_blank");
+  const openReceipt = () => window.open(ShopUtils.getReceiptUrlFromOrder(order), "_blank");
 
   const isPending =
     disabled ||
@@ -62,7 +65,7 @@ const ShopOrderItem: React.FC<{
         <br />
         <Typography variant="body1">
           주문 결제 금액 :{" "}
-          <Shop.Components.PriceDisplay price={order.current_paid_price} />
+          <CommonComponents.PriceDisplay price={order.current_paid_price} />
         </Typography>
         <Typography variant="body1">
           상태: {PaymentHistoryStatusTranslated[order.current_status]}
@@ -77,7 +80,7 @@ const ShopOrderItem: React.FC<{
           const currentCustomOptionValues: { [k: string]: string } =
             prodRels.options
               .filter((optionRel) =>
-                Shop.Utils.isOrderProductOptionModifiable(optionRel)
+                ShopUtils.isOrderProductOptionModifiable(optionRel)
               )
               .reduce(
                 (acc, optionRel) => ({
@@ -109,7 +112,7 @@ const ShopOrderItem: React.FC<{
             if (!Common.Utils.isFormValid(formRef.current))
               throw new Error("Form is not valid");
 
-            const modifiedCustomOptionValues: Shop.Schemas.OrderOptionsPatchRequest["options"] =
+            const modifiedCustomOptionValues: ShopSchemas.OrderOptionsPatchRequest["options"] =
               Object.entries(
                 Common.Utils.getFormValue<{ [key: string]: string }>({
                   form: formRef.current,
@@ -145,7 +148,7 @@ const ShopOrderItem: React.FC<{
                 >
                   <Stack spacing={2} sx={{ width: "100%" }}>
                     {prodRels.options.map((optionRel) => (
-                      <Shop.Components.OrderProductRelationOptionInput
+                      <CommonComponents.OrderProductRelationOptionInput
                         key={
                           optionRel.product_option_group.id +
                           (optionRel.product_option?.id || "")
@@ -203,34 +206,25 @@ const ShopOrderItem: React.FC<{
   );
 };
 
-export const ShopOrderList: React.FC = () => {
+export const OrderList: React.FC = () => {
   const WrappedOrderList: React.FC = () => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    const { data } = Shop.Hooks.useOrders();
+    const { data } = ShopHooks.useOrders();
 
     return (
       <List>
         {data.map((item) => (
-          <ShopOrderItem key={item.id} order={item} />
+          <OrderItem key={item.id} order={item} />
         ))}
       </List>
     );
   };
 
-  return (
-    <>
-      <Typography variant="h5" gutterBottom>
-        Order List
-      </Typography>
-      <Shop.Components.ShopSignInGuard>
-        <ErrorBoundary
-          fallback={<div>주문 내역을 불러오는 중 문제가 발생했습니다.</div>}
-        >
-          <Suspense fallback={<CircularProgress />}>
-            <WrappedOrderList />
-          </Suspense>
-        </ErrorBoundary>
-      </Shop.Components.ShopSignInGuard>
-    </>
-  );
+  return <CommonComponents.SignInGuard>
+    <ErrorBoundary fallback={<div>주문 내역을 불러오는 중 문제가 발생했습니다.</div>}>
+      <Suspense fallback={<CircularProgress />}>
+        <WrappedOrderList />
+      </Suspense>
+    </ErrorBoundary>
+  </CommonComponents.SignInGuard>;
 };

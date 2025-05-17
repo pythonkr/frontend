@@ -70,7 +70,7 @@ ReactDom.createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <ReactQueryDevtools initialIsOpen={false} />
       <Common.Components.CommonContextProvider options={CommonOptions}>
-        <Shop.Components.ShopContextProvider options={ShopOptions}>
+        <Shop.Components.Common.ShopContextProvider options={ShopOptions}>
           <ThemeProvider theme={muiTheme}>
             <SnackbarProvider>
               <CssBaseline />
@@ -78,7 +78,7 @@ ReactDom.createRoot(document.getElementById("root")!).render(
               <ErrorBoundariedApp />
             </SnackbarProvider>
           </ThemeProvider>
-        </Shop.Components.ShopContextProvider>
+        </Shop.Components.Common.ShopContextProvider>
       </Common.Components.CommonContextProvider>
     </QueryClientProvider>
   </React.StrictMode>

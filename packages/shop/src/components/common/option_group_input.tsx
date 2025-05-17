@@ -10,8 +10,8 @@ import {
   Tooltip,
 } from "@mui/material";
 
-import ShopSchemas from "../schemas";
-import ShopAPIUtil from "../utils";
+import ShopSchemas from "../../schemas";
+import ShopAPIUtil from "../../utils";
 import { PriceDisplay } from "./price_display";
 
 type CommonOptionGroupType = {

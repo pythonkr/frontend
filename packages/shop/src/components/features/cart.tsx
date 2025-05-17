@@ -15,10 +15,13 @@ import {
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { useQueryClient } from "@tanstack/react-query";
 
-import * as Shop from "@frontend/shop";
+import ShopHooks from "../../hooks";
+import ShopSchemas from "../../schemas";
+import ShopUtils from "../../utils";
+import CommonComponents from "../common";
 
-const ShopCartItem: React.FC<{
-  cartProdRel: Shop.Schemas.OrderProductItem;
+const CartItem: React.FC<{
+  cartProdRel: ShopSchemas.OrderProductItem;
   removeItemFromCartFunc: (cartProductId: string) => void;
   disabled?: boolean;
 }> = ({ cartProdRel, disabled, removeItemFromCartFunc }) => (
@@ -31,7 +34,7 @@ const ShopCartItem: React.FC<{
     <AccordionDetails>
       <Stack spacing={2} sx={{ width: "100%" }}>
         {cartProdRel.options.map((optionRel) => (
-          <Shop.Components.OrderProductRelationOptionInput
+          <CommonComponents.OrderProductRelationOptionInput
             key={
               optionRel.product_option_group.id +
               (optionRel.product_option?.id || "")
@@ -46,7 +49,7 @@ const ShopCartItem: React.FC<{
       <Divider />
       <br />
       <Typography variant="h6" sx={{ textAlign: "end" }}>
-        상품 가격: <Shop.Components.PriceDisplay price={cartProdRel.price} />
+        상품 가격: <CommonComponents.PriceDisplay price={cartProdRel.price} />
       </Typography>
     </AccordionDetails>
     <AccordionActions>
@@ -62,19 +65,19 @@ const ShopCartItem: React.FC<{
   </Accordion>
 );
 
-export const ShopCartList: React.FC<{ onPaymentCompleted?: () => void }> = ({
+export const CartStatus: React.FC<{ onPaymentCompleted?: () => void }> = ({
   onPaymentCompleted,
 }) => {
   const queryClient = useQueryClient();
-  const cartOrderStartMutation = Shop.Hooks.usePrepareCartOrderMutation();
-  const removeItemFromCartMutation = Shop.Hooks.useRemoveItemFromCartMutation();
+  const cartOrderStartMutation = ShopHooks.usePrepareCartOrderMutation();
+  const removeItemFromCartMutation = ShopHooks.useRemoveItemFromCartMutation();
 
   const removeItemFromCart = (cartProductId: string) =>
     removeItemFromCartMutation.mutate({ cartProductId });
   const startCartOrder = () =>
     cartOrderStartMutation.mutate(undefined, {
-      onSuccess: (order: Shop.Schemas.Order) => {
-        Shop.Utils.startPortOnePurchase(
+      onSuccess: (order: ShopSchemas.Order) => {
+        ShopUtils.startPortOnePurchase(
           order,
           () => {
             queryClient.invalidateQueries();
@@ -82,13 +85,13 @@ export const ShopCartList: React.FC<{ onPaymentCompleted?: () => void }> = ({
             onPaymentCompleted?.();
           },
           (response) => alert("결제를 실패했습니다!\n" + response.error_msg),
-          () => {}
+          () => { }
         );
       },
       onError: (error) =>
         alert(
           error.message ||
-            "결제 준비 중 문제가 발생했습니다,\n잠시 후 다시 시도해주세요."
+          "결제 준비 중 문제가 발생했습니다,\n잠시 후 다시 시도해주세요."
         ),
     });
 
@@ -97,7 +100,7 @@ export const ShopCartList: React.FC<{ onPaymentCompleted?: () => void }> = ({
 
   const WrappedShopCartList: React.FC = () => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    const { data } = Shop.Hooks.useCart();
+    const { data } = ShopHooks.useCart();
 
     return !data.hasOwnProperty("products") || data.products.length === 0 ? (
       <Typography variant="body1" color="error">
@@ -106,7 +109,7 @@ export const ShopCartList: React.FC<{ onPaymentCompleted?: () => void }> = ({
     ) : (
       <>
         {data.products.map((prodRel) => (
-          <ShopCartItem
+          <CartItem
             key={prodRel.id}
             cartProdRel={prodRel}
             disabled={disabled}
@@ -117,7 +120,7 @@ export const ShopCartList: React.FC<{ onPaymentCompleted?: () => void }> = ({
         <Divider />
         <Typography variant="h6" sx={{ textAlign: "end" }}>
           결제 금액:{" "}
-          <Shop.Components.PriceDisplay price={data.first_paid_price} />
+          <CommonComponents.PriceDisplay price={data.first_paid_price} />
         </Typography>
         <Button
           variant="contained"
@@ -131,20 +134,11 @@ export const ShopCartList: React.FC<{ onPaymentCompleted?: () => void }> = ({
     );
   };
 
-  return (
-    <>
-      <Typography variant="h5" gutterBottom>
-        Cart List
-      </Typography>
-      <Shop.Components.ShopSignInGuard>
-        <ErrorBoundary
-          fallback={<div>장바구니 정보를 불러오는 중 문제가 발생했습니다.</div>}
-        >
-          <Suspense fallback={<CircularProgress />}>
-            <WrappedShopCartList />
-          </Suspense>
-        </ErrorBoundary>
-      </Shop.Components.ShopSignInGuard>
-    </>
-  );
+  return <CommonComponents.SignInGuard>
+    <ErrorBoundary fallback={<div>장바구니 정보를 불러오는 중 문제가 발생했습니다.</div>}>
+      <Suspense fallback={<CircularProgress />}>
+        <WrappedShopCartList />
+      </Suspense>
+    </ErrorBoundary>
+  </CommonComponents.SignInGuard>;
 };
