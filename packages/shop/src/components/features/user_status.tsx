@@ -28,6 +28,16 @@ export const UserInfo: React.FC = () => {
       })
     );
   };
+  const signInWithNaver = () =>
+    SignInWithSNSMutation.mutate({
+      provider: "naver",
+      callback_url: window.location.href,
+    });
+  const signInWithKakao = () =>
+    SignInWithSNSMutation.mutate({
+      provider: "kakao",
+      callback_url: window.location.href,
+    });
 
   const disabled = SignInWithSNSMutation.isPending || signInWithEmailMutation.isPending || signOutMutation.isPending;
 
@@ -73,6 +83,12 @@ export const UserInfo: React.FC = () => {
         </form>
         <Button variant="contained" color="primary" onClick={signInWithGoogle} disabled={disabled}>
           Sign In with Google
+        </Button>
+        <Button variant="contained" color="primary" onClick={signInWithNaver} disabled={disabled}>
+          Sign In with Naver
+        </Button>
+        <Button variant="contained" color="primary" onClick={signInWithKakao} disabled={disabled}>
+          Sign In with Kakao
         </Button>
       </Stack>
     );
