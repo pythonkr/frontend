@@ -32,12 +32,14 @@ jobs:
       BUMP_RULE: ${{ (github.event_name == 'workflow_dispatch' && inputs.WORKFLOW_PHASE || 'dev') == 'dev' && '--mode development' || '' }}
       AWS_S3_PYCONKR_FRONTEND_BUCKET: ${{ (github.event_name == 'workflow_dispatch' && inputs.WORKFLOW_PHASE || 'dev') == 'dev' && secrets.AWS_S3_PYCONKR_FRONTEND_BUCKET_DEV || secrets.AWS_S3_PYCONKR_FRONTEND_BUCKET_PROD }}
       AWS_S3_PYCONKR_ADMIN_BUCKET: ${{ (github.event_name == 'workflow_dispatch' && inputs.WORKFLOW_PHASE || 'dev') == 'dev' && secrets.AWS_S3_PYCONKR_ADMIN_BUCKET_DEV || secrets.AWS_S3_PYCONKR_ADMIN_BUCKET_PROD }}
+      AWS_S3_PYCONKR_PARTICIPANT_PORTAL_BUCKET: ${{ (github.event_name == 'workflow_dispatch' && inputs.WORKFLOW_PHASE || 'dev') == 'dev' && secrets.AWS_S3_PYCONKR_PARTICIPANT_PORTAL_BUCKET_DEV || secrets.AWS_S3_PYCONKR_PARTICIPANT_PORTAL_BUCKET_PROD }}
       AWS_CLOUDFRONT_PYCONKR_FRONTEND_DISTRIBUTION_ID: ${{ (github.event_name == 'workflow_dispatch' && inputs.WORKFLOW_PHASE || 'dev') == 'dev' && secrets.AWS_CLOUDFRONT_PYCONKR_FRONTEND_DISTRIBUTION_ID_DEV || secrets.AWS_CLOUDFRONT_PYCONKR_FRONTEND_DISTRIBUTION_ID_PROD }}
       AWS_CLOUDFRONT_PYCONKR_ADMIN_DISTRIBUTION_ID: ${{ (github.event_name == 'workflow_dispatch' && inputs.WORKFLOW_PHASE || 'dev') == 'dev' && secrets.AWS_CLOUDFRONT_PYCONKR_ADMIN_DISTRIBUTION_ID_DEV || secrets.AWS_CLOUDFRONT_PYCONKR_ADMIN_DISTRIBUTION_ID_PROD }}
+      AWS_CLOUDFRONT_PYCONKR_PARTICIPANT_PORTAL_DISTRIBUTION_ID: ${{ (github.event_name == 'workflow_dispatch' && inputs.WORKFLOW_PHASE || 'dev') == 'dev' && secrets.AWS_CLOUDFRONT_PYCONKR_PARTICIPANT_PORTAL_DISTRIBUTION_ID_DEV || secrets.AWS_CLOUDFRONT_PYCONKR_PARTICIPANT_PORTAL_DISTRIBUTION_ID_PROD }}
 
     strategy:
       matrix:
-        application: [pyconkr, pyconkr-admin]
+        application: [pyconkr, pyconkr-admin, pyconkr-participant-portal]
         include:
           - application: pyconkr
             aws_s3_bucket_key: AWS_S3_PYCONKR_FRONTEND_BUCKET
@@ -45,6 +47,9 @@ jobs:
           - application: pyconkr-admin
             aws_s3_bucket_key: AWS_S3_PYCONKR_ADMIN_BUCKET
             aws_cloudfront_distribution_key: AWS_CLOUDFRONT_PYCONKR_ADMIN_DISTRIBUTION_ID
+          - application: pyconkr-participant-portal
+            aws_s3_bucket_key: AWS_S3_PYCONKR_PARTICIPANT_PORTAL_BUCKET
+            aws_cloudfront_distribution_key: AWS_CLOUDFRONT_PYCONKR_PARTICIPANT_PORTAL_DISTRIBUTION_ID
 
     steps:
       - uses: actions/checkout@master

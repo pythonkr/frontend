@@ -1,0 +1,13 @@
+{
+    "name": "@apps/pyconkr-participant-portal",
+    "dependencies": {
+        "@frontend/common": "workspace:*",
+        "@frontend/shop": "workspace:*"
+    },
+    "devDependencies": {
+        "vite": "^6.3.5",
+        "vite-plugin-mdx": "^3.6.1",
+        "vite-plugin-mkcert": "^1.17.8",
+        "vite-plugin-svgr": "^4.3.0"
+    }
+}
