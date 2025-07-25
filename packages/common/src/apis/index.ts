@@ -1,5 +1,6 @@
-import { BackendAPIClient, BackendAPIClientError as _BackendAPIClientError } from "./client";
 import BackendAPISchemas from "../schemas/backendAPI";
+import BackendSessionAPISchemas from "../schemas/backendSessionAPI";
+import { BackendAPIClient, BackendAPIClientError as _BackendAPIClientError } from "./client";
 
 namespace BackendAPIs {
   export const BackendAPIClientError = _BackendAPIClientError;
@@ -7,10 +8,10 @@ namespace BackendAPIs {
   export const retrievePage = (client: BackendAPIClient) => (id: string) => client.get<BackendAPISchemas.PageSchema>(`v1/cms/page/${id}/`);
   export const listSponsors = (client: BackendAPIClient) => () => client.get<BackendAPISchemas.SponsorTierSchema[]>("v1/event/sponsor/");
   export const listSessions = (client: BackendAPIClient, params?: BackendAPISchemas.SessionQueryParameterSchema) => () =>
-    client.get<BackendAPISchemas.SessionSchema[]>("v1/event/presentation/", { params });
+    client.get<BackendSessionAPISchemas.SessionSchema[]>("v1/event/presentation/", { params });
   export const retrieveSession = (client: BackendAPIClient) => (id: string) => {
     if (!id) return Promise.resolve(null);
-    return client.get<BackendAPISchemas.SessionSchema>(`v1/event/presentation/${id}/`);
+    return client.get<BackendSessionAPISchemas.SessionSchema>(`v1/event/presentation/${id}/`);
   };
 }
 

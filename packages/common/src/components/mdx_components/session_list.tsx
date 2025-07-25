@@ -6,14 +6,14 @@ import * as R from "remeda";
 
 import PyCon2025Logo from "../../assets/pyconkr2025_logo.png";
 import Hooks from "../../hooks";
-import BackendAPISchemas from "../../schemas/backendAPI";
+import BackendSessionAPISchemas from "../../schemas/backendSessionAPI";
 import { ErrorFallback } from "../error_handler";
 import { FallbackImage } from "../fallback_image";
 import { StyledDivider } from "./styled_divider";
 
 const EXCLUDE_CATEGORIES = ["후원사", "Sponsor"];
 
-const SessionItem: React.FC<{ session: BackendAPISchemas.SessionSchema; enableLink?: boolean }> = Suspense.with(
+const SessionItem: React.FC<{ session: BackendSessionAPISchemas.SessionSchema; enableLink?: boolean }> = Suspense.with(
   { fallback: <CircularProgress /> },
   ({ session, enableLink }) => {
     const sessionTitle = session.title.replace("\\n", "\n");

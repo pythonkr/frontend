@@ -3,7 +3,7 @@ import { ErrorBoundary, Suspense } from "@suspensive/react";
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import * as R from "remeda";
-import BackendAPISchemas from "../../schemas/backendAPI";
+import BackendSessionAPISchemas from "../../schemas/backendSessionAPI";
 import { ErrorFallback } from "../error_handler";
 import { StyledDivider } from "./styled_divider";
 
@@ -17,7 +17,7 @@ type TimeTableData = {
       [room: string]:
         | {
             rowSpan: number;
-            session: BackendAPISchemas.SessionSchema;
+            session: BackendSessionAPISchemas.SessionSchema;
           }
         | undefined;
     };
@@ -25,31 +25,42 @@ type TimeTableData = {
 };
 
 const getDateStr = (date: Date) => date.toISOString().split("T")[0];
+const getDateStringToStr = (dateString: string) => dateString.split("T")[0];
 const getDetailedDateStr = (date: Date) => date.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
 const getPaddedTime = (time: Date) => `${time.getHours()}:${time.getMinutes().toString().padStart(2, "0")}`;
+const isSession: (session: BackendSessionAPISchemas.SessionSchema) => boolean = (session) =>
+  session.call_for_presentation_schedules &&
+  session.call_for_presentation_schedules.length > 0 &&
+  session.call_for_presentation_schedules[0].presentation_type_name == "Session";
 
-const getRooms = (data: BackendAPISchemas.SessionSchema[]) => {
+const getRooms = (data: BackendSessionAPISchemas.SessionSchema[]) => {
   const rooms: Set<string> = new Set();
-  data.forEach((session) => session.room_schedules.room_name && rooms.add(session.room_schedules.room_name));
+  data.forEach((session) => {
+    if (session.room_schedules.length == 0) return;
+    session.room_schedules[0].room_name && rooms.add(session.room_schedules[0].room_name);
+  });
   return Array.from(rooms);
 };
 
-const getConfStartEndTimePerDay: (data: BackendAPISchemas.SessionSchema[]) => {
+const getConfStartEndTimePerDay: (data: BackendSessionAPISchemas.SessionSchema[]) => {
   [date: string]: { start: Date; end: Date };
 } = (data) => {
   const result: { [date: string]: { start: Date; end: Date } } = {};
 
   data.forEach((session) => {
-    if (session.call_for_presentation_schedules.start_at && session.call_for_presentation_schedules.end_at) {
-      const startTime = session.call_for_presentation_schedules.start_at;
-      const endTime = session.call_for_presentation_schedules.end_at;
-      const date = getDateStr(startTime);
+    if (session.call_for_presentation_schedules.length == 0) return;
+    if (session.call_for_presentation_schedules[0].start_at && session.call_for_presentation_schedules[0].end_at) {
+      const startTime = session.call_for_presentation_schedules[0].start_at;
+      const endTime = session.call_for_presentation_schedules[0].end_at;
+      const date = getDateStringToStr(startTime);
+      const startTimeAsDate = new Date(startTime);
+      const endTimeAsDate = new Date(endTime);
 
       if (!result[date]) {
-        result[date] = { start: startTime, end: endTime };
+        result[date] = { start: startTimeAsDate, end: endTimeAsDate };
       } else {
-        if (startTime < result[date].start) result[date].start = startTime;
-        if (endTime > result[date].end) result[date].end = endTime;
+        if (startTimeAsDate < result[date].start) result[date].start = startTimeAsDate;
+        if (endTimeAsDate > result[date].end) result[date].end = endTimeAsDate;
       }
     }
   });
@@ -68,7 +79,7 @@ const getEveryTenMinutesArr = (start: Date, end: Date) => {
   return arr;
 };
 
-const getTimeTableData: (data: BackendAPISchemas.SessionSchema[]) => TimeTableData = (data) => {
+const getTimeTableData: (data: BackendSessionAPISchemas.SessionSchema[]) => TimeTableData = (data) => {
   // Initialize timeTableData structure
   const timeTableData: TimeTableData = Object.entries(getConfStartEndTimePerDay(data)).reduce(
     (acc, [date, { start, end }]) => ({
@@ -80,10 +91,15 @@ const getTimeTableData: (data: BackendAPISchemas.SessionSchema[]) => TimeTableDa
 
   // Fill timeTableData with session data
   data.forEach((session) => {
-    if (session.call_for_presentation_schedules.start_at && session.call_for_presentation_schedules.end_at) {
-      const start = session.call_for_presentation_schedules.start_at;
-      const durationMin = (session.call_for_presentation_schedules.end_at.getTime() - start.getTime()) / 1000 / 60;
-      timeTableData[getDateStr(start)][getPaddedTime(start)][session.room_schedules.room_name] = {
+    if (session.call_for_presentation_schedules.length == 0) return;
+    if (session.call_for_presentation_schedules[0].start_at && session.call_for_presentation_schedules[0].end_at) {
+      const start = session.call_for_presentation_schedules[0].start_at;
+      const end = session.call_for_presentation_schedules[0].end_at;
+      const startAsDate = new Date(start);
+      const endAsDate = new Date(end);
+      const durationMin = (endAsDate.getTime() - startAsDate.getTime()) / 1000 / 60;
+      if (session.room_schedules.length == 0) return;
+      timeTableData[getDateStringToStr(start)][getPaddedTime(startAsDate)][session.room_schedules[0].room_name] = {
         rowSpan: durationMin / 10,
         session,
       };
@@ -104,7 +120,7 @@ const ErrorHeading = styled(Typography)({
 const SessionColumn: React.FC<{
   rowSpan: number;
   colSpan?: number;
-  session: BackendAPISchemas.SessionSchema;
+  session: BackendSessionAPISchemas.SessionSchema;
 }> = ({ rowSpan, colSpan, session }) => {
   const navigate = useNavigate();
   const clickable = R.isArray(session.speakers) && !R.isEmpty(session.speakers);
@@ -143,7 +159,7 @@ export const SessionTimeTable: React.FC = ErrorBoundary.with(
     React.useEffect(() => window.scrollTo(0, 0), []);
     const [confDate, setConfDate] = React.useState("");
 
-    const sessionRawData: BackendAPISchemas.SessionSchema[] = [];
+    const sessionRawData: BackendSessionAPISchemas.SessionSchema[] = [];
     const timeTableData = getTimeTableData(sessionRawData);
     const dates = Object.keys(timeTableData).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
     const rooms: { [room: string]: number } = getRooms(sessionRawData).reduce((acc, room) => ({ ...acc, [room]: 0 }), {});
@@ -235,7 +251,7 @@ export const SessionTimeTable: React.FC = ErrorBoundary.with(
                 }
 
                 // 만약 세션 타입이 아닌 발표가 존재하는 경우, 해당 줄에서는 colSpan이 roomCount인 column을 생성합니다.
-                const nonSessionTypeData = Object.values(roomData).find((room) => room !== undefined && !room.session.isSession);
+                const nonSessionTypeData = Object.values(roomData).find((room) => room !== undefined && room.session && isSession(room.session));
                 if (nonSessionTypeData) {
                   Object.keys(rooms).forEach((room) => (rooms[room] = nonSessionTypeData.rowSpan - 1));
                   return (
