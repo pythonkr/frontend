@@ -17,6 +17,7 @@ const SessionItem: React.FC<{ session: BackendSessionAPISchemas.SessionSchema; e
   { fallback: <CircularProgress /> },
   ({ session, enableLink }) => {
     const sessionTitle = session.title.replace("\\n", "\n");
+    const hasSummary = session.summary !== null && session.summary.length > 0;
 
     let speakerImgSrc = session.image || "";
     if (!speakerImgSrc && R.isArray(session.speakers) && !R.isEmpty(session.speakers)) {
@@ -33,6 +34,7 @@ const SessionItem: React.FC<{ session: BackendSessionAPISchemas.SessionSchema; e
       .replace(/([.])/g, "_")
       .replace(/(?![0-9A-Za-zㄱ-ㅣ가-힣-_])./g, "");
     const sessionDetailedUrl = `/presentations/${session.id}#${urlSafeTitle}`;
+
     const result = (
       <SessionItemContainer direction="row">
         <SessionImageContainer
@@ -40,6 +42,7 @@ const SessionItem: React.FC<{ session: BackendSessionAPISchemas.SessionSchema; e
         />
         <Stack direction="column" sx={{ flexGrow: 1, py: 0.5, gap: 0.75 }}>
           <SessionTitle children={sessionTitle} />
+          {hasSummary ? <SummaryText children={session.summary} /> : null}
           <Stack direction="row" spacing={0.5}>
             {session.speakers.map((speaker) => (
               <Chip key={speaker.id} size="small" label={speaker.nickname} />
@@ -53,6 +56,7 @@ const SessionItem: React.FC<{ session: BackendSessionAPISchemas.SessionSchema; e
         </Stack>
       </SessionItemContainer>
     );
+
     return (
       <>
         {enableLink ? <Link to={sessionDetailedUrl} style={{ textDecoration: "none" }} children={result} /> : result}
@@ -202,6 +206,14 @@ const SessionImageErrorFallback: React.FC = () => (
 const SessionTitle = styled(Typography)({
   fontSize: "1.5em",
   fontWeight: 600,
+  lineHeight: 1.25,
+  textDecoration: "none",
+  whiteSpace: "pre-wrap",
+});
+
+const SummaryText = styled(Typography)({
+  fontSize: "1em",
+  fontWeight: 500,
   lineHeight: 1.25,
   textDecoration: "none",
   whiteSpace: "pre-wrap",
