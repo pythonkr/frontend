@@ -2,7 +2,7 @@ import { Button, Chip, CircularProgress, Stack, styled, Table, TableBody, TableC
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { DateTime } from "luxon";
 import * as React from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import * as R from "remeda";
 
 import Hooks from "../../hooks";
@@ -108,7 +108,6 @@ const SessionColumn: React.FC<{
   colSpan?: number;
   session: BackendAPISchemas.SessionSchema;
 }> = ({ rowSpan, colSpan, session }) => {
-  const navigate = useNavigate();
   const clickable = R.isArray(session.speakers) && !R.isEmpty(session.speakers);
   // Firefox는 rowSpan된 td의 height를 계산할 때 rowSpan을 고려하지 않습니다. 따라서 직접 계산하여 height를 설정합니다.
   const sessionBoxHeight = `${TD_HEIGHT * rowSpan}rem`;
@@ -118,18 +117,32 @@ const SessionColumn: React.FC<{
     .replace(/(?![.0-9A-Za-zㄱ-ㅣ가-힣-])./g, "");
   return (
     <SessionTableCell rowSpan={rowSpan} colSpan={colSpan}>
-      <SessionBox
-        onClick={() => clickable && navigate(`/presentations/${session.id}#${urlSafeTitle}`)}
-        className={clickable ? "clickable" : ""}
-        sx={{ height: sessionBoxHeight, gap: 0.75, padding: "0.5rem" }}
-      >
-        <SessionTitle children={session.title.replace("\\n", "\n")} align="center" />
-        <Stack direction="row" alignItems="center" justifyContent="center" sx={{ width: "100%", flexWrap: "wrap", gap: 0.5 }}>
-          {session.speakers.map((speaker) => (
-            <Chip key={speaker.id} size="small" label={speaker.nickname} />
-          ))}
-        </Stack>
-      </SessionBox>
+      {clickable ? (
+        <Link to={`/presentations/${session.id}#${urlSafeTitle}`} style={{ textDecoration: 'none', display: 'block' }}>
+          <SessionBox
+            className="clickable"
+            sx={{ height: sessionBoxHeight, gap: 0.75, padding: "0.5rem" }}
+          >
+            <SessionTitle children={session.title.replace("\\n", "\n")} align="center" />
+            <Stack direction="row" alignItems="center" justifyContent="center" sx={{ width: "100%", flexWrap: "wrap", gap: 0.5 }}>
+              {session.speakers.map((speaker) => (
+                <Chip key={speaker.id} size="small" label={speaker.nickname} />
+              ))}
+            </Stack>
+          </SessionBox>
+        </Link>
+      ) : (
+        <SessionBox
+          sx={{ height: sessionBoxHeight, gap: 0.75, padding: "0.5rem" }}
+        >
+          <SessionTitle children={session.title.replace("\\n", "\n")} align="center" />
+          <Stack direction="row" alignItems="center" justifyContent="center" sx={{ width: "100%", flexWrap: "wrap", gap: 0.5 }}>
+            {session.speakers.map((speaker) => (
+              <Chip key={speaker.id} size="small" label={speaker.nickname} />
+            ))}
+          </Stack>
+        </SessionBox>
+      )}
     </SessionTableCell>
   );
 };
