@@ -1,7 +1,7 @@
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { ButtonBase, Stack, Typography } from "@mui/material";
 import * as React from "react";
-import { useAppContext } from "../../../../../apps/pyconkr/src/contexts/app_context";
+import { useAppContext } from "../../contexts/app_context";
 import PyCon2025MobileLogoImage from "../../assets/pyconkr2025_main_cover_image.png";
 import PyCon2025MobileLogoTitle from "../../assets/pyconkr2025_main_cover_title.png";
 

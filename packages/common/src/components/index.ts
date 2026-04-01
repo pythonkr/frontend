@@ -17,18 +17,22 @@ import { Confetti as ConfettiComponent } from "./mdx_components/confetti";
 import {
   FAQAccordion as FAQAccordionComponent,
   type FAQAccordionProps as FAQAccordionPropsType,
+  type FAQAccordionStyles as FAQAccordionStylesType,
   type FAQItem as FAQItemType,
 } from "./mdx_components/faq_accordion";
 import type { MapPropType as MapComponentPropType } from "./mdx_components/map";
 import { Map as MapComponent } from "./mdx_components/map";
 import { OneDetailsOpener as OneDetailsOpenerComponent } from "./mdx_components/one_details_opener";
-import { SessionList as SessionListComponent } from "./mdx_components/session_list";
-import { SessionTimeTable as SessionTimeTableComponent } from "./mdx_components/session_timetable";
+import { SessionList as SessionListComponent, type SessionListStyles as SessionListStylesType } from "./mdx_components/session_list";
+import { SessionTimeTable as SessionTimeTableComponent, type SessionTimeTableStyles as SessionTimeTableStylesType } from "./mdx_components/session_timetable";
 import {
   PrimaryStyledDetails as PrimaryStyledDetailsComponent,
   HighlightedStyledDetails as SecondaryStyledDetailsComponent,
 } from "./mdx_components/styled_details";
-import { StyledFullWidthButton as StyledFullWidthButtonComponent } from "./mdx_components/styled_full_width_button";
+import {
+  StyledFullWidthButton as StyledFullWidthButtonComponent,
+  type StyledFullWidthButtonStyles as StyledFullWidthButtonStylesType,
+} from "./mdx_components/styled_full_width_button";
 import { MDXEditor as MDXEditorComponent } from "./mdx_editor";
 import { PythonKorea as PythonKoreaComponent } from "./pythonkorea";
 
@@ -61,7 +65,11 @@ namespace Components {
     export const SessionTimeTable = SessionTimeTableComponent;
     export type MapPropType = MapComponentPropType;
     export type FAQAccordionProps = FAQAccordionPropsType;
+    export type FAQAccordionStyles = FAQAccordionStylesType;
     export type FAQItem = FAQItemType;
+    export type SessionListStyles = SessionListStylesType;
+    export type SessionTimeTableStyles = SessionTimeTableStylesType;
+    export type StyledFullWidthButtonStyles = StyledFullWidthButtonStylesType;
   }
 }
 

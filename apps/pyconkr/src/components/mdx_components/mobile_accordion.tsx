@@ -4,7 +4,7 @@ import { AccordionDetails, AccordionSummary, Accordion as MuiAccordion, Stack, T
 import * as React from "react";
 import Marquee from "react-fast-marquee";
 
-import { useAppContext } from "../../../../../apps/pyconkr/src/contexts/app_context";
+import { useAppContext } from "../../contexts/app_context";
 import PyCon2025HostLogoBig from "../../assets/pyconkr2025_hostlogo_big.png";
 import PyCon2025HostLogoSmall from "../../assets/pyconkr2025_hostlogo_small.png";
 

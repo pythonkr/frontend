@@ -9,21 +9,44 @@ export interface FAQItem {
   answer: string;
 }
 
+export type FAQAccordionStyles = {
+  summary?: {
+    padding?: string;
+    minHeight?: string;
+    maxHeight?: string;
+  };
+  number?: {
+    fontSize?: string;
+    fontWeight?: number | string;
+  };
+  question?: {
+    fontSize?: string;
+    fontWeight?: number | string;
+    marginLeft?: string;
+  };
+  details?: {
+    fontSize?: string;
+    fontWeight?: number | string;
+    padding?: string;
+  };
+};
+
 export interface FAQAccordionProps {
   items: FAQItem[];
+  styles?: FAQAccordionStyles;
 }
 
-export const FAQAccordion: React.FC<FAQAccordionProps> = ({ items }) => {
+export const FAQAccordion: React.FC<FAQAccordionProps> = ({ items, styles }) => {
   return (
     <AccordionWrapper>
       {items.map((faq, index) => (
         <React.Fragment key={faq.id}>
-          <StyledAccordion>
+          <StyledAccordion faqStyles={styles}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls={`panel${faq.id}-content`} id={`panel${faq.id}-header`}>
-              <Number>{faq.id}</Number>
-              <Question>{faq.question}</Question>
+              <Number faqStyles={styles}>{faq.id}</Number>
+              <Question faqStyles={styles}>{faq.question}</Question>
             </AccordionSummary>
-            <StyledAccordionDetails>{faq.answer}</StyledAccordionDetails>
+            <StyledAccordionDetails faqStyles={styles}>{faq.answer}</StyledAccordionDetails>
           </StyledAccordion>
           {index !== items.length - 1 && <Divider />}
         </React.Fragment>
@@ -45,59 +68,54 @@ const Divider = styled.div`
   margin: 0;
 `;
 
-const StyledAccordion = styled(MuiAccordion)`
-  box-shadow: none;
-  border-radius: 0;
+const StyledAccordion = styled(MuiAccordion, {
+  shouldForwardProp: (prop) => prop !== "faqStyles",
+})<{ faqStyles?: FAQAccordionStyles }>(({ faqStyles }) => ({
+  boxShadow: "none",
+  borderRadius: 0,
+  "&:before": { display: "none" },
+  "&.MuiAccordion-root": {
+    margin: 0,
+    "&:first-of-type": { borderTop: "none" },
+    "&:last-of-type": { borderBottom: "none" },
+  },
+  ".MuiAccordionSummary-root": {
+    padding: faqStyles?.summary?.padding ?? "10px 35px",
+    minHeight: faqStyles?.summary?.minHeight ?? "60px",
+    maxHeight: faqStyles?.summary?.maxHeight ?? "60px",
+    ".MuiAccordionSummary-content": {
+      display: "flex",
+      alignItems: "center",
+      margin: 0,
+    },
+    "&.Mui-expanded": {
+      minHeight: faqStyles?.summary?.minHeight ?? "60px",
+      maxHeight: faqStyles?.summary?.maxHeight ?? "60px",
+    },
+  },
+}));
 
-  &:before {
-    display: none;
-  }
+const Number = styled("span", {
+  shouldForwardProp: (prop) => prop !== "faqStyles",
+})<{ faqStyles?: FAQAccordionStyles }>(({ faqStyles }) => ({
+  fontSize: faqStyles?.number?.fontSize ?? "18px",
+  fontWeight: faqStyles?.number?.fontWeight ?? 400,
+}));
 
-  &.MuiAccordion-root {
-    margin: 0;
+const Question = styled("span", {
+  shouldForwardProp: (prop) => prop !== "faqStyles",
+})<{ faqStyles?: FAQAccordionStyles }>(({ faqStyles }) => ({
+  fontSize: faqStyles?.question?.fontSize ?? "18px",
+  fontWeight: faqStyles?.question?.fontWeight ?? 400,
+  marginLeft: faqStyles?.question?.marginLeft ?? "60px",
+}));
 
-    &:first-of-type {
-      border-top: none;
-    }
-
-    &:last-of-type {
-      border-bottom: none;
-    }
-  }
-
-  .MuiAccordionSummary-root {
-    padding: 10px 35px;
-    min-height: 60px;
-    max-height: 60px;
-
-    .MuiAccordionSummary-content {
-      display: flex;
-      align-items: center;
-      margin: 0;
-    }
-
-    &.Mui-expanded {
-      min-height: 60px;
-      max-height: 60px;
-    }
-  }
-`;
-
-const Number = styled.span`
-  font-size: 18px;
-  font-weight: 400;
-`;
-
-const Question = styled.span`
-  font-size: 18px;
-  font-weight: 400;
-  margin-left: 60px;
-`;
-
-const StyledAccordionDetails = styled(AccordionDetails)`
-  background-color: ${({ theme }) => `${theme.palette.primary.light}26`}; // 15% opacity (26 in hex)
-  color: ${({ theme }) => theme.palette.primary.dark};
-  font-size: 14px;
-  font-weight: 400;
-  padding: 20px 0 20px calc(35px + 18px + 60px); // top right bottom left
-`;
+const StyledAccordionDetails = styled(AccordionDetails, {
+  shouldForwardProp: (prop) => prop !== "faqStyles",
+})<{ faqStyles?: FAQAccordionStyles }>(({ theme, faqStyles }) => ({
+  backgroundColor: `${theme.palette.primary.light}26`,
+  color: theme.palette.primary.dark,
+  fontSize: faqStyles?.details?.fontSize ?? "14px",
+  fontWeight: faqStyles?.details?.fontWeight ?? 400,
+  padding: faqStyles?.details?.padding ?? "20px 0 20px calc(35px + 18px + 60px)",
+}));

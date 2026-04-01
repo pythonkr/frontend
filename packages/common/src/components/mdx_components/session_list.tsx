@@ -12,16 +12,38 @@ import { StyledDivider } from "./styled_divider";
 
 const EXCLUDE_CATEGORIES = ["후원사", "Sponsor"];
 
+export type SessionListStyles = {
+  categoryButton?: {
+    flexBasis?: string;
+  };
+  itemContainer?: {
+    padding?: string;
+    gap?: string;
+    minHeight?: string;
+    mobilePadding?: string;
+    mobileGap?: string;
+  };
+  imageContainer?: {
+    size?: string;
+  };
+  title?: {
+    fontSize?: string;
+    fontWeight?: number | string;
+    lineHeight?: number | string;
+  };
+};
+
 type SessionItemProps = {
   session: BackendAPISchemas.SessionSchema;
   enableLink?: boolean;
   fallbackImage?: React.ReactNode;
   getSessionUrl?: (session: BackendAPISchemas.SessionSchema) => string;
+  styles?: SessionListStyles;
 };
 
 const SessionItem: React.FC<SessionItemProps> = Suspense.with(
   { fallback: <CircularProgress /> },
-  ({ session, enableLink, fallbackImage, getSessionUrl }) => {
+  ({ session, enableLink, fallbackImage, getSessionUrl, styles }) => {
     const sessionTitle = session.title.replace("\\n", "\n");
 
     let speakerImgSrc = session.image || "";
@@ -40,12 +62,13 @@ const SessionItem: React.FC<SessionItemProps> = Suspense.with(
       .replace(/(?![0-9A-Za-zㄱ-ㅣ가-힣-_])./g, "");
     const sessionDetailedUrl = getSessionUrl ? getSessionUrl(session) : `/presentations/${session.id}#${urlSafeTitle}`;
     const result = (
-      <SessionItemContainer direction="row">
+      <SessionItemContainer listStyles={styles} direction="row">
         <SessionImageContainer
+          listStyles={styles}
           children={<SessionImage src={speakerImgSrc} alt="Session Image" loading="lazy" errorFallback={<SessionImageErrorFallback fallbackImage={fallbackImage} />} />}
         />
         <Stack direction="column" sx={{ flexGrow: 1, py: 0.5, gap: 0.75 }}>
-          <SessionTitle children={sessionTitle} />
+          <SessionTitle listStyles={styles} children={sessionTitle} />
           {session.summary && <Typography variant="subtitle1" sx={{ whiteSpace: "pre-wrap" }} children={session.summary} />}
           <Stack direction="row" spacing={0.5}>
             {session.speakers.map((speaker) => (
@@ -75,11 +98,12 @@ type SessionListPropType = {
   enableLink?: boolean;
   fallbackImage?: React.ReactNode;
   getSessionUrl?: (session: BackendAPISchemas.SessionSchema) => string;
+  styles?: SessionListStyles;
 };
 
 export const SessionList: React.FC<SessionListPropType> = ErrorBoundary.with(
   { fallback: ErrorFallback },
-  Suspense.with({ fallback: <CircularProgress /> }, ({ event, types, enableLink, fallbackImage, getSessionUrl }) => {
+  Suspense.with({ fallback: <CircularProgress /> }, ({ event, types, enableLink, fallbackImage, getSessionUrl, styles }) => {
     const { language } = Hooks.Common.useCommonContext();
     const backendAPIClient = Hooks.BackendAPI.useBackendClient();
     const params = { ...(event && { event }), ...(types && { types: R.isString(types) ? types : types.join(",") }) };
@@ -122,6 +146,7 @@ export const SessionList: React.FC<SessionListPropType> = ErrorBoundary.with(
                     onClick={() => toggleCategory(cat.id)}
                     children={cat.name}
                     selected={selectedCategoryIds.some((selectedCatId) => selectedCatId === cat.id)}
+                    listStyles={styles}
                   />
                 ))}
               </Stack>
@@ -130,17 +155,19 @@ export const SessionList: React.FC<SessionListPropType> = ErrorBoundary.with(
           )}
         </Box>
         {filteredSessions.map((s) => (
-          <SessionItem key={s.id} session={s} enableLink={enableLink} fallbackImage={fallbackImage} getSessionUrl={getSessionUrl} />
+          <SessionItem key={s.id} session={s} enableLink={enableLink} fallbackImage={fallbackImage} getSessionUrl={getSessionUrl} styles={styles} />
         ))}
       </Box>
     );
   })
 );
 
-const CategoryButtonStyle = styled(Button)<{ selected?: boolean }>(({ theme, selected }) => ({
+const CategoryButtonStyle = styled(Button, {
+  shouldForwardProp: (prop) => prop !== "selected" && prop !== "listStyles",
+})<{ selected?: boolean; listStyles?: SessionListStyles }>(({ theme, selected, listStyles }) => ({
   flexGrow: 0,
   flexShrink: 0,
-  flexBasis: "14rem",
+  flexBasis: listStyles?.categoryButton?.flexBasis ?? "14rem",
 
   wordBreak: "keep-all",
   whiteSpace: "nowrap",
@@ -152,17 +179,19 @@ const CategoryButtonStyle = styled(Button)<{ selected?: boolean }>(({ theme, sel
   },
 }));
 
-const SessionItemContainer = styled(Stack)(({ theme }) => ({
+const SessionItemContainer = styled(Stack, {
+  shouldForwardProp: (prop) => prop !== "listStyles",
+})<{ listStyles?: SessionListStyles }>(({ theme, listStyles }) => ({
   alignItems: "center",
   justifyContent: "flex-start",
-  padding: "0.5rem 1.5rem",
-  gap: "1.5rem",
-  minHeight: "9rem",
+  padding: listStyles?.itemContainer?.padding ?? "0.5rem 1.5rem",
+  gap: listStyles?.itemContainer?.gap ?? "1.5rem",
+  minHeight: listStyles?.itemContainer?.minHeight ?? "9rem",
 
   [theme.breakpoints.down("md")]: {
     fontSize: "0.75rem",
-    padding: "0.5rem",
-    gap: "1rem",
+    padding: listStyles?.itemContainer?.mobilePadding ?? "0.5rem",
+    gap: listStyles?.itemContainer?.mobileGap ?? "1rem",
 
     "& .MuiChip-labelSmall": {
       fontSize: "0.75em",
@@ -170,21 +199,24 @@ const SessionItemContainer = styled(Stack)(({ theme }) => ({
   },
 }));
 
-const SessionImageContainer = styled(Stack)({
-  alignItems: "center",
-  justifyContent: "center",
-
-  width: "6rem",
-  minWidth: "6rem",
-  maxWidth: "6rem",
-  height: "6rem",
-  minHeight: "6rem",
-  maxHeight: "6rem",
+const SessionImageContainer = styled(Stack, {
+  shouldForwardProp: (prop) => prop !== "listStyles",
+})<{ listStyles?: SessionListStyles }>(({ listStyles }) => {
+  const size = listStyles?.imageContainer?.size ?? "6rem";
+  return {
+    alignItems: "center",
+    justifyContent: "center",
+    width: size,
+    minWidth: size,
+    maxWidth: size,
+    height: size,
+    minHeight: size,
+    maxHeight: size,
+  };
 });
 
 const SessionImage = styled(FallbackImage)(({ theme }) => ({
   border: `1px solid color-mix(in srgb, ${theme.palette.primary.light} 50%, transparent 50%)`,
-
   width: "100%",
   height: "100%",
   borderRadius: "50%",
@@ -196,7 +228,6 @@ const SessionImageErrorFallbackBox = styled(Box)(({ theme }) => ({
   height: "100%",
   borderRadius: "50%",
   border: `1px solid color-mix(in srgb, ${theme.palette.primary.light} 50%, transparent 50%)`,
-
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -206,10 +237,12 @@ const SessionImageErrorFallback: React.FC<{ fallbackImage?: React.ReactNode }> =
   <SessionImageErrorFallbackBox>{fallbackImage}</SessionImageErrorFallbackBox>
 );
 
-const SessionTitle = styled(Typography)({
-  fontSize: "1.5em",
-  fontWeight: 600,
-  lineHeight: 1.25,
+const SessionTitle = styled(Typography, {
+  shouldForwardProp: (prop) => prop !== "listStyles",
+})<{ listStyles?: SessionListStyles }>(({ listStyles }) => ({
+  fontSize: listStyles?.title?.fontSize ?? "1.5em",
+  fontWeight: listStyles?.title?.fontWeight ?? 600,
+  lineHeight: listStyles?.title?.lineHeight ?? 1.25,
   textDecoration: "none",
   whiteSpace: "pre-wrap",
-});
+}));

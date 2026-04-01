@@ -144,8 +144,48 @@ const PyConKR2025SessionListFallbackImage = React.createElement("img", {
   style: { width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" },
 });
 
+const pyConKR2025SessionListStyles: Common.Components.MDX.SessionListStyles = {
+  categoryButton: { flexBasis: "14rem" },
+  itemContainer: { padding: "0.5rem 1.5rem", gap: "1.5rem", minHeight: "9rem", mobilePadding: "0.5rem", mobileGap: "1rem" },
+  imageContainer: { size: "6rem" },
+  title: { fontSize: "1.5em", fontWeight: 600, lineHeight: 1.25 },
+};
+
 const PyConKR2025SessionList: React.FC<React.ComponentProps<typeof Common.Components.MDX.SessionList>> = (props) =>
-  React.createElement(Common.Components.MDX.SessionList, { ...props, fallbackImage: PyConKR2025SessionListFallbackImage });
+  React.createElement(Common.Components.MDX.SessionList, { ...props, fallbackImage: PyConKR2025SessionListFallbackImage, styles: pyConKR2025SessionListStyles });
+
+const pyConKR2025SessionTimeTableStyles: Common.Components.MDX.SessionTimeTableStyles = {
+  layout: { tdHeight: 4, tdWidth: 15, tdWidthMobile: 20 },
+  dateItemContainer: { padding: "1rem 3rem" },
+  dateTitle: { fontSize: "2.25em", fontWeight: 600, lineHeight: 1.25 },
+  dateSubTitle: { fontSize: "1em", fontWeight: 600, lineHeight: 1.25 },
+  sessionTitle: { fontSize: "1.125em", fontWeight: 600, lineHeight: 1.25 },
+  sessionBox: { padding: "0.25rem", borderRadius: "0.5rem", gap: "0.5rem" },
+  tableCell: { padding: "0 0.5rem" },
+  tableContainer: { gap: "1rem" },
+};
+
+const PyConKR2025SessionTimeTable: React.FC<React.ComponentProps<typeof Common.Components.MDX.SessionTimeTable>> = (props) =>
+  React.createElement(Common.Components.MDX.SessionTimeTable, { ...props, styles: pyConKR2025SessionTimeTableStyles });
+
+const pyConKR2025FAQAccordionStyles: Common.Components.MDX.FAQAccordionStyles = {
+  summary: { padding: "10px 35px", minHeight: "60px", maxHeight: "60px" },
+  number: { fontSize: "18px", fontWeight: 400 },
+  question: { fontSize: "18px", fontWeight: 400, marginLeft: "60px" },
+  details: { fontSize: "14px", fontWeight: 400, padding: "20px 0 20px calc(35px + 18px + 60px)" },
+};
+
+const PyConKR2025FAQAccordion: React.FC<React.ComponentProps<typeof Common.Components.MDX.FAQAccordion>> = (props) =>
+  React.createElement(Common.Components.MDX.FAQAccordion, { ...props, styles: pyConKR2025FAQAccordionStyles });
+
+const pyConKR2025StyledFullWidthButtonStyles: Common.Components.MDX.StyledFullWidthButtonStyles = {
+  borderRadius: "0.5rem",
+  textTransform: "none",
+  largeHeight: "3.5rem",
+};
+
+const PyConKR2025StyledFullWidthButton: React.FC<React.ComponentProps<typeof Common.Components.MDX.StyledFullWidthButton>> = (props) =>
+  React.createElement(Common.Components.MDX.StyledFullWidthButton, { ...props, styles: pyConKR2025StyledFullWidthButtonStyles });
 
 const PyConKRCommonMDXComponents: MDXComponents = {
   Common__Components__Lottie: Common.Components.LottiePlayer,
@@ -154,10 +194,10 @@ const PyConKRCommonMDXComponents: MDXComponents = {
   Common__Components__MDX__PrimaryStyledDetails: Common.Components.MDX.PrimaryStyledDetails,
   Common__Components__MDX__SecondaryStyledDetails: PyConKR2025SecondaryStyledDetails,
   Common__Components__MDX__Map: Common.Components.MDX.Map,
-  Common__Components__MDX__FAQAccordion: Common.Components.MDX.FAQAccordion,
-  Common__Components__MDX__FullWidthStyledButton: Common.Components.MDX.StyledFullWidthButton,
+  Common__Components__MDX__FAQAccordion: PyConKR2025FAQAccordion,
+  Common__Components__MDX__FullWidthStyledButton: PyConKR2025StyledFullWidthButton,
   Common__Components__Session__List: PyConKR2025SessionList,
-  Common__Components__Session__TimeTable: Common.Components.MDX.SessionTimeTable,
+  Common__Components__Session__TimeTable: PyConKR2025SessionTimeTable,
 };
 
 const PythonKRShopMDXComponents: MDXComponents = {

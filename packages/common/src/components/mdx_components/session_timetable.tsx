@@ -15,6 +15,43 @@ const TD_HEIGHT = 4;
 const TD_WIDTH = 15;
 const TD_WIDTH_MOBILE = 20;
 
+export type SessionTimeTableStyles = {
+  layout?: {
+    tdHeight?: number;
+    tdWidth?: number;
+    tdWidthMobile?: number;
+  };
+  dateItemContainer?: {
+    padding?: string;
+  };
+  dateTitle?: {
+    fontSize?: string;
+    fontWeight?: number | string;
+    lineHeight?: number | string;
+  };
+  dateSubTitle?: {
+    fontSize?: string;
+    fontWeight?: number | string;
+    lineHeight?: number | string;
+  };
+  sessionTitle?: {
+    fontSize?: string;
+    fontWeight?: number | string;
+    lineHeight?: number | string;
+  };
+  sessionBox?: {
+    padding?: string;
+    borderRadius?: string;
+    gap?: string;
+  };
+  tableCell?: {
+    padding?: string;
+  };
+  tableContainer?: {
+    gap?: string;
+  };
+};
+
 type TimeTableData = {
   [date: string]: {
     [time: string]: {
@@ -108,24 +145,27 @@ const SessionColumn: React.FC<{
   colSpan?: number;
   session: BackendAPISchemas.SessionSchema;
   getSessionUrl?: (session: BackendAPISchemas.SessionSchema) => string;
-}> = ({ rowSpan, colSpan, session, getSessionUrl }) => {
+  styles?: SessionTimeTableStyles;
+}> = ({ rowSpan, colSpan, session, getSessionUrl, styles }) => {
   const clickable = R.isArray(session.speakers) && !R.isEmpty(session.speakers);
   // Firefox는 rowSpan된 td의 height를 계산할 때 rowSpan을 고려하지 않습니다. 따라서 직접 계산하여 height를 설정합니다.
-  const sessionBoxHeight = `${TD_HEIGHT * rowSpan}rem`;
+  const tdHeight = styles?.layout?.tdHeight ?? TD_HEIGHT;
+  const sessionBoxHeight = `${tdHeight * rowSpan}rem`;
   const urlSafeTitle = session.title
     .replace(/ /g, "-")
     .replace(/([.])/g, "_")
     .replace(/(?![.0-9A-Za-zㄱ-ㅣ가-힣-])./g, "");
   const sessionUrl = getSessionUrl ? getSessionUrl(session) : `/presentations/${session.id}#${urlSafeTitle}`;
   return (
-    <SessionTableCell rowSpan={rowSpan} colSpan={colSpan}>
+    <SessionTableCell tableStyles={styles} rowSpan={rowSpan} colSpan={colSpan}>
       {clickable ? (
-        <Link to={sessionUrl} style={{ textDecoration: 'none', display: 'block' }}>
+        <Link to={sessionUrl} style={{ textDecoration: "none", display: "block" }}>
           <SessionBox
+            tableStyles={styles}
             className="clickable"
             sx={{ height: sessionBoxHeight, gap: 0.75, padding: "0.5rem" }}
           >
-            <SessionTitle children={session.title.replace("\\n", "\n")} align="center" />
+            <SessionTitle tableStyles={styles} children={session.title.replace("\\n", "\n")} align="center" />
             <Stack direction="row" alignItems="center" justifyContent="center" sx={{ width: "100%", flexWrap: "wrap", gap: 0.5 }}>
               {session.speakers.map((speaker) => (
                 <Chip key={speaker.id} size="small" label={speaker.nickname} />
@@ -135,9 +175,10 @@ const SessionColumn: React.FC<{
         </Link>
       ) : (
         <SessionBox
+          tableStyles={styles}
           sx={{ height: sessionBoxHeight, gap: 0.75, padding: "0.5rem" }}
         >
-          <SessionTitle children={session.title.replace("\\n", "\n")} align="center" />
+          <SessionTitle tableStyles={styles} children={session.title.replace("\\n", "\n")} align="center" />
           <Stack direction="row" alignItems="center" justifyContent="center" sx={{ width: "100%", flexWrap: "wrap", gap: 0.5 }}>
             {session.speakers.map((speaker) => (
               <Chip key={speaker.id} size="small" label={speaker.nickname} />
@@ -158,11 +199,12 @@ type SessionTimeTablePropType = {
   event?: string;
   types?: string | string[];
   getSessionUrl?: (session: BackendAPISchemas.SessionSchema) => string;
+  styles?: SessionTimeTableStyles;
 };
 
 export const SessionTimeTable: React.FC<SessionTimeTablePropType> = ErrorBoundary.with(
   { fallback: ErrorFallback },
-  Suspense.with({ fallback: <CenteredPage children={<CircularProgress />} /> }, ({ event, types, getSessionUrl }) => {
+  Suspense.with({ fallback: <CenteredPage children={<CircularProgress />} /> }, ({ event, types, getSessionUrl, styles }) => {
     const [confDate, setConfDate] = React.useState("");
 
     const { language } = Hooks.Common.useCommonContext();
@@ -195,21 +237,21 @@ export const SessionTimeTable: React.FC<SessionTimeTablePropType> = ErrorBoundar
             const dateStr = DateTime.fromISO(date).setLocale(language).toLocaleString({ weekday: "long", month: "long", day: "numeric" });
             return (
               <Button variant="text" key={date} onClick={() => setConfDate(date)} className={selectedDate === date ? "selected" : ""}>
-                <SessionDateItemContainer direction="column">
-                  <SessionDateTitle children={"Day " + (i + 1)} isSelected={selectedDate === date} />
-                  <SessionDateSubTitle children={dateStr} isSelected={selectedDate === date} />
+                <SessionDateItemContainer tableStyles={styles} direction="column">
+                  <SessionDateTitle tableStyles={styles} children={"Day " + (i + 1)} isSelected={selectedDate === date} />
+                  <SessionDateSubTitle tableStyles={styles} children={dateStr} isSelected={selectedDate === date} />
                 </SessionDateItemContainer>
               </Button>
             );
           })}
         </Stack>
         <StyledDivider />
-        <SessionTableContainer>
-          <SessionTable>
+        <SessionTableContainer tableStyles={styles}>
+          <SessionTable tableStyles={styles}>
             <TableHead>
-              <SessionTableCell></SessionTableCell>
+              <SessionTableCell tableStyles={styles}></SessionTableCell>
               {sortedRoomList.map((room) => (
-                <SessionTableCell key={room} sx={{ padding: "1rem" }}>
+                <SessionTableCell tableStyles={styles} key={room} sx={{ padding: "1rem" }}>
                   <Typography
                     variant="subtitle1"
                     sx={{ whiteSpace: "pre-wrap", fontWeight: 600, textAlign: "center" }}
@@ -219,7 +261,7 @@ export const SessionTimeTable: React.FC<SessionTimeTablePropType> = ErrorBoundar
               ))}
             </TableHead>
             <SessionTableBody>
-              <SessionTableRow children={<SessionTableCell colSpan={roomCount + 1} />} /> {/* dummy first row */}
+              <SessionTableRow children={<SessionTableCell tableStyles={styles} colSpan={roomCount + 1} />} /> {/* dummy first row */}
               {Object.entries(selectedTableData).map(([time, roomData], i, a) => {
                 const hasSession = Object.values(rooms).some((c) => c >= 1) || Object.values(roomData).some((room) => room !== undefined);
 
@@ -235,13 +277,15 @@ export const SessionTimeTable: React.FC<SessionTimeTablePropType> = ErrorBoundar
                       breakCount += 1;
                     }
 
+                    const tdHeight = styles?.layout?.tdHeight ?? TD_HEIGHT;
                     // I really hate this, but I can't think of a better way to do this.
-                    const height = (TD_HEIGHT * breakCount) / (breakCount <= 2 ? 1 : 3);
+                    const height = (tdHeight * breakCount) / (breakCount <= 2 ? 1 : 3);
                     const isLast = i === a.length - 1;
                     const duration = breakCount * 10; // 10 minutes per row
                     return (
                       <SessionTableRow>
                         <SessionTableCell
+                          tableStyles={styles}
                           sx={{
                             height: `${height}rem !important`,
                             transform: `translateY(-${height / 2}rem) !important`,
@@ -252,6 +296,7 @@ export const SessionTimeTable: React.FC<SessionTimeTablePropType> = ErrorBoundar
                           {time}
                         </SessionTableCell>
                         <SessionTableCell
+                          tableStyles={styles}
                           colSpan={roomCount + 1}
                           rowSpan={breakCount}
                           sx={{
@@ -276,27 +321,27 @@ export const SessionTimeTable: React.FC<SessionTimeTablePropType> = ErrorBoundar
                   Object.keys(rooms).forEach((room) => (rooms[room] = firstSessionInfo.rowSpan - 1));
                   return (
                     <SessionTableRow>
-                      <SessionTableCell align="center" children={time} />
-                      <SessionColumn rowSpan={firstSessionInfo.rowSpan} colSpan={roomCount} session={firstSessionInfo.session} getSessionUrl={getSessionUrl} />
+                      <SessionTableCell tableStyles={styles} align="center" children={time} />
+                      <SessionColumn rowSpan={firstSessionInfo.rowSpan} colSpan={roomCount} session={firstSessionInfo.session} getSessionUrl={getSessionUrl} styles={styles} />
                     </SessionTableRow>
                   );
                 }
 
                 return (
                   <SessionTableRow>
-                    <SessionTableCell align="center" children={time} />
+                    <SessionTableCell tableStyles={styles} align="center" children={time} />
                     {sortedRoomList.map((room) => {
                       const roomDatum = roomData[room];
                       if (roomDatum === undefined) {
                         // 진행 중인 세션이 없는 경우, 해당 줄에서는 해당 room의 빈 column을 생성합니다.
-                        if (rooms[room] <= 0) return <SessionTableCell />;
+                        if (rooms[room] <= 0) return <SessionTableCell tableStyles={styles} />;
                         // 진행 중인 세션이 있는 경우, 이번 줄에서는 해당 세션들만큼 column을 생성하지 않습니다.
                         rooms[room] -= 1;
                         return null;
                       }
                       // 세션이 여러 줄에 걸쳐있는 경우, n-1 줄만큼 해당 room에 column을 생성하지 않도록 합니다.
                       if (roomDatum.rowSpan > 1) rooms[room] = roomDatum.rowSpan - 1;
-                      return <SessionColumn key={room} rowSpan={roomDatum.rowSpan} session={roomDatum.session} getSessionUrl={getSessionUrl} />;
+                      return <SessionColumn key={room} rowSpan={roomDatum.rowSpan} session={roomDatum.session} getSessionUrl={getSessionUrl} styles={styles} />;
                     })}
                   </SessionTableRow>
                 );
@@ -309,82 +354,91 @@ export const SessionTimeTable: React.FC<SessionTimeTablePropType> = ErrorBoundar
   })
 );
 
-const SessionDateItemContainer = styled(Stack)({
+const SessionDateItemContainer = styled(Stack, {
+  shouldForwardProp: (prop) => prop !== "tableStyles",
+})<{ tableStyles?: SessionTimeTableStyles }>(({ tableStyles }) => ({
   alignItems: "center",
   justifyContent: "center",
-  padding: "1rem 3rem",
-});
+  padding: tableStyles?.dateItemContainer?.padding ?? "1rem 3rem",
+}));
 
-const SessionDateTitle = styled(Typography)<{ isSelected: boolean }>(({ theme, isSelected }) => ({
-  fontSize: "2.25em",
-  fontWeight: 600,
-  lineHeight: 1.25,
+const SessionDateTitle = styled(Typography, {
+  shouldForwardProp: (prop) => prop !== "isSelected" && prop !== "tableStyles",
+})<{ isSelected: boolean; tableStyles?: SessionTimeTableStyles }>(({ theme, isSelected, tableStyles }) => ({
+  fontSize: tableStyles?.dateTitle?.fontSize ?? "2.25em",
+  fontWeight: tableStyles?.dateTitle?.fontWeight ?? 600,
+  lineHeight: tableStyles?.dateTitle?.lineHeight ?? 1.25,
   textDecoration: "none",
   whiteSpace: "pre-wrap",
   color: isSelected ? theme.palette.primary.main : theme.palette.primary.light,
 }));
 
-const SessionDateSubTitle = styled(Typography)<{ isSelected: boolean }>(({ theme, isSelected }) => ({
-  fontSize: "1em",
-  fontWeight: 600,
-  lineHeight: 1.25,
+const SessionDateSubTitle = styled(Typography, {
+  shouldForwardProp: (prop) => prop !== "isSelected" && prop !== "tableStyles",
+})<{ isSelected: boolean; tableStyles?: SessionTimeTableStyles }>(({ theme, isSelected, tableStyles }) => ({
+  fontSize: tableStyles?.dateSubTitle?.fontSize ?? "1em",
+  fontWeight: tableStyles?.dateSubTitle?.fontWeight ?? 600,
+  lineHeight: tableStyles?.dateSubTitle?.lineHeight ?? 1.25,
   textDecoration: "none",
   whiteSpace: "pre-wrap",
   color: isSelected ? theme.palette.primary.main : theme.palette.primary.light,
 }));
 
-const SessionTitle = styled(Typography)({
-  fontSize: "1.125em",
-  fontWeight: 600,
-  lineHeight: 1.25,
+const SessionTitle = styled(Typography, {
+  shouldForwardProp: (prop) => prop !== "tableStyles",
+})<{ tableStyles?: SessionTimeTableStyles }>(({ tableStyles }) => ({
+  fontSize: tableStyles?.sessionTitle?.fontSize ?? "1.125em",
+  fontWeight: tableStyles?.sessionTitle?.fontWeight ?? 600,
+  lineHeight: tableStyles?.sessionTitle?.lineHeight ?? 1.25,
   textDecoration: "none",
   whiteSpace: "pre-wrap",
-});
+}));
 
-const SessionTable = styled(Table)({
-  width: "100%",
-  maxWidth: "60rem",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "1rem",
-  flex: 1,
+const SessionTable = styled(Table, {
+  shouldForwardProp: (prop) => prop !== "tableStyles",
+})<{ tableStyles?: SessionTimeTableStyles }>(({ tableStyles }) => {
+  const tdHeight = tableStyles?.layout?.tdHeight ?? TD_HEIGHT;
+  const tdWidth = tableStyles?.layout?.tdWidth ?? TD_WIDTH;
+  const tdWidthMobile = tableStyles?.layout?.tdWidthMobile ?? TD_WIDTH_MOBILE;
 
-  "*": {
-    textAlign: "center",
-  },
+  return {
+    width: "100%",
+    maxWidth: "60rem",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "1rem",
+    flex: 1,
 
-  "tbody > th": {
-    border: "unset",
-  },
+    "*": { textAlign: "center" },
+    "tbody > th": { border: "unset" },
 
-  "tr:first-child td": {
-    borderTop: "unset",
-    transform: "unset",
-    height: `${TD_HEIGHT / 2}rem`,
-  },
-
-  td: {
-    height: `${TD_HEIGHT}rem`,
-  },
-
-  "td:first-child": {
-    borderTop: "unset",
-    transform: `translateY(-${TD_HEIGHT / 2}rem)`,
-    width: "1.5rem",
-  },
-
-  "td:not(:first-child)": {
-    width: `${TD_WIDTH}vw`,
-    maxWidth: `${TD_WIDTH}vw`,
-    borderTop: `1px solid rgba(255, 255, 255, 0.1)`,
-  },
-
-  "@media only screen and (max-width: 810px)": {
-    "td:not(:first-child)": {
-      width: `${TD_WIDTH_MOBILE}vw`,
-      maxWidth: `${TD_WIDTH_MOBILE}vw`,
+    "tr:first-child td": {
+      borderTop: "unset",
+      transform: "unset",
+      height: `${tdHeight / 2}rem`,
     },
-  },
+
+    td: { height: `${tdHeight}rem` },
+
+    "td:first-child": {
+      borderTop: "unset",
+      transform: `translateY(-${tdHeight / 2}rem)`,
+      width: "1.5rem",
+    },
+
+    "td:not(:first-child)": {
+      width: `${tdWidth}vw`,
+      maxWidth: `${tdWidth}vw`,
+      borderTop: `1px solid rgba(255, 255, 255, 0.1)`,
+    },
+
+    "@media only screen and (max-width: 810px)": {
+      "td:not(:first-child)": {
+        width: `${tdWidthMobile}vw`,
+        maxWidth: `${tdWidthMobile}vw`,
+      },
+    },
+  };
 });
 
 const SessionTableBody = styled(TableBody)({
@@ -396,29 +450,30 @@ const SessionTableRow = styled(TableRow)({
   justifyContent: "center",
 });
 
-const SessionTableCell = styled(TableCell)({
-  padding: "0 0.5rem",
+const SessionTableCell = styled(TableCell, {
+  shouldForwardProp: (prop) => prop !== "tableStyles",
+})<{ tableStyles?: SessionTimeTableStyles }>(({ tableStyles }) => ({
+  padding: tableStyles?.tableCell?.padding ?? "0 0.5rem",
   alignItems: "center",
   justifyContent: "center",
   border: "unset",
-});
+}));
 
-const SessionBox = styled(Stack)(({ theme }) => ({
+const SessionBox = styled(Stack, {
+  shouldForwardProp: (prop) => prop !== "tableStyles",
+})<{ tableStyles?: SessionTimeTableStyles }>(({ theme, tableStyles }) => ({
   height: "100%",
-  padding: "0.25rem",
+  padding: tableStyles?.sessionBox?.padding ?? "0.25rem",
   flexDirection: "column",
   justifyContent: "center",
   alignItems: "center",
   border: `1px solid color-mix(in srgb, ${theme.palette.primary.light} 50%, transparent 50%)`,
-  borderRadius: "0.5rem",
-
+  borderRadius: tableStyles?.sessionBox?.borderRadius ?? "0.5rem",
   backgroundColor: `${theme.palette.primary.light}1A`,
   transition: "all 0.25s ease",
-  gap: "0.5rem",
+  gap: tableStyles?.sessionBox?.gap ?? "0.5rem",
 
-  "&.clickable": {
-    cursor: "pointer",
-  },
+  "&.clickable": { cursor: "pointer" },
 
   h6: {
     margin: 0,
@@ -466,10 +521,12 @@ const SessionBox = styled(Stack)(({ theme }) => ({
   },
 }));
 
-const SessionTableContainer = styled(Stack)({
+const SessionTableContainer = styled(Stack, {
+  shouldForwardProp: (prop) => prop !== "tableStyles",
+})<{ tableStyles?: SessionTimeTableStyles }>(({ tableStyles }) => ({
   flexDirection: "column",
   alignItems: "center",
   justifyContent: "center",
-  gap: "1rem",
+  gap: tableStyles?.tableContainer?.gap ?? "1rem",
   flex: 1,
-});
+}));
