@@ -3,6 +3,9 @@ import * as Common from "@frontend/common";
 import * as Shop from "@frontend/shop";
 import * as mui from "@mui/material";
 import type { MDXComponents } from "mdx/types.js";
+import * as React from "react";
+
+import PyCon2025Logo from "../assets/pyconkr2025_logo.png";
 
 const MUIMDXComponents: MDXComponents = {
   Mui__material__Accordion: mui.Accordion,
@@ -130,16 +133,30 @@ const MUIMDXComponents: MDXComponents = {
   Mui__material__Zoom: mui.Zoom,
 };
 
+const PyConKR2025SecondaryStyledDetails: React.FC<React.ComponentProps<typeof Common.Components.MDX.SecondaryStyledDetails>> = (props) => {
+  const theme = mui.useTheme();
+  return React.createElement(Common.Components.MDX.SecondaryStyledDetails, { ...props, paletteColor: theme.palette.highlight });
+};
+
+const PyConKR2025SessionListFallbackImage = React.createElement("img", {
+  src: PyCon2025Logo,
+  alt: "PyCon 2025 Logo",
+  style: { width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" },
+});
+
+const PyConKR2025SessionList: React.FC<React.ComponentProps<typeof Common.Components.MDX.SessionList>> = (props) =>
+  React.createElement(Common.Components.MDX.SessionList, { ...props, fallbackImage: PyConKR2025SessionListFallbackImage });
+
 const PyConKRCommonMDXComponents: MDXComponents = {
   Common__Components__Lottie: Common.Components.LottiePlayer,
   Common__Components__NetworkLottie: Common.Components.NetworkLottiePlayer,
   Common__Components__MDX__Confetti: Common.Components.MDX.Confetti,
   Common__Components__MDX__PrimaryStyledDetails: Common.Components.MDX.PrimaryStyledDetails,
-  Common__Components__MDX__SecondaryStyledDetails: Common.Components.MDX.SecondaryStyledDetails,
+  Common__Components__MDX__SecondaryStyledDetails: PyConKR2025SecondaryStyledDetails,
   Common__Components__MDX__Map: Common.Components.MDX.Map,
   Common__Components__MDX__FAQAccordion: Common.Components.MDX.FAQAccordion,
   Common__Components__MDX__FullWidthStyledButton: Common.Components.MDX.StyledFullWidthButton,
-  Common__Components__Session__List: Common.Components.MDX.SessionList,
+  Common__Components__Session__List: PyConKR2025SessionList,
   Common__Components__Session__TimeTable: Common.Components.MDX.SessionTimeTable,
 };
 

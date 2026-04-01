@@ -107,7 +107,8 @@ const SessionColumn: React.FC<{
   rowSpan: number;
   colSpan?: number;
   session: BackendAPISchemas.SessionSchema;
-}> = ({ rowSpan, colSpan, session }) => {
+  getSessionUrl?: (session: BackendAPISchemas.SessionSchema) => string;
+}> = ({ rowSpan, colSpan, session, getSessionUrl }) => {
   const clickable = R.isArray(session.speakers) && !R.isEmpty(session.speakers);
   // Firefox는 rowSpan된 td의 height를 계산할 때 rowSpan을 고려하지 않습니다. 따라서 직접 계산하여 height를 설정합니다.
   const sessionBoxHeight = `${TD_HEIGHT * rowSpan}rem`;
@@ -115,10 +116,11 @@ const SessionColumn: React.FC<{
     .replace(/ /g, "-")
     .replace(/([.])/g, "_")
     .replace(/(?![.0-9A-Za-zㄱ-ㅣ가-힣-])./g, "");
+  const sessionUrl = getSessionUrl ? getSessionUrl(session) : `/presentations/${session.id}#${urlSafeTitle}`;
   return (
     <SessionTableCell rowSpan={rowSpan} colSpan={colSpan}>
       {clickable ? (
-        <Link to={`/presentations/${session.id}#${urlSafeTitle}`} style={{ textDecoration: 'none', display: 'block' }}>
+        <Link to={sessionUrl} style={{ textDecoration: 'none', display: 'block' }}>
           <SessionBox
             className="clickable"
             sx={{ height: sessionBoxHeight, gap: 0.75, padding: "0.5rem" }}
@@ -155,11 +157,12 @@ const BreakTime: React.FC<{ language: "ko" | "en"; duration: number }> = ({ lang
 type SessionTimeTablePropType = {
   event?: string;
   types?: string | string[];
+  getSessionUrl?: (session: BackendAPISchemas.SessionSchema) => string;
 };
 
 export const SessionTimeTable: React.FC<SessionTimeTablePropType> = ErrorBoundary.with(
   { fallback: ErrorFallback },
-  Suspense.with({ fallback: <CenteredPage children={<CircularProgress />} /> }, ({ event, types }) => {
+  Suspense.with({ fallback: <CenteredPage children={<CircularProgress />} /> }, ({ event, types, getSessionUrl }) => {
     const [confDate, setConfDate] = React.useState("");
 
     const { language } = Hooks.Common.useCommonContext();
@@ -274,7 +277,7 @@ export const SessionTimeTable: React.FC<SessionTimeTablePropType> = ErrorBoundar
                   return (
                     <SessionTableRow>
                       <SessionTableCell align="center" children={time} />
-                      <SessionColumn rowSpan={firstSessionInfo.rowSpan} colSpan={roomCount} session={firstSessionInfo.session} />
+                      <SessionColumn rowSpan={firstSessionInfo.rowSpan} colSpan={roomCount} session={firstSessionInfo.session} getSessionUrl={getSessionUrl} />
                     </SessionTableRow>
                   );
                 }
@@ -293,7 +296,7 @@ export const SessionTimeTable: React.FC<SessionTimeTablePropType> = ErrorBoundar
                       }
                       // 세션이 여러 줄에 걸쳐있는 경우, n-1 줄만큼 해당 room에 column을 생성하지 않도록 합니다.
                       if (roomDatum.rowSpan > 1) rooms[room] = roomDatum.rowSpan - 1;
-                      return <SessionColumn key={room} rowSpan={roomDatum.rowSpan} session={roomDatum.session} />;
+                      return <SessionColumn key={room} rowSpan={roomDatum.rowSpan} session={roomDatum.session} getSessionUrl={getSessionUrl} />;
                     })}
                   </SessionTableRow>
                 );

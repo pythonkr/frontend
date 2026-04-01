@@ -76,7 +76,7 @@ export const PrimaryStyledDetails: React.FC<StyledDetailsProps> = (props) => {
   return <BaseStyledDetails {...props} paletteColor={palette.primary} transparencyOnExpand={20} />;
 };
 
-export const HighlightedStyledDetails: React.FC<StyledDetailsProps> = (props) => {
+export const HighlightedStyledDetails: React.FC<StyledDetailsProps & { paletteColor?: PaletteColor }> = ({ paletteColor, ...props }) => {
   const { palette } = useTheme();
-  return <BaseStyledDetails {...props} paletteColor={palette.highlight} transparencyOnExpand={10} />;
+  return <BaseStyledDetails {...props} paletteColor={paletteColor ?? palette.warning} transparencyOnExpand={10} />;
 };
