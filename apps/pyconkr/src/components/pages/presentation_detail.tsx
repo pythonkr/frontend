@@ -6,7 +6,6 @@ import * as React from "react";
 import { Navigate, useParams } from "react-router-dom";
 import * as R from "remeda";
 
-import PyCon2025Logo from "../../assets/pyconkr2025_logo.png";
 import { useAppContext } from "../../contexts/app_context";
 import { PageLayout } from "../layout/PageLayout";
 
@@ -92,11 +91,16 @@ const ProfileImageStyle: React.CSSProperties = {
 
 const ProfileImage = styled(Common.Components.FallbackImage)(ProfileImageStyle);
 
-const ProfileImageErrorFallback: React.FC = () => (
-  <Stack alignItems="center" justifyContent="center" sx={{ ...ProfileImageStyle }}>
-    <img src={PyCon2025Logo} alt="PyCon 2025 Logo" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
-  </Stack>
-);
+const ProfileImageErrorFallback: React.FC = () => {
+  const { eventConfig } = Common.Hooks.Common.useCommonContext();
+  const logo = eventConfig?.assets.logo;
+
+  return (
+    <Stack alignItems="center" justifyContent="center" sx={{ ...ProfileImageStyle }}>
+      {logo && <img src={logo} alt="Event Logo" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />}
+    </Stack>
+  );
+};
 
 const PresentationSpeakerItem: React.FC<{ speaker: SimplifiedSpeakerSchema }> = ({ speaker }) => {
   return (

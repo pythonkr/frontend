@@ -1,0 +1,23 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "..",
+    "paths": {
+      "@apps/pyconkr/*": ["apps/pyconkr/src/*"],
+      "@apps/pyconkr-2026/*": ["apps/pyconkr-2026/src/*"],
+      "@frontend/common": ["packages/common/src/index.ts"],
+      "@frontend/common/*": ["packages/common/*"],
+      "@frontend/shop": ["packages/shop/src/index.ts"],
+      "@frontend/shop/*": ["packages/shop/*"],
+      "@frontend/theme": ["packages/theme/src/index.ts"],
+      "@frontend/theme/*": ["packages/theme/*"]
+    }
+  },
+  "include": [
+    "./**/*.ts",
+    "./**/*.tsx",
+    "../.storybook/**/*.ts",
+    "../.storybook/**/*.tsx",
+    "../types/**/*.d.ts"
+  ]
+}

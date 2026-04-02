@@ -21,6 +21,8 @@ import {
 } from "./mdx_components/faq_accordion";
 import type { MapPropType as MapComponentPropType } from "./mdx_components/map";
 import { Map as MapComponent } from "./mdx_components/map";
+import { MobileAccordion as MobileAccordionComponent } from "./mdx_components/mobile_accordion";
+import { MobileCover as MobileCoverComponent } from "./mdx_components/mobile_cover";
 import { OneDetailsOpener as OneDetailsOpenerComponent } from "./mdx_components/one_details_opener";
 import { SessionList as SessionListComponent } from "./mdx_components/session_list";
 import { SessionTimeTable as SessionTimeTableComponent } from "./mdx_components/session_timetable";
@@ -28,7 +30,9 @@ import {
   PrimaryStyledDetails as PrimaryStyledDetailsComponent,
   HighlightedStyledDetails as SecondaryStyledDetailsComponent,
 } from "./mdx_components/styled_details";
+import { StyledDivider as StyledDividerComponent } from "./mdx_components/styled_divider";
 import { StyledFullWidthButton as StyledFullWidthButtonComponent } from "./mdx_components/styled_full_width_button";
+import { SubContentContainer as SubContentContainerComponent } from "./mdx_components/sub_content_container";
 import { MDXEditor as MDXEditorComponent } from "./mdx_editor";
 import { PythonKorea as PythonKoreaComponent } from "./pythonkorea";
 
@@ -57,6 +61,10 @@ namespace Components {
     export const Map = MapComponent;
     export const FAQAccordion = FAQAccordionComponent;
     export const OneDetailsOpener = OneDetailsOpenerComponent;
+    export const StyledDivider = StyledDividerComponent;
+    export const SubContentContainer = SubContentContainerComponent;
+    export const MobileAccordion = MobileAccordionComponent;
+    export const MobileCover = MobileCoverComponent;
     export const SessionList = SessionListComponent;
     export const SessionTimeTable = SessionTimeTableComponent;
     export type MapPropType = MapComponentPropType;

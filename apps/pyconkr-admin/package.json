@@ -2,7 +2,8 @@
     "name": "@apps/pyconkr-admin",
     "dependencies": {
         "@frontend/common": "workspace:*",
-        "@frontend/shop": "workspace:*"
+        "@frontend/shop": "workspace:*",
+        "@frontend/theme": "workspace:*"
     },
     "devDependencies": {
         "vite": "^6.3.5",

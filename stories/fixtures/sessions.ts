@@ -1,0 +1,111 @@
+export const mockSessions = [
+  {
+    id: "1",
+    title: "파이썬으로 배우는 클린 아키텍처",
+    summary: "파이썬 프로젝트에 클린 아키텍처를 적용하는 실전 사례를 공유합니다.",
+    description: "",
+    slideshow_url: null,
+    public_slideshow_file: null,
+    image: null,
+    categories: [
+      { id: "cat-web", name: "Web" },
+      { id: "cat-arch", name: "Architecture" },
+    ],
+    speakers: [
+      { id: "sp1", nickname: "김파이썬", biography: "", image: null },
+    ],
+    room_schedules: [
+      {
+        id: "rs1",
+        room_name: "Track A",
+        start_at: "2025-08-15T10:00:00+09:00",
+        end_at: "2025-08-15T10:50:00+09:00",
+      },
+    ],
+  },
+  {
+    id: "2",
+    title: "FastAPI와 Django의 차이점\n실무 관점에서 비교하기",
+    summary: null,
+    description: "",
+    slideshow_url: null,
+    public_slideshow_file: null,
+    image: null,
+    categories: [{ id: "cat-web", name: "Web" }],
+    speakers: [
+      { id: "sp2", nickname: "이장고", biography: "", image: null },
+      { id: "sp3", nickname: "박패스트", biography: "", image: null },
+    ],
+    room_schedules: [
+      {
+        id: "rs2",
+        room_name: "Track B",
+        start_at: "2025-08-15T10:00:00+09:00",
+        end_at: "2025-08-15T10:30:00+09:00",
+      },
+    ],
+  },
+  {
+    id: "3",
+    title: "타입 힌트로 더 안전한 파이썬 코드 작성하기",
+    summary: "mypy와 pyright를 활용해 정적 타입 검사를 도입하는 방법을 알아봅니다.",
+    description: "",
+    slideshow_url: "https://slides.example.com/3",
+    public_slideshow_file: null,
+    image: null,
+    categories: [{ id: "cat-quality", name: "Code Quality" }],
+    speakers: [{ id: "sp4", nickname: "최타입", biography: "", image: null }],
+    room_schedules: [
+      {
+        id: "rs3",
+        room_name: "Track B",
+        start_at: "2025-08-15T10:30:00+09:00",
+        end_at: "2025-08-15T11:10:00+09:00",
+      },
+    ],
+  },
+  {
+    id: "4",
+    title: "기조 연설: 파이썬 커뮤니티의 과거, 현재, 미래",
+    summary: "파이콘 한국 2025 기조 연설입니다.",
+    description: "",
+    slideshow_url: null,
+    public_slideshow_file: null,
+    image: null,
+    categories: [{ id: "cat-keynote", name: "Keynote" }],
+    speakers: [{ id: "sp5", nickname: "파이콘 오거나이저", biography: "", image: null }],
+    room_schedules: [
+      {
+        id: "rs4",
+        room_name: "Track A",
+        start_at: "2025-08-15T09:00:00+09:00",
+        end_at: "2025-08-15T09:50:00+09:00",
+      },
+      {
+        id: "rs5",
+        room_name: "Track B",
+        start_at: "2025-08-15T09:00:00+09:00",
+        end_at: "2025-08-15T09:50:00+09:00",
+      },
+    ],
+  },
+  {
+    id: "5",
+    title: "데이터 파이프라인 구축 with Airflow",
+    summary: "Apache Airflow를 활용한 데이터 파이프라인 구축 경험을 공유합니다.",
+    description: "",
+    slideshow_url: null,
+    public_slideshow_file: null,
+    image: null,
+    categories: [{ id: "cat-data", name: "Data" }],
+    speakers: [{ id: "sp6", nickname: "정에어플로우", biography: "", image: null }],
+    room_schedules: [
+      {
+        id: "rs6",
+        room_name: "Track A",
+        start_at: "2025-08-15T11:00:00+09:00",
+        end_at: "2025-08-15T11:50:00+09:00",
+      },
+    ],
+  },
+];

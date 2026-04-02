@@ -4,7 +4,6 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 import * as R from "remeda";
 
-import PyCon2025Logo from "../../assets/pyconkr2025_logo.png";
 import Hooks from "../../hooks";
 import BackendAPISchemas from "../../schemas/backendAPI";
 import { ErrorFallback } from "../error_handler";
@@ -194,11 +193,16 @@ const SessionImageErrorFallbackBox = styled(Box)(({ theme }) => ({
   justifyContent: "center",
 }));
 
-const SessionImageErrorFallback: React.FC = () => (
-  <SessionImageErrorFallbackBox>
-    <img src={PyCon2025Logo} alt="PyCon 2025 Logo" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
-  </SessionImageErrorFallbackBox>
-);
+const SessionImageErrorFallback: React.FC = () => {
+  const { eventConfig } = Hooks.Common.useCommonContext();
+  const logo = eventConfig?.assets.logo;
+
+  return (
+    <SessionImageErrorFallbackBox>
+      {logo && <img src={logo} alt="Event Logo" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />}
+    </SessionImageErrorFallbackBox>
+  );
+};
 
 const SessionTitle = styled(Typography)({
   fontSize: "1.5em",

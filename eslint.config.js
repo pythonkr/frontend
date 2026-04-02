@@ -21,6 +21,15 @@ export default tseslint.config(js.configs.recommended, tseslint.configs.recommen
       project: "./tsconfig.json",
     },
   },
+}, {
+  files: ["stories/**/*.{ts,tsx}", ".storybook/**/*.{ts,tsx}"],
+  languageOptions: {
+    parserOptions: {
+      project: "./stories/tsconfig.json",
+    },
+  },
+},
+{
   plugins: {
     "react-hooks": reactHooks,
     "react-refresh": reactRefresh,

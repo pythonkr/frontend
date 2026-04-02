@@ -1,0 +1,5 @@
+{
+  "name": "@frontend/theme",
+  "type": "module",
+  "main": "./src/index.ts"
+}

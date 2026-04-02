@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(nvm ls:*)",
+      "Bash(fnm list:*)",
+      "Bash(volta list:*)",
+      "Bash(pnpm tsc:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx eslint:*)",
+      "Bash(grep -r title: /Users/eunji/Documents/Projects/frontend/stories/*.tsx /Users/eunji/Documents/Projects/frontend/stories/*.ts)",
+      "Bash(node -e \"const sb = require\\(''''./node_modules/.pnpm/storybook@10.3.3_@babel+core@7.27.1_jiti@2.4.2/node_modules/storybook/package.json''''\\); console.log\\(sb.version\\)\")",
+      "Bash(pnpm list:*)",
+      "Bash(grep -r autodocs node_modules/.pnpm/storybook@10.3.3_*/node_modules/storybook/dist/*.js)",
+      "WebSearch",
+      "WebFetch(domain:storybook.js.org)"
+    ]
+  }
+}

@@ -1,7 +1,9 @@
 import { Global } from "@emotion/react";
 import * as Common from "@frontend/common";
 import * as Shop from "@frontend/shop";
+import { theme2025 } from "@frontend/theme";
 import { CircularProgress, CssBaseline, ThemeProvider } from "@mui/material";
+import { createTheme } from "@mui/material/styles";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { matchQuery, MutationCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -11,11 +13,29 @@ import * as ReactDom from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
 import { App } from "./App.tsx";
+import PyCon2025HostLogoBig from "./assets/pyconkr2025_hostlogo_big.png";
+import PyCon2025HostLogoSmall from "./assets/pyconkr2025_hostlogo_small.png";
+import PyCon2025Logo from "./assets/pyconkr2025_logo.png";
+import PyCon2025MobileCoverImage from "./assets/pyconkr2025_main_cover_image.png";
+import PyCon2025MobileCoverTitle from "./assets/pyconkr2025_main_cover_title.png";
 import { IS_DEBUG_ENV } from "./consts";
 import { LOCAL_STORAGE_LANGUAGE_KEY } from "./consts/local_stroage.ts";
 import { PyConKRMDXComponents } from "./consts/mdx_components.ts";
 import { AppContext, AppContextType } from "./contexts/app_context.tsx";
-import { globalStyles, muiTheme } from "./styles/globalStyles.ts";
+
+const muiTheme = createTheme(theme2025.muiTheme);
+
+const eventConfig: Common.Contexts.EventConfig = {
+  ...theme2025.event,
+  assets: {
+    ...theme2025.event.assets,
+    logo: PyCon2025Logo,
+    mobileCoverImage: PyCon2025MobileCoverImage,
+    mobileCoverTitle: PyCon2025MobileCoverTitle,
+    hostLogoBig: PyCon2025HostLogoBig,
+    hostLogoSmall: PyCon2025HostLogoSmall,
+  },
+};
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,6 +69,7 @@ const CommonOptions: Common.Contexts.ContextOptions = {
   backendApiDomain: import.meta.env.VITE_PYCONKR_BACKEND_API_DOMAIN,
   backendApiTimeout: 10000,
   mdxComponents: PyConKRMDXComponents,
+  eventConfig,
 };
 
 const ShopOptions: Shop.Contexts.ContextOptions = {
@@ -73,7 +94,7 @@ const MainApp: React.FC = () => {
 
     currentSiteMapDepth: [],
 
-    title: "PyCon Korea 2025",
+    title: eventConfig.eventName,
   });
 
   return (
@@ -89,7 +110,7 @@ const MainApp: React.FC = () => {
                     <Suspense fallback={SuspenseFallback}>
                       <ThemeProvider theme={muiTheme}>
                         <CssBaseline />
-                        <Global styles={globalStyles} />
+                        <Global styles={theme2025.globalStyles} />
                         <App />
                       </ThemeProvider>
                     </Suspense>

@@ -27,8 +27,10 @@
     "baseUrl": ".",
     "paths": {
       "@apps/pyconkr/*": ["apps/pyconkr/src/*"],
+      "@apps/pyconkr-2026/*": ["apps/pyconkr-2026/src/*"],
       "@frontend/common/*": ["packages/common/*"],
       "@frontend/shop/*": ["packages/shop/*"],
+      "@frontend/theme/*": ["packages/theme/*"],
     }
   },
   "include": ["apps", "packages", "types", "eslint.config.js"]

@@ -9,8 +9,12 @@ import { useParams } from "react-router-dom";
 // I don't know why, I don't want to know why, I shouldn't have to wonder why,
 // but for whatever reason this stupid namespace won't import on Common.Schemas.BackendAdminAPI.PageSectionSchema.
 // TODO: FIXME: Remove this hack when the issue is resolved. This is dumb.
+import { theme2025 } from "@frontend/theme";
+import { createTheme } from "@mui/material/styles";
+
 import BackendAdminAPISchemas from "../../../../../../packages/common/src/schemas/backendAdminAPI";
-import { muiTheme } from "../../../styles/globalStyles";
+
+const muiTheme = createTheme(theme2025.muiTheme);
 import { addErrorSnackbar } from "../../../utils/snackbar";
 import { AdminEditor } from "../../layouts/admin_editor";
 
