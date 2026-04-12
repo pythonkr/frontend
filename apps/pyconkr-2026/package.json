@@ -1,0 +1,12 @@
+{
+    "name": "@apps/pyconkr-2026",
+    "dependencies": {
+        "@frontend/common": "workspace:*"
+    },
+    "devDependencies": {
+        "vite": "^6.3.5",
+        "vite-plugin-mdx": "^3.6.1",
+        "vite-plugin-mkcert": "^1.17.8",
+        "vite-plugin-svgr": "^4.3.0"
+    }
+}

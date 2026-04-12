@@ -1,6 +1,6 @@
 import styled from "@emotion/styled";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { AccordionDetails, AccordionSummary, Accordion as MuiAccordion, Stack, Typography } from "@mui/material";
+import { AccordionDetails, AccordionSummary, Accordion as MuiAccordion, Stack, Typography, useTheme } from "@mui/material";
 import * as React from "react";
 import Marquee from "react-fast-marquee";
 
@@ -31,6 +31,7 @@ type MobileAccordionProps = {
 
 export const MobileAccordion: React.FC<MobileAccordionProps> = ({ marqueeText, marqueeLogoSrc, hostLogoBigSrc, venueKo, venueEnLines }) => {
   const { language } = Hooks.Common.useCommonContext();
+  const theme = useTheme();
   const [expanded, setExpanded] = React.useState<boolean>(false);
 
   return (
@@ -41,7 +42,7 @@ export const MobileAccordion: React.FC<MobileAccordionProps> = ({ marqueeText, m
             <ExpandMoreIcon
               fontSize={"large"}
               sx={{
-                color: "#8E9B5D",
+                color: theme.palette.primary.main,
                 borderWidth: 1,
                 position: "relative",
                 top: expanded ? -16 : 0,
@@ -59,14 +60,14 @@ export const MobileAccordion: React.FC<MobileAccordionProps> = ({ marqueeText, m
             </Stack>
             {language === "ko" ? (
               <Stack direction="column" sx={{ transform: "translateY(-280%)" }}>
-                <Typography color="#938A85" textAlign="center" fontSize="11px" fontWeight={400}>
+                <Typography color={theme.palette.text.secondary} textAlign="center" fontSize="11px" fontWeight={400}>
                   {venueKo}
                 </Typography>
               </Stack>
             ) : (
               <Stack direction="column" sx={{ transform: "translateY(-180%)" }}>
                 {venueEnLines.map((line, i) => (
-                  <Typography key={i} color="#938A85" textAlign="center" fontWeight={400} fontSize="10px">
+                  <Typography key={i} color={theme.palette.text.secondary} textAlign="center" fontWeight={400} fontSize="10px">
                     {line}
                   </Typography>
                 ))}
@@ -149,7 +150,7 @@ const StyledAccordion = styled(MuiAccordion)`
 const StyledTypography = styled(Typography)`
   font-weight: 500;
   font-size: 20px;
-  color: #938a85;
+  color: ${({ theme }) => theme.palette.text.secondary};
   text-align: center;
   padding: 0 20px;
 `;

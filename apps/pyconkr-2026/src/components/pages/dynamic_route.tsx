@@ -62,7 +62,7 @@ const PermissionDenied: React.FC = () => <>403 Permission Denied</>;
 const PageNotFound: React.FC = () => <>404 Not Found</>;
 const CenteredLoadingPage: React.FC = () => (
   <Components.CenteredPage>
-    <CircularProgress />
+    <CircularProgress sx={{ color: "primary.main" }} />
   </Components.CenteredPage>
 );
 
