@@ -1,0 +1,254 @@
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    :root {
+      --bg1: #000000;
+      --bg2: #000000;
+      --shadow: rgba(0, 0, 0, 0.12);
+      --white: rgba(255, 255, 255, 0.9);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: #000000;
+    }
+
+    .noise {
+      position: fixed;
+      inset: 0;
+      opacity: 0.05;
+      pointer-events: none;
+      background-image:
+        radial-gradient(circle at 1px 1px, rgba(0,0,0,.65) 1px, transparent 0);
+      background-size: 6px 6px;
+      mix-blend-mode: multiply;
+    }
+
+    .page {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: grid;
+      place-items: center;
+    }
+
+    .goo-layer {
+      position: absolute;
+      inset: 0;
+      filter: url(#goo);
+    }
+
+    .bar {
+      --w: 340px;
+      --h: 90px;
+      position: absolute;
+      width: var(--w);
+      height: var(--h);
+      border-radius: 999px;
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--c1) 80%, white 20%), var(--c2));
+      box-shadow:
+        inset 0 2px 1px rgba(255,255,255,.55),
+        inset 0 -8px 14px rgba(0,0,0,.08),
+        0 10px 20px rgba(0,0,0,.08);
+      contain: layout style;
+    }
+
+    .bar::before {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+      border-radius: inherit;
+      inset: 6px 24px auto 24px;
+      height: 34%;
+      border-radius: 999px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.22));
+      opacity: .95;
+    }
+
+    .bar {
+      cursor: grab;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .bar.dragging {
+      cursor: grabbing;
+      z-index: 100;
+    }
+
+    .goo-layer { overflow: hidden; }
+    .bar { will-change: transform; }
+
+    .helper {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+      padding: 1rem 1.25rem;
+      border-radius: 14px;
+      background: rgba(255,255,255,.55);
+      border: 1px solid rgba(255,255,255,.7);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 8px 18px rgba(0,0,0,.06);
+      font-size: 13px;
+      color: rgba(30,41,59,.75);
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" aria-hidden="true" focusable="false">
+    <filter id="goo">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
+      <feColorMatrix
+        in="blur"
+        mode="matrix"
+        values="
+          1 0 0 0 0
+          0 1 0 0 0
+          0 0 1 0 0
+          0 0 0 24 -10"
+        result="goo"
+      />
+      <feBlend in="SourceGraphic" in2="goo" />
+    </filter>
+  </svg>
+
+  <div class="page">
+    <div class="noise"></div>
+
+    <!-- <div class="helper">
+      <strong>타이틀 텍스트</strong>
+      <p>내용 텍스트</p>
+    </div> -->
+
+    <div class="goo-layer" id="goo-layer"></div>
+
+  <script>
+    const BAR_COUNT = 24;
+    const MARGIN = 320;
+    const layer = document.getElementById('goo-layer');
+    const bars = [];
+
+    for (let i = 0; i < BAR_COUNT; i++) {
+      const el = document.createElement('div');
+      el.className = 'bar';
+      layer.appendChild(el);
+      bars.push(el);
+    }
+
+    function randomizeAppearance(bar) {
+      const hue = Math.random() * 360;
+      const sat1 = 85 + Math.random() * 15;
+      const lit1 = 60 + Math.random() * 15;
+      const hueShift = 15 + Math.random() * 25;
+      const sat2 = Math.min(100, sat1 + 5 + Math.random() * 10);
+      const lit2 = lit1 - 8 - Math.random() * 10;
+
+      bar.style.setProperty('--c1', `hsl(${hue}, ${sat1}%, ${lit1}%)`);
+      bar.style.setProperty('--c2', `hsl(${hue + hueShift}, ${sat2}%, ${lit2}%)`);
+      bar.style.setProperty('--w', (230 + Math.random() * 190) + 'px');
+      bar.style.setProperty('--h', (76 + Math.random() * 16) + 'px');
+      bar.style.scale = 0.55 + Math.random() * 1.0;
+      bar.style.opacity = 0.4 + Math.random() * 0.5;
+    }
+
+    // Each bar owns a fixed lane index for even Y distribution
+    function laneY(laneIndex) {
+      const vh = window.innerHeight;
+      const totalRange = vh + window.innerWidth; // account for diagonal climb
+      const laneH = totalRange / BAR_COUNT;
+      return laneH * laneIndex + Math.random() * laneH;
+    }
+
+    function resetFromLeft(bar, lane) {
+      randomizeAppearance(bar);
+      bar._speed = 0.8 + Math.random() * 1.5;
+      bar._x = -MARGIN - Math.random() * MARGIN;
+      bar._y = laneY(lane);
+      bar._dragging = false;
+    }
+
+    // init: spread bars evenly across screen
+    bars.forEach((bar, i) => {
+      const vw = window.innerWidth;
+      bar._lane = i;
+      bar._dragging = false;
+      randomizeAppearance(bar);
+      bar._speed = 0.8 + Math.random() * 1.5;
+      // spread X evenly with jitter
+      const sliceW = (vw + MARGIN * 2) / BAR_COUNT;
+      bar._x = -MARGIN + sliceW * i + Math.random() * sliceW;
+      bar._y = laneY(i);
+    });
+
+    // Animation loop — single transform per bar for GPU compositing
+    let prev = 0;
+    function tick(now) {
+      // cap delta to avoid jumps on tab switch
+      const dt = prev ? Math.min(now - prev, 50) : 16;
+      prev = now;
+      const vw = window.innerWidth;
+
+      for (let i = 0; i < bars.length; i++) {
+        const bar = bars[i];
+        if (bar._dragging) continue;
+
+        const step = bar._speed * dt * 0.06;
+        bar._x += step;
+        bar._y -= step;
+
+        if (bar._x > vw + MARGIN || bar._y < -MARGIN) {
+          resetFromLeft(bar, bar._lane);
+        }
+
+        bar.style.transform = `translate(${bar._x}px, ${bar._y}px) rotate(-45deg)`;
+      }
+
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+
+    // Drag logic
+    let dragged = null;
+    let dragOffsetX = 0, dragOffsetY = 0;
+
+    document.addEventListener('pointerdown', e => {
+      const bar = e.target.closest('.bar');
+      if (!bar) return;
+      e.preventDefault();
+      dragged = bar;
+      dragged.classList.add('dragging');
+      dragged.setPointerCapture(e.pointerId);
+      bar._dragging = true;
+
+      const rect = bar.getBoundingClientRect();
+      dragOffsetX = e.clientX - rect.left - rect.width / 2;
+      dragOffsetY = e.clientY - rect.top - rect.height / 2;
+    });
+
+    document.addEventListener('pointermove', e => {
+      if (!dragged) return;
+      const parent = dragged.offsetParent.getBoundingClientRect();
+      dragged._x = e.clientX - parent.left - dragOffsetX - dragged.offsetWidth / 2;
+      dragged._y = e.clientY - parent.top - dragOffsetY - dragged.offsetHeight / 2;
+      dragged.style.transform = `translate(${dragged._x}px, ${dragged._y}px) rotate(-45deg)`;
+    });
+
+    document.addEventListener('pointerup', e => {
+      if (!dragged) return;
+      dragged.classList.remove('dragging');
+      dragged._dragging = false;
+      dragged = null;
+    });
+  </script>
+</body>
+</html>

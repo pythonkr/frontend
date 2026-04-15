@@ -8,8 +8,8 @@ import * as React from "react";
 import PyCon2026HostLogoBig from "../../../../packages/common/src/assets/pyconkr2025_hostlogo_big.png";
 import PyCon2026HostLogoSmall from "../../../../packages/common/src/assets/pyconkr2025_hostlogo_small.png";
 import Pycon2026Logo from "../../../../packages/common/src/assets/pyconkr2025_logo.png";
-import PyCon2026MobileLogoImage from "../../../../packages/common/src/assets/pyconkr2025_main_cover_image.png";
-import PyCon2026MobileLogoTitle from "../../../../packages/common/src/assets/pyconkr2025_main_cover_title.png";
+import { Cover2026 } from "../components/cover_2026";
+import { useAppContext } from "../contexts/app_context";
 
 // MobileCover는 배경(coverImageSrc)과 타이틀 오버레이(coverTitleSrc)를 분리해서 받음.
 const MUIMDXComponents: MDXComponents = {
@@ -176,11 +176,13 @@ const PyConKR2026MobileAccordion: React.FC<object> = () =>
     venueEnLines: ["Dongguk University", "Pildong-ro 1-gil, Jung-gu, Seoul, Republic of Korea"],
   });
 
-const PyConKR2026MobileCover: React.FC<object> = () =>
-  React.createElement(Components.MDX.MobileCover, {
-    coverImageSrc: PyCon2026MobileLogoImage,
-    coverTitleSrc: PyCon2026MobileLogoTitle,
-  });
+const PyConKR2026MobileCover: React.FC<object> = () => {
+  const { setAppContext } = useAppContext();
+  React.useEffect(() => {
+    setAppContext((ps) => ({ ...ps, shouldShowTitleBanner: false }));
+  }, [setAppContext]);
+  return React.createElement(Cover2026, null);
+};
 
 const PyConKRCommonMDXComponents: MDXComponents = {
   Common__Components__Lottie: Components.LottiePlayer,
