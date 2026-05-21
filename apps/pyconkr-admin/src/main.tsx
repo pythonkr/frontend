@@ -1,8 +1,3 @@
-import { CenteredPage, CommonContextProvider } from "@frontend/common/components";
-import type { ContextOptions } from "@frontend/common/contexts";
-import { registerChunkLoadErrorReloadHandler } from "@frontend/common/utils";
-import { ShopContextProvider } from "@frontend/shop/components/common";
-import { ContextOptions as ShopContextOptions } from "@frontend/shop/contexts";
 import { CircularProgress } from "@mui/material";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { matchQuery, MutationCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -11,6 +6,12 @@ import { SnackbarProvider } from "notistack";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+
+import { CenteredPage, CommonContextProvider } from "@frontend/common/components";
+import type { ContextOptions } from "@frontend/common/contexts";
+import { registerChunkLoadErrorReloadHandler } from "@frontend/common/utils";
+import { ShopContextProvider } from "@frontend/shop/components/common";
+import { ContextOptions as ShopContextOptions } from "@frontend/shop/contexts";
 
 import { Layout } from "./components/layouts/global";
 import { LandingPage } from "./components/pages/home";

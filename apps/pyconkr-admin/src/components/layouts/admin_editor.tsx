@@ -1,19 +1,3 @@
-import { retrieve } from "@frontend/common/apis/admin_api";
-import { LottieDebugPanel, MDXRenderer, MarkdownEditor } from "@frontend/common/components";
-import {
-  useBackendAdminClient,
-  useChoicesQuery,
-  useCreateMutation,
-  useRemoveMutation,
-  useSchemaQuery,
-  useUpdateMutation,
-} from "@frontend/common/hooks/useAdminAPI";
-import { useCommonContext } from "@frontend/common/hooks/useCommonContext";
-import {
-  filterPropertiesByLanguageInJsonSchema,
-  filterReadOnlyPropertiesInJsonSchema,
-  filterWritablePropertiesInJsonSchema,
-} from "@frontend/common/utils";
 import { Add, Close, Delete, Edit } from "@mui/icons-material";
 import {
   Box,
@@ -64,6 +48,22 @@ import { addProp, isArray, isNonNullish, isObjectType, isString } from "remeda";
 import { BackendAdminSignInGuard } from "@apps/pyconkr-admin/components/elements/admin_signin_guard";
 import { ErrorFallback } from "@apps/pyconkr-admin/components/elements/error_fallback";
 import { addErrorSnackbar, addSnackbar } from "@apps/pyconkr-admin/utils/snackbar";
+import { retrieve } from "@frontend/common/apis/admin_api";
+import { LottieDebugPanel, MDXRenderer, MarkdownEditor } from "@frontend/common/components";
+import {
+  useBackendAdminClient,
+  useChoicesQuery,
+  useCreateMutation,
+  useRemoveMutation,
+  useSchemaQuery,
+  useUpdateMutation,
+} from "@frontend/common/hooks/useAdminAPI";
+import { useCommonContext } from "@frontend/common/hooks/useCommonContext";
+import {
+  filterPropertiesByLanguageInJsonSchema,
+  filterReadOnlyPropertiesInJsonSchema,
+  filterWritablePropertiesInJsonSchema,
+} from "@frontend/common/utils";
 
 type EditorFormDataEventType = IChangeEvent<Record<string, string>, RJSFSchema, { [k in string]: unknown }>;
 type onSubmitType = (data: Record<string, string>, event: FormEvent<unknown>) => void;
@@ -99,7 +99,7 @@ const FileField: Field = (p) => (
     required={p.required}
     disabled={p.disabled}
     defaultValue={p.defaultValue}
-    onChange={(event) => processFile(event).then(p.onChange)}
+    onChange={(event) => processFile(event).then((v) => p.onChange(v, []))}
   />
 );
 
@@ -153,7 +153,7 @@ const fieldPropsToSelectedProps = (props: FieldProps): OutlinedSelectProps & { d
   };
   const onFocus = (event: FocusEvent<HTMLInputElement>) => rawOnFocus(event.currentTarget.name, event.currentTarget.value);
   const onBlur = (event: FocusEvent<HTMLInputElement>) => rawOnBlur(event.currentTarget.name, event.currentTarget.value);
-  const onChange = (event: ChangeEvent<HTMLInputElement>) => rawOnChange(event.target.value, undefined, event.target.name);
+  const onChange = (event: ChangeEvent<HTMLInputElement>) => rawOnChange(event.target.value, [], undefined, event.target.name);
   const sx: OutlinedSelectProps["sx"] = color ? { color, borderColor: color } : {};
   const defaultValue = (formData ? (isArray(formData) ? formData : [formData.toString()]) : []) as string[];
   return addProp({ ...rest, name, label: name, defaultValue, autoFocus, readOnly, onFocus, onBlur, onChange, sx }, "data-rjsf", data);
@@ -200,7 +200,7 @@ const MDEditorField: Field = ErrorBoundary.with({ fallback: ErrorFallback }, ({ 
   const [valueState, setValueState] = useState<string | undefined>(formData?.toString() || "");
   const onChange = (value?: string) => {
     setValueState(value);
-    rawOnChange(value, undefined, name);
+    rawOnChange(value, [], undefined, name);
   };
   return (
     <MUIStyledFieldset>

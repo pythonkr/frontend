@@ -1,4 +1,3 @@
-import { useBackendAdminClient, useRenderTemplateMutation, useRetrieveQuery } from "@frontend/common/hooks/useAdminAPI";
 import { Close, Visibility } from "@mui/icons-material";
 import { Box, Button, Chip, CircularProgress, IconButton, Stack, TextField, Typography } from "@mui/material";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
@@ -7,6 +6,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { BackendAdminSignInGuard } from "@apps/pyconkr-admin/components/elements/admin_signin_guard";
 import { ErrorFallback } from "@apps/pyconkr-admin/components/elements/error_fallback";
+import { useBackendAdminClient, useRenderTemplateMutation, useRetrieveQuery } from "@frontend/common/hooks/useAdminAPI";
 
 const APP = "notification/kakao-alimtalk";
 const RESOURCE = "template";

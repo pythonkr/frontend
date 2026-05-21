@@ -1,8 +1,8 @@
-import { AutoTextLinking } from "@frontend/common/components";
 import { CircularProgress, Stack, Typography } from "@mui/material";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { FC } from "react";
 
+import { AutoTextLinking } from "@frontend/common/components";
 import { usePatrons, useShopClient } from "@frontend/shop/hooks";
 
 const InnerPatronList: FC<{ year: number }> = ErrorBoundary.with(

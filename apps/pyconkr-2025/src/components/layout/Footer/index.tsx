@@ -1,11 +1,11 @@
 import styled from "@emotion/styled";
-import { useEmail } from "@frontend/common/hooks/useEmail";
 import { Article, Email, Facebook, GitHub, Instagram, LinkedIn, OpenInNew, X, YouTube } from "@mui/icons-material";
 import { Button, useMediaQuery, useTheme } from "@mui/material";
 import { FC, Fragment } from "react";
 
 import FlickrIcon from "@apps/pyconkr-2025/assets/thirdparty/flickr.svg?react";
 import { useAppContext } from "@apps/pyconkr-2025/contexts/app_context";
+import { useEmail } from "@frontend/common/hooks/useEmail";
 
 import MobileFooter from "./Mobile/MobileFooter";
 

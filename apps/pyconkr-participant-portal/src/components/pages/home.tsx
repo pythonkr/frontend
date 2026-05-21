@@ -1,10 +1,3 @@
-import { FallbackImage } from "@frontend/common/components";
-import {
-  useListPresentationsQuery,
-  useModificationAuditsQuery,
-  useParticipantPortalClient,
-  useSignedInUserQuery,
-} from "@frontend/common/hooks/useParticipantPortalAPI";
 import {
   Button,
   FormControlLabel,
@@ -30,6 +23,13 @@ import { LoadingPage } from "@apps/pyconkr-participant-portal/components/element
 import { SignInGuard } from "@apps/pyconkr-participant-portal/components/elements/signin_guard";
 import { Page } from "@apps/pyconkr-participant-portal/components/page";
 import { useAppContext } from "@apps/pyconkr-participant-portal/contexts/app_context";
+import { FallbackImage } from "@frontend/common/components";
+import {
+  useListPresentationsQuery,
+  useModificationAuditsQuery,
+  useParticipantPortalClient,
+  useSignedInUserQuery,
+} from "@frontend/common/hooks/useParticipantPortalAPI";
 
 const ProfileImageSize: CSSProperties["width" | "height"] = "8rem";
 

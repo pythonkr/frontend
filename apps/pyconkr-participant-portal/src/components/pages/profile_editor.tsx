@@ -1,5 +1,3 @@
-import { BackendAPIClientError } from "@frontend/common/apis";
-import { useParticipantPortalClient, useSignedInUserQuery, useUpdateMeMutation } from "@frontend/common/hooks/useParticipantPortalAPI";
 import { Key, SendAndArchive } from "@mui/icons-material";
 import { Button, SelectChangeEvent, Stack } from "@mui/material";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
@@ -17,6 +15,8 @@ import { SignInGuard } from "@apps/pyconkr-participant-portal/components/element
 import { PrimaryTitle } from "@apps/pyconkr-participant-portal/components/elements/titles";
 import { Page } from "@apps/pyconkr-participant-portal/components/page";
 import { useAppContext } from "@apps/pyconkr-participant-portal/contexts/app_context";
+import { BackendAPIClientError } from "@frontend/common/apis";
+import { useParticipantPortalClient, useSignedInUserQuery, useUpdateMeMutation } from "@frontend/common/hooks/useParticipantPortalAPI";
 
 export type ProfileSchema = {
   email: string;

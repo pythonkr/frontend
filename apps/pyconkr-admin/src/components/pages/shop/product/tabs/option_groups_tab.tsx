@@ -1,4 +1,3 @@
-import { useBackendAdminClient, useCreateMutation, useUpdateMutation } from "@frontend/common/hooks/useAdminAPI";
 import { Add, Delete, Edit, ExpandMore } from "@mui/icons-material";
 import {
   Accordion,
@@ -29,6 +28,7 @@ import { FC, useEffect, useState } from "react";
 
 import { OptionAdmin, OptionGroupAdmin } from "@apps/pyconkr-admin/components/pages/shop/product/types";
 import { addErrorSnackbar, addSnackbar } from "@apps/pyconkr-admin/utils/snackbar";
+import { useBackendAdminClient, useCreateMutation, useUpdateMutation } from "@frontend/common/hooks/useAdminAPI";
 
 // ----------------- Option dialog -----------------
 type OptionFormValues = {
@@ -61,6 +61,7 @@ const OptionDialog: FC<OptionDialogProps> = ({ open, onClose, optionGroup, optio
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setValues({
         name_ko: option?.name_ko ?? "",
         name_en: option?.name_en ?? "",
@@ -208,6 +209,7 @@ const OptionGroupDialog: FC<OptionGroupDialogProps> = ({ open, onClose, productI
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setValues({
         name_ko: group?.name_ko ?? "",
         name_en: group?.name_en ?? "",

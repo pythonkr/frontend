@@ -1,4 +1,3 @@
-import { OneDetailsOpener, PrimaryStyledDetails } from "@frontend/common/components/mdx_components";
 import { AccordionProps, Backdrop, Button, CircularProgress, Divider, Stack, Typography } from "@mui/material";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -8,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { isArray } from "remeda";
 
+import { OneDetailsOpener, PrimaryStyledDetails } from "@frontend/common/components/mdx_components";
 import { formatBackendErrorMessage } from "@frontend/shop/apis";
 import { CustomerInfoFormDialog, OrderProductRelationOptionInput, PriceDisplay, SignInGuard } from "@frontend/shop/components/common";
 import { useCart, usePrepareCartOrderMutation, useRemoveItemFromCartMutation, useShopClient, useShopContext } from "@frontend/shop/hooks";

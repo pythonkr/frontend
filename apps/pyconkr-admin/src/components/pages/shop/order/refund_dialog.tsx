@@ -1,9 +1,9 @@
-import { useBackendAdminClient } from "@frontend/common/hooks/useAdminAPI";
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField, Typography } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
-import { FC, useEffect, useState } from "react";
+import { FC, useState } from "react";
 
 import { addErrorSnackbar, addSnackbar } from "@apps/pyconkr-admin/utils/snackbar";
+import { useBackendAdminClient } from "@frontend/common/hooks/useAdminAPI";
 
 import { OrderAdmin } from "./types";
 
@@ -20,12 +20,15 @@ export const RefundDialog: FC<RefundDialogProps> = ({ open, onClose, order }) =>
   const [totp, setTotp] = useState("");
   const [touched, setTouched] = useState(false);
 
-  useEffect(() => {
+  // open 변경 시 폼 초기화 (https://react.dev/reference/react/useState#storing-information-from-previous-renders)
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
     if (open) {
       setTotp("");
       setTouched(false);
     }
-  }, [open]);
+  }
 
   const refundMutation = useMutation({
     mutationFn: async (totpCode: string) => {

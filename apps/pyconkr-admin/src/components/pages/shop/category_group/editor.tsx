@@ -1,4 +1,3 @@
-import { useBackendAdminClient, useRetrieveQuery } from "@frontend/common/hooks/useAdminAPI";
 import { Add, Delete, Edit } from "@mui/icons-material";
 import {
   Button,
@@ -25,6 +24,7 @@ import { useParams } from "react-router-dom";
 
 import { AdminEditor } from "@apps/pyconkr-admin/components/layouts/admin_editor";
 import { addErrorSnackbar, addSnackbar } from "@apps/pyconkr-admin/utils/snackbar";
+import { useBackendAdminClient, useRetrieveQuery } from "@frontend/common/hooks/useAdminAPI";
 
 type Category = {
   id?: string;
@@ -64,6 +64,7 @@ const CategoryDialog: FC<CategoryDialogProps> = ({ open, onClose, group, categor
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setValues({
         name: category?.name ?? "",
         priority: category ? String(category.priority) : String((group.categories ?? []).length * 10),

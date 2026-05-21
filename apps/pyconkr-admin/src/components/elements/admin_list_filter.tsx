@@ -1,7 +1,8 @@
-import { ChoicesResponse, OpenAPIParameterSchema } from "@frontend/common/schemas/backendAdminAPI";
 import { Add, Clear, FilterList, RestartAlt } from "@mui/icons-material";
 import { Box, Button, Chip, FormControl, IconButton, InputLabel, MenuItem, Select, Stack, TextField } from "@mui/material";
-import { FC, useEffect, useState } from "react";
+import { FC, useState } from "react";
+
+import { ChoicesResponse, OpenAPIParameterSchema } from "@frontend/common/schemas/backendAdminAPI";
 type AdminListFilterProps = {
   parameters: OpenAPIParameterSchema[];
   values: Record<string, string>;
@@ -12,9 +13,12 @@ type AdminListFilterProps = {
 export const AdminListFilter: FC<AdminListFilterProps> = ({ parameters, values, choices, onApply }) => {
   const [localValues, setLocalValues] = useState<Record<string, string>>(values);
 
-  useEffect(() => {
+  // 외부 values prop 변경 시 동기화 (https://react.dev/reference/react/useState#storing-information-from-previous-renders)
+  const [prevValues, setPrevValues] = useState(values);
+  if (prevValues !== values) {
+    setPrevValues(values);
     setLocalValues(values);
-  }, [values]);
+  }
 
   const handleChange = (name: string, value: string) => {
     setLocalValues((prev) => ({ ...prev, [name]: value }));

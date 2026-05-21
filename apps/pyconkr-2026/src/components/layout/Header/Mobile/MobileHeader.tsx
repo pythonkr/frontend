@@ -1,10 +1,10 @@
-import { PythonKorea } from "@frontend/common/components";
 import { Box, Stack, styled, Typography } from "@mui/material";
 import { FC, useState } from "react";
 import { Link } from "react-router-dom";
 
 import LanguageSelector from "@apps/pyconkr-2026/components/layout/LanguageSelector";
 import { useAppContext } from "@apps/pyconkr-2026/contexts/app_context";
+import { PythonKorea } from "@frontend/common/components";
 
 import { HamburgerButton } from "./HamburgerButton";
 import { MobileNavigation } from "./MobileNavigation";

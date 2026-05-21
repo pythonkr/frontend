@@ -1,7 +1,8 @@
-import { Map as MDXMap, MapPropType } from "@frontend/common/components/mdx_components";
-import { getFormValue, isFormValid } from "@frontend/common/utils";
 import { Box, Button, FormControlLabel, Stack, Switch, TextField } from "@mui/material";
 import { FC, useRef, useState } from "react";
+
+import { Map as MDXMap, MapPropType } from "@frontend/common/components/mdx_components";
+import { getFormValue, isFormValid } from "@frontend/common/utils";
 type MapTestPageStateType = {
   checked: boolean;
   mapProps: MapPropType;

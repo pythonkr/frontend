@@ -1,7 +1,8 @@
-import { useParticipantPortalClient, useSignedInUserQuery } from "@frontend/common/hooks/useParticipantPortalAPI";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { FC, PropsWithChildren } from "react";
 import { Navigate } from "react-router-dom";
+
+import { useParticipantPortalClient, useSignedInUserQuery } from "@frontend/common/hooks/useParticipantPortalAPI";
 
 import { ErrorPage } from "./error_page";
 import { LoadingPage } from "./loading_page";

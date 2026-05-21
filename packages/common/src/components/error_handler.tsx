@@ -10,6 +10,8 @@ const ChunkLoadErrorFallback: FC = () => {
   const [reloadSkipped, setReloadSkipped] = useState(false);
 
   useEffect(() => {
+    // 청크 로드 실패 시 페이지 새로고침. 새로고침이 일어나지 않으면 안내 fallback 표시.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!reloadForChunkLoadError()) setReloadSkipped(true);
   }, []);
 

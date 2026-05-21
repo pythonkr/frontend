@@ -1,6 +1,3 @@
-import { CenteredPage, ErrorFallback, FallbackImage, LinkHandler, MDXRenderer } from "@frontend/common/components";
-import { useBackendClient, useSessionQuery } from "@frontend/common/hooks/useAPI";
-import { useCommonContext } from "@frontend/common/hooks/useCommonContext";
 import { Box, Chip, CircularProgress, Divider, Stack, styled, Table, TableBody, TableCell, TableRow, Typography } from "@mui/material";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { DateTime } from "luxon";
@@ -11,6 +8,9 @@ import { isString } from "remeda";
 import PyCon2025Logo from "@apps/pyconkr-2025/assets/pyconkr2025_logo.png";
 import { PageLayout } from "@apps/pyconkr-2025/components/layout/PageLayout";
 import { useAppContext } from "@apps/pyconkr-2025/contexts/app_context";
+import { CenteredPage, ErrorFallback, FallbackImage, LinkHandler, MDXRenderer } from "@frontend/common/components";
+import { useBackendClient, useSessionQuery } from "@frontend/common/hooks/useAPI";
+import { useCommonContext } from "@frontend/common/hooks/useCommonContext";
 
 const PROFILE_IMAGE_SIZE = "7rem";
 

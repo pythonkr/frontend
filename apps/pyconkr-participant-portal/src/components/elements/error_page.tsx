@@ -1,8 +1,8 @@
-import { ErrorFallback } from "@frontend/common/components";
 import { Stack } from "@mui/material";
 import { FC } from "react";
 
 import { Page } from "@apps/pyconkr-participant-portal/components/page";
+import { ErrorFallback } from "@frontend/common/components";
 
 export const ErrorPage: FC<{ error: Error; reset: () => void }> = ({ error, reset }) => {
   return (

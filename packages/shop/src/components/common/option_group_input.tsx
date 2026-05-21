@@ -133,7 +133,7 @@ export const OrderProductRelationOptionInput: FC<{
   control: Control<FieldValues, unknown, FieldValues>;
 }> = Suspense.with({ fallback: <CircularProgress /> }, ({ optionRel, disabled, disabledReason, control }) => {
   const { language } = useShopContext();
-  let defaultValue: string | null = null;
+  let defaultValue: string | null;
   let guessedDisabledReason: string | undefined = undefined;
   let dummyOptions: {
     id: string;

@@ -1,30 +1,34 @@
-import { NestedSiteMapSchema } from "@frontend/common/schemas/backendAPI";
 import { Stack, styled } from "@mui/material";
 import { FC } from "react";
 import { Link } from "react-router-dom";
 import { isNonNullish } from "remeda";
+
+import { NestedSiteMapSchema } from "@frontend/common/schemas/backendAPI";
 type BreadCrumbPropType = {
   title: string;
   parentSiteMaps: (NestedSiteMapSchema | undefined)[];
 };
 
 export const BreadCrumb: FC<BreadCrumbPropType> = ({ title, parentSiteMaps }) => {
-  let route = "/";
+  const filtered = parentSiteMaps.slice(1, -1).filter((routeInfo) => isNonNullish(routeInfo));
   return (
     <BreadCrumbContainer>
       <BreadcrumbPathContainer direction="row" alignItems="center">
-        {parentSiteMaps
-          .slice(1, -1)
-          .filter((routeInfo) => isNonNullish(routeInfo))
-          .map(({ route_code, name }, index) => {
-            route += `${route_code}/`;
-            return (
-              <span key={index}>
-                {index > 0 && <span className="separator">&gt;</span>}
-                <Link to={route} children={name} />
-              </span>
-            );
-          })}
+        {filtered.map(({ name }, index, arr) => {
+          const route =
+            "/" +
+            arr
+              .slice(0, index + 1)
+              .map((r) => r.route_code)
+              .join("/") +
+            "/";
+          return (
+            <span key={index}>
+              {index > 0 && <span className="separator">&gt;</span>}
+              <Link to={route} children={name} />
+            </span>
+          );
+        })}
       </BreadcrumbPathContainer>
       <PageTitle>{title}</PageTitle>
     </BreadCrumbContainer>

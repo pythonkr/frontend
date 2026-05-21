@@ -11,7 +11,6 @@ import {
   ReactNode,
   useCallback,
   useEffect,
-  useReducer,
   useRef,
   useState,
 } from "react";
@@ -42,13 +41,13 @@ type DndFileInputProps = {
 type DndFileInputState = {
   isMouseHoverOnDragBox?: boolean;
   openSetValueDialog?: boolean;
+  selectedFile?: File | null;
 };
 
 export const DndFileInput: FC<DndFileInputProps> = ({ onFileChange, language }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fileDragBoxRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<DndFileInputState>({});
-  const [, forceRender] = useReducer((x) => x + 1, 0);
 
   const selectFileStr = language === "ko" ? "파일 선택" : "Select File";
   const resetSelectStr = language === "ko" ? "파일 선택 초기화" : "Reset File Selection";
@@ -59,7 +58,7 @@ export const DndFileInput: FC<DndFileInputProps> = ({ onFileChange, language }) 
   const fileIsNotImageStr = language === "ko" ? "이미지 파일만 업로드가 가능합니다." : "Only image file can be uploaded.";
   const fileReadErrorStr = language === "ko" ? "파일을 읽는 중 오류가 발생했습니다." : "An error occurred while reading the file.";
 
-  const selectedFile = (fileInputRef.current?.files?.length && fileInputRef.current.files[0]) || null;
+  const selectedFile = state.selectedFile ?? null;
   const selectedFilePreview = selectedFile && (
     <Stack justifyContent="center" alignItems="center">
       <img src={URL.createObjectURL(selectedFile)} alt="Preview" style={{ maxWidth: "100%" }} />
@@ -124,9 +123,9 @@ export const DndFileInput: FC<DndFileInputProps> = ({ onFileChange, language }) 
     if (fileInputRef.current) {
       fileInputRef.current.value = ""; // 파일 선택 초기화
       fileInputRef.current.files = null; // 파일 목록 초기화
-      forceRender();
+      setState((ps) => ({ ...ps, selectedFile: null }));
     }
-  }, [forceRender]);
+  }, []);
 
   const handleFile = useCallback(
     (file: File) => {
@@ -147,7 +146,7 @@ export const DndFileInput: FC<DndFileInputProps> = ({ onFileChange, language }) 
           list.items.add(file);
           fileInputRef.current.files = list.files;
           onFileChange?.(file);
-          forceRender();
+          setState((ps) => ({ ...ps, selectedFile: file }));
         } else {
           addSnackbar(fileReadErrorStr, "error");
           console.error("파일 읽기 오류:", event);
@@ -159,7 +158,7 @@ export const DndFileInput: FC<DndFileInputProps> = ({ onFileChange, language }) 
       };
       fileReader.readAsDataURL(file);
     },
-    [forceRender, onFileChange, fileIsEmptyStr, fileIsNotImageStr, fileReadErrorStr, language]
+    [onFileChange, fileIsEmptyStr, fileIsNotImageStr, fileReadErrorStr, language]
   );
 
   const onFileSelect = (e: ChangeEvent<HTMLInputElement>) => {

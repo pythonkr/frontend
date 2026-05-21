@@ -1,16 +1,17 @@
-import { MDXEditor, MDXRenderer } from "@frontend/common/components";
-import { useCommonContext } from "@frontend/common/hooks/useCommonContext";
 import { Box, Stack } from "@mui/material";
 import React from "react";
+
+import { MDXEditor, MDXRenderer } from "@frontend/common/components";
+import { useCommonContext } from "@frontend/common/hooks/useCommonContext";
 
 const HalfWidthStyle: React.CSSProperties = { width: "50%", maxWidth: "50%" };
 
 export const MdiTestPage: React.FC = () => {
   const { baseUrl, mdxComponents } = useCommonContext();
-  const [state, setState] = React.useState<{ text: string; resetKey: number }>({
+  const [state, setState] = React.useState<{ text: string; resetKey: number }>(() => ({
     text: "",
     resetKey: Math.random(),
-  });
+  }));
   const setMDXInput = (input?: string) => setState({ text: input || "", resetKey: Math.random() });
 
   return (

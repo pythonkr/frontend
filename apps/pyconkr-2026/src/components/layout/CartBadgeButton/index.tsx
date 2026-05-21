@@ -1,9 +1,10 @@
-import { useCart, useShopClient } from "@frontend/shop/hooks";
 import { ShoppingCart } from "@mui/icons-material";
 import { Badge, badgeClasses, IconButton, styled } from "@mui/material";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { FC } from "react";
 import { useNavigate } from "react-router-dom";
+
+import { useCart, useShopClient } from "@frontend/shop/hooks";
 
 type InnerCartBadgeButtonPropType = {
   loading?: boolean;

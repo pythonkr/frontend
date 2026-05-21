@@ -1,6 +1,3 @@
-import { CenteredPage, CommonContextProvider } from "@frontend/common/components";
-import type { ContextOptions } from "@frontend/common/contexts";
-import { registerChunkLoadErrorReloadHandler } from "@frontend/common/utils";
 import { CircularProgress, createTheme, CssBaseline, ThemeProvider } from "@mui/material";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { matchQuery, MutationCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -9,6 +6,10 @@ import { SnackbarProvider } from "notistack";
 import { FC, StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
+
+import { CenteredPage, CommonContextProvider } from "@frontend/common/components";
+import type { ContextOptions } from "@frontend/common/contexts";
+import { registerChunkLoadErrorReloadHandler } from "@frontend/common/utils";
 
 import { App } from "./App.tsx";
 import { ErrorPage } from "./components/elements/error_page.tsx";

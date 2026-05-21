@@ -1,8 +1,8 @@
-import { getFormValue, isFormValid } from "@frontend/common/utils";
 import { Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField } from "@mui/material";
 import { Suspense } from "@suspensive/react";
 import { FC, MouseEventHandler, useRef } from "react";
 
+import { getFormValue, isFormValid } from "@frontend/common/utils";
 import { useShopClient, useShopContext, useUserStatus } from "@frontend/shop/hooks";
 import type { CustomerInfo } from "@frontend/shop/schemas";
 

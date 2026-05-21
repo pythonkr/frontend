@@ -1,4 +1,3 @@
-import { useBackendAdminClient, useModificationAuditPreviewQuery } from "@frontend/common/hooks/useAdminAPI";
 import { Box, Button, CircularProgress, Divider, Stack, Typography } from "@mui/material";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { FC, useState } from "react";
@@ -6,6 +5,7 @@ import { Navigate, useParams } from "react-router-dom";
 
 import { BackendAdminSignInGuard } from "@apps/pyconkr-admin/components/elements/admin_signin_guard";
 import { ErrorFallback } from "@apps/pyconkr-admin/components/elements/error_fallback";
+import { useBackendAdminClient, useModificationAuditPreviewQuery } from "@frontend/common/hooks/useAdminAPI";
 
 import { ModificationAuditProperties } from "./components";
 import { ApproveSubmitConfirmDialog, RejectSubmitConfirmDialog } from "./dialogs";

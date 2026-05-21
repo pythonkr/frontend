@@ -1,9 +1,10 @@
-import { useBackendAdminClient, useChoicesQuery, usePublicFileQuery } from "@frontend/common/hooks/useAdminAPI";
 import { OpenInNew } from "@mui/icons-material";
 import { Autocomplete, Box, Button, CircularProgress, Stack, TextField } from "@mui/material";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { FC, useMemo } from "react";
 import { Link as RouterLink } from "react-router-dom";
+
+import { useBackendAdminClient, useChoicesQuery, usePublicFileQuery } from "@frontend/common/hooks/useAdminAPI";
 
 type Option = { value: string; label: string };
 

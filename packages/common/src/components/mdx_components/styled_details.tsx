@@ -25,20 +25,27 @@ type BaseStyledDetailsProps = StyledDetailsProps & {
   transparencyOnExpand?: number;
 };
 
+const StyledAccordion = styled(Accordion, { shouldForwardProp: (p) => p !== "borderColor" })<{ borderColor: string }>(({ theme, borderColor }) => ({
+  width: "100%",
+  paddingRight: theme.spacing(1),
+  paddingLeft: theme.spacing(1),
+  border: `1px solid ${borderColor}`,
+  borderRadius: "0.5rem",
+  fontWeight: 500,
+}));
+
+const StyledAccordionSummary = styled(AccordionSummary, { shouldForwardProp: (p) => p !== "summaryColor" })<{ summaryColor: string }>(
+  ({ summaryColor }) => ({
+    color: summaryColor,
+  })
+);
+
+const StyledExpandIcon = styled(ExpandMore, { shouldForwardProp: (p) => p !== "iconColor" })<{ iconColor: string }>(({ theme, iconColor }) => ({
+  color: iconColor,
+  fontSize: theme.typography.h4.fontSize,
+}));
+
 const BaseStyledDetails: FC<BaseStyledDetailsProps> = ({ expandIcon, summary, children, actions, paletteColor, transparencyOnExpand, ...props }) => {
-  const StyledAccordion = styled(Accordion)(({ theme }) => ({
-    width: "100%",
-    paddingRight: theme.spacing(1),
-    paddingLeft: theme.spacing(1),
-    border: `1px solid ${paletteColor.dark}`,
-    borderRadius: "0.5rem",
-    fontWeight: 500,
-  }));
-
-  const StyledAccordionSummary = styled(AccordionSummary)(() => ({
-    color: paletteColor.dark,
-  }));
-
   const rootSx: SxProps = {
     transition: "background-color 0.3s ease",
     "&.Mui-expanded": {
@@ -46,14 +53,9 @@ const BaseStyledDetails: FC<BaseStyledDetailsProps> = ({ expandIcon, summary, ch
     },
   };
 
-  const DefaultExpandIcon = styled(ExpandMore)(({ theme }) => ({
-    color: paletteColor.dark,
-    fontSize: theme.typography.h4.fontSize,
-  }));
-
   return (
-    <StyledAccordion {...props} disableGutters square elevation={0} slotProps={{ root: { sx: rootSx } }}>
-      <StyledAccordionSummary expandIcon={expandIcon || <DefaultExpandIcon />}>
+    <StyledAccordion borderColor={paletteColor.dark} {...props} disableGutters square elevation={0} slotProps={{ root: { sx: rootSx } }}>
+      <StyledAccordionSummary summaryColor={paletteColor.dark} expandIcon={expandIcon || <StyledExpandIcon iconColor={paletteColor.dark} />}>
         {typeof summary === "string" ? <Typography variant="h5">{summary}</Typography> : summary}
       </StyledAccordionSummary>
       <AccordionDetails sx={{ pt: "0", pb: "1rem", px: "2rem" }}>{children}</AccordionDetails>

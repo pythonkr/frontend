@@ -1,24 +1,4 @@
 // 후대의 개발자님께 : 컴포넌트 맨 첫글자가 대문자로 시작하지 않으면 JSX 컴포넌트가 아니라 일반 HTML 태그로 인식합니다. 제발 대문자로 시작해주세요.
-import PyCon2025HostLogoBig from "@frontend/common/assets/pyconkr2025_hostlogo_big.png";
-import PyCon2025HostLogoSmall from "@frontend/common/assets/pyconkr2025_hostlogo_small.png";
-import PyCon2025MobileLogoImage from "@frontend/common/assets/pyconkr2025_main_cover_image.png";
-import PyCon2025MobileLogoTitle from "@frontend/common/assets/pyconkr2025_main_cover_title.png";
-import { LottiePlayer, NetworkLottiePlayer } from "@frontend/common/components";
-import {
-  Confetti,
-  FAQAccordion,
-  Map as MDXMap,
-  MobileAccordion,
-  MobileCover,
-  PrimaryStyledDetails,
-  SecondaryStyledDetails,
-  SessionList,
-  SessionTimeTable,
-  StyledFullWidthButton,
-} from "@frontend/common/components/mdx_components";
-import type { SessionSchema } from "@frontend/common/schemas/backendAPI";
-import { PriceDisplay, ShopContextProvider, SignInGuard, UserSignInAccount, UserSignInMethod } from "@frontend/shop/components/common";
-import { CartStatus, OrderList, PatronList, ProductImageCardList, ProductList, UserInfo } from "@frontend/shop/components/features";
 import {
   Accordion,
   AccordionActions,
@@ -148,6 +128,26 @@ import type { MDXComponents } from "mdx/types.js";
 import { ComponentProps, FC, createElement } from "react";
 
 import PyCon2025Logo from "@apps/pyconkr-2025/assets/pyconkr2025_logo.png";
+import PyCon2025HostLogoBig from "@frontend/common/assets/pyconkr2025_hostlogo_big.png";
+import PyCon2025HostLogoSmall from "@frontend/common/assets/pyconkr2025_hostlogo_small.png";
+import PyCon2025MobileLogoImage from "@frontend/common/assets/pyconkr2025_main_cover_image.png";
+import PyCon2025MobileLogoTitle from "@frontend/common/assets/pyconkr2025_main_cover_title.png";
+import { LottiePlayer, NetworkLottiePlayer } from "@frontend/common/components";
+import {
+  Confetti,
+  FAQAccordion,
+  Map as MDXMap,
+  MobileAccordion,
+  MobileCover,
+  PrimaryStyledDetails,
+  SecondaryStyledDetails,
+  SessionList,
+  SessionTimeTable,
+  StyledFullWidthButton,
+} from "@frontend/common/components/mdx_components";
+import type { SessionSchema } from "@frontend/common/schemas/backendAPI";
+import { PriceDisplay, ShopContextProvider, SignInGuard, UserSignInAccount, UserSignInMethod } from "@frontend/shop/components/common";
+import { CartStatus, OrderList, PatronList, ProductImageCardList, ProductList, UserInfo } from "@frontend/shop/components/features";
 
 const MUIMDXComponents: MDXComponents = {
   Mui__material__Accordion: Accordion,
@@ -251,7 +251,7 @@ const MUIMDXComponents: MDXComponents = {
   Mui__material__StepLabel: StepLabel,
   Mui__material__Stepper: Stepper,
   Mui__material__SvgIcon: SvgIcon,
-  Mui__material__SwipeableDrawer: SwipeableDrawer,
+  Mui__material__SwipeableDrawer: (props) => createElement(SwipeableDrawer, props),
   Mui__material__Switch: Switch,
   Mui__material__Tab: Tab,
   Mui__material__Table: Table,

@@ -1,14 +1,14 @@
-import { PythonKorea } from "@frontend/common/components";
-import { NestedSiteMapSchema } from "@frontend/common/schemas/backendAPI";
 import { ArrowForwardIos } from "@mui/icons-material";
 import { Box, Button, CircularProgress, Divider, Stack, styled, SxProps, Theme, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { MUIStyledCommonProps } from "@mui/system";
-import { CSSProperties, Fragment, useEffect, useState } from "react";
+import { CSSProperties, Fragment, useState } from "react";
 import { Link } from "react-router-dom";
 import { isEmpty, isNonNullish, isString } from "remeda";
 
 import LanguageSelector from "@apps/pyconkr-2026/components/layout/LanguageSelector";
 import { useAppContext } from "@apps/pyconkr-2026/contexts/app_context";
+import { PythonKorea } from "@frontend/common/components";
+import { NestedSiteMapSchema } from "@frontend/common/schemas/backendAPI";
 
 import { MobileHeader } from "./Mobile/MobileHeader";
 
@@ -39,13 +39,17 @@ export default function Header() {
   const getDepth2Route = (nextRoute?: string) => (navState.depth1?.route_code || "") + `/${nextRoute || ""}`;
   const getDepth3Route = (nextRoute?: string) => getDepth2Route(navState.depth2?.route_code) + `/${nextRoute || ""}`;
 
-  useEffect(resetDepths, [language]);
+  // 언어 변경 시 navState 초기화 (https://react.dev/reference/react/useState#storing-information-from-previous-renders)
+  const [prevLanguage, setPrevLanguage] = useState(language);
+  if (prevLanguage !== language) {
+    setPrevLanguage(language);
+    setNavState({});
+  }
 
   if (isMobile) return <MobileHeader />;
 
-  let breadCrumbRoute = "";
-  let breadCrumbArray = currentSiteMapDepth.slice(1, -1);
-  if (isEmpty(breadCrumbArray)) breadCrumbArray = currentSiteMapDepth.slice(0, -1);
+  const initialBreadCrumbArray = currentSiteMapDepth.slice(1, -1);
+  const breadCrumbArray = isEmpty(initialBreadCrumbArray) ? currentSiteMapDepth.slice(0, -1) : initialBreadCrumbArray;
 
   const headerStyle: SxProps<Theme> = shouldShowTitleBanner ? {} : { backgroundColor: "transparent" };
 
@@ -160,8 +164,12 @@ export default function Header() {
               <Stack direction="row" alignItems="center" spacing={0.5}>
                 {breadCrumbArray
                   .filter((routeInfo) => isNonNullish(routeInfo))
-                  .map(({ route_code, name }, index) => {
-                    breadCrumbRoute += `${route_code}/`;
+                  .map(({ name }, index, arr) => {
+                    const breadCrumbRoute =
+                      arr
+                        .slice(0, index + 1)
+                        .map((r) => r.route_code)
+                        .join("/") + "/";
                     return (
                       <Fragment key={index}>
                         {index > 0 && <ArrowForwardIos sx={{ fontSize: "0.75rem", color: "rgba(237,94,189,0.6)" }} />}

@@ -1,4 +1,3 @@
-import { useBackendAdminClient, useUploadPublicFileMutation } from "@frontend/common/hooks/useAdminAPI";
 import { CloudUpload, PermMedia } from "@mui/icons-material";
 import { Box, Button, Input, Stack, Typography } from "@mui/material";
 import { BaseSyntheticEvent, ChangeEvent, DragEvent, DragEventHandler, FC, MouseEventHandler, useCallback, useEffect, useRef, useState } from "react";
@@ -6,10 +5,11 @@ import { useNavigate } from "react-router-dom";
 
 import { BackendAdminSignInGuard } from "@apps/pyconkr-admin/components/elements/admin_signin_guard";
 import { addErrorSnackbar, addSnackbar } from "@apps/pyconkr-admin/utils/snackbar";
+import { useBackendAdminClient, useUploadPublicFileMutation } from "@frontend/common/hooks/useAdminAPI";
 
 type PublicFileUploadPageStateType = {
   isMouseOnDragBox: boolean;
-  _forceRerender: number;
+  selectedFile: File | null;
 };
 
 const ignoreEvent = (e: BaseSyntheticEvent | Event) => {
@@ -21,25 +21,12 @@ const InnerPublicFileUploadPage: FC = () => {
   const navigate = useNavigate();
   const [state, setState] = useState<PublicFileUploadPageStateType>({
     isMouseOnDragBox: false,
-    _forceRerender: 0, // 강제 리렌더링을 위한 상태
+    selectedFile: null,
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fileDragBoxRef = useRef<HTMLDivElement>(null);
   const backendAdminClient = useBackendAdminClient();
   const uploadPublicFileMutation = useUploadPublicFileMutation(backendAdminClient);
-
-  const forceRerender = useCallback(
-    () =>
-      setState((prev) => {
-        let newValue = Math.random();
-        while (prev._forceRerender === newValue)
-          // 중복된 값 방지
-          newValue = Math.random();
-
-        return { ...prev, _forceRerender: newValue };
-      }),
-    []
-  );
 
   const onFileSelectButtonClick: MouseEventHandler = () => {
     if (fileInputRef.current) {
@@ -66,46 +53,43 @@ const InnerPublicFileUploadPage: FC = () => {
     if (!fileDragBoxRef.current.contains(currentHoveredElement) || (x === 0 && y === 0)) setState((prev) => ({ ...prev, isMouseOnDragBox: false }));
   };
 
-  const handleFile = useCallback(
-    (file: File) => {
-      if (!file || file.size === 0) {
-        addSnackbar("파일을 찾을 수 없거나, 파일 크기가 0입니다.", "error");
-        return;
-      } else if (!(file.type.startsWith("image/") || file.type === "application/json")) {
-        addSnackbar("이미지 또는 JSON 파일만 업로드가 가능합니다.", "error");
-        return;
+  const handleFile = useCallback((file: File) => {
+    if (!file || file.size === 0) {
+      addSnackbar("파일을 찾을 수 없거나, 파일 크기가 0입니다.", "error");
+      return;
+    } else if (!(file.type.startsWith("image/") || file.type === "application/json")) {
+      addSnackbar("이미지 또는 JSON 파일만 업로드가 가능합니다.", "error");
+      return;
+    }
+
+    const fileReader = new FileReader();
+    fileReader.onload = (event) => {
+      if (fileInputRef.current && event.target?.result) {
+        addSnackbar(`파일 ${file.name} 선택 완료`, "info");
+
+        const list = new DataTransfer();
+        list.items.add(file);
+        fileInputRef.current.files = list.files;
+        setState((prev) => ({ ...prev, selectedFile: file }));
+      } else {
+        addSnackbar("파일을 읽는 중 오류가 발생했습니다.", "error");
+        console.error("파일 읽기 오류:", event);
       }
-
-      const fileReader = new FileReader();
-      fileReader.onload = (event) => {
-        if (fileInputRef.current && event.target?.result) {
-          addSnackbar(`파일 ${file.name} 선택 완료`, "info");
-
-          const list = new DataTransfer();
-          list.items.add(file);
-          fileInputRef.current.files = list.files;
-          forceRerender();
-        } else {
-          addSnackbar("파일을 읽는 중 오류가 발생했습니다.", "error");
-          console.error("파일 읽기 오류:", event);
-        }
-      };
-      fileReader.onerror = (error) => {
-        addSnackbar(`파일 읽기 중 오류가 발생했습니다: ${error}`, "error");
-        console.error("파일 읽기 중 오류 발생:", error);
-      };
-      fileReader.readAsDataURL(file);
-    },
-    [forceRerender]
-  );
+    };
+    fileReader.onerror = (error) => {
+      addSnackbar(`파일 읽기 중 오류가 발생했습니다: ${error}`, "error");
+      console.error("파일 읽기 중 오류 발생:", error);
+    };
+    fileReader.readAsDataURL(file);
+  }, []);
 
   const resetFileSelect = useCallback(() => {
     if (fileInputRef.current) {
       fileInputRef.current.value = ""; // 파일 선택 초기화
       fileInputRef.current.files = null; // 파일 목록 초기화
-      forceRerender();
+      setState((prev) => ({ ...prev, selectedFile: null }));
     }
-  }, [forceRerender]);
+  }, []);
 
   const onFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
     ignoreEvent(e);
@@ -129,6 +113,7 @@ const InnerPublicFileUploadPage: FC = () => {
       return;
     }
 
+    setState((prev) => ({ ...prev, selectedFile: file }));
     handleFile(file);
   };
 
@@ -173,12 +158,12 @@ const InnerPublicFileUploadPage: FC = () => {
   };
 
   const onSubmit = () => {
-    if (!fileInputRef.current?.files?.length) {
+    if (!state.selectedFile) {
       addSnackbar("파일을 선택해주세요.", "error");
       return;
     }
 
-    uploadPublicFileMutation.mutate(fileInputRef.current.files[0], {
+    uploadPublicFileMutation.mutate(state.selectedFile, {
       onSuccess: (data) => {
         addSnackbar("파일 업로드 성공", "success");
         navigate(`/file/publicfile/${data.id}`);
@@ -192,7 +177,7 @@ const InnerPublicFileUploadPage: FC = () => {
     return () => document.removeEventListener("paste", onClipboardPaste);
   }, [onClipboardPaste, state.isMouseOnDragBox]);
 
-  const selectedFile = (fileInputRef.current?.files?.length && fileInputRef.current.files[0]) || null;
+  const selectedFile = state.selectedFile;
 
   return (
     <Stack spacing={2} sx={{ flexGrow: 1, width: "100%", minHeight: "100%" }}>

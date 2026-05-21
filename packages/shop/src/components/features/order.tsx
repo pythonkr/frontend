@@ -1,5 +1,3 @@
-import { OneDetailsOpener, PrimaryStyledDetails } from "@frontend/common/components/mdx_components";
-import { useBackendContext } from "@frontend/common/hooks/useAPI";
 import {
   AccordionProps,
   Button,
@@ -19,6 +17,8 @@ import { FC, ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { isNullish } from "remeda";
 
+import { OneDetailsOpener, PrimaryStyledDetails } from "@frontend/common/components/mdx_components";
+import { useBackendContext } from "@frontend/common/hooks/useAPI";
 import { formatBackendErrorMessage } from "@frontend/shop/apis";
 import { OrderProductRelationOptionInput, PriceDisplay, SignInGuard } from "@frontend/shop/components/common";
 import {
@@ -309,29 +309,27 @@ const OrderItem: FC<OrderItemProps> = ({ order, disabled, ...props }) => {
   );
 };
 
-export const OrderList: FC = () => {
-  const WrappedOrderList: FC = () => {
-    const shopAPIClient = useShopClient();
-    const { data } = useOrders(shopAPIClient);
-
-    return (
-      <OneDetailsOpener>
-        {data.map((item) => (
-          <OrderItem key={item.id} order={item} />
-        ))}
-      </OneDetailsOpener>
-    );
-  };
+const WrappedOrderList: FC = () => {
+  const shopAPIClient = useShopClient();
+  const { data } = useOrders(shopAPIClient);
 
   return (
-    <SignInGuard>
-      <ErrorBoundary fallback={<div>주문 내역을 불러오는 중 문제가 발생했습니다.</div>}>
-        <Suspense fallback={<CircularProgress />}>
-          <Stack spacing={2}>
-            <WrappedOrderList />
-          </Stack>
-        </Suspense>
-      </ErrorBoundary>
-    </SignInGuard>
+    <OneDetailsOpener>
+      {data.map((item) => (
+        <OrderItem key={item.id} order={item} />
+      ))}
+    </OneDetailsOpener>
   );
 };
+
+export const OrderList: FC = () => (
+  <SignInGuard>
+    <ErrorBoundary fallback={<div>주문 내역을 불러오는 중 문제가 발생했습니다.</div>}>
+      <Suspense fallback={<CircularProgress />}>
+        <Stack spacing={2}>
+          <WrappedOrderList />
+        </Stack>
+      </Suspense>
+    </ErrorBoundary>
+  </SignInGuard>
+);

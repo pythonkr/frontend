@@ -1,10 +1,10 @@
 import styled from "@emotion/styled";
-import { useEmail } from "@frontend/common/hooks/useEmail";
 import { Article, Email, Facebook, GitHub, Instagram, LinkedIn, X, YouTube } from "@mui/icons-material";
 import { FC } from "react";
 
 import FlickrIcon from "@apps/pyconkr-2025/assets/thirdparty/flickr.svg?react";
 import { useAppContext } from "@apps/pyconkr-2025/contexts/app_context";
+import { useEmail } from "@frontend/common/hooks/useEmail";
 
 interface IconItem {
   icon: FC<{ width?: number; height?: number }>;

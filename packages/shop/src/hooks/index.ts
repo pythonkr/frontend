@@ -1,7 +1,7 @@
-import { useBackendContext } from "@frontend/common/hooks/useAPI";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { useContext } from "react";
 
+import { useBackendContext } from "@frontend/common/hooks/useAPI";
 import {
   appendItemToCart,
   BackendAPIClient,

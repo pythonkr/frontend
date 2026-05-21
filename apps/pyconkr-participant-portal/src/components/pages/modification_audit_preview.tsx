@@ -1,4 +1,3 @@
-import { useModificationAuditPreviewQuery, useParticipantPortalClient } from "@frontend/common/hooks/useParticipantPortalAPI";
 import { Card, CardContent, Palette, PaletteColor, styled, Typography } from "@mui/material";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { FC, ReactNode } from "react";
@@ -10,6 +9,7 @@ import { LoadingPage } from "@apps/pyconkr-participant-portal/components/element
 import { SignInGuard } from "@apps/pyconkr-participant-portal/components/elements/signin_guard";
 import { Page } from "@apps/pyconkr-participant-portal/components/page";
 import { useAppContext } from "@apps/pyconkr-participant-portal/contexts/app_context";
+import { useModificationAuditPreviewQuery, useParticipantPortalClient } from "@frontend/common/hooks/useParticipantPortalAPI";
 
 import { ProfileEditorForm, ProfileSchema } from "./profile_editor";
 import { SessionEditorForm, SessionSchema } from "./session_editor";

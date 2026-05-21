@@ -1,4 +1,3 @@
-import { useBackendAdminClient, useRetrieveQuery, useUpdateMutation } from "@frontend/common/hooks/useAdminAPI";
 import { CurrencyExchange, NotificationsActive, Save } from "@mui/icons-material";
 import {
   Alert,
@@ -19,13 +18,14 @@ import {
   Typography,
 } from "@mui/material";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
-import { FC, FormEvent, useEffect, useState } from "react";
+import { FC, FormEvent, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { BackendAdminSignInGuard } from "@apps/pyconkr-admin/components/elements/admin_signin_guard";
 import { ErrorFallback } from "@apps/pyconkr-admin/components/elements/error_fallback";
 import { ORDER_PRODUCT_STATUS_LABEL, PAYMENT_STATUS_LABEL } from "@apps/pyconkr-admin/components/pages/shop/_common/status_labels";
 import { addErrorSnackbar, addSnackbar } from "@apps/pyconkr-admin/utils/snackbar";
+import { useBackendAdminClient, useRetrieveQuery, useUpdateMutation } from "@frontend/common/hooks/useAdminAPI";
 
 import { RefundDialog } from "./refund_dialog";
 import { OrderAdmin, SimpleCustomerInfo, SimpleOrderProductRelation } from "./types";
@@ -42,12 +42,15 @@ const CustomerInfoTab: FC<{ order: OrderAdmin }> = ({ order }) => {
   const [email, setEmail] = useState(order.customer_info?.email ?? "");
   const [organization, setOrganization] = useState(order.customer_info?.organization ?? "");
 
-  useEffect(() => {
+  // order.customer_info 변경 시 폼 동기화 (https://react.dev/reference/react/useState#storing-information-from-previous-renders)
+  const [prevCustomerInfo, setPrevCustomerInfo] = useState(order.customer_info);
+  if (prevCustomerInfo !== order.customer_info) {
+    setPrevCustomerInfo(order.customer_info);
     setName(order.customer_info?.name ?? "");
     setPhone(order.customer_info?.phone ?? "");
     setEmail(order.customer_info?.email ?? "");
     setOrganization(order.customer_info?.organization ?? "");
-  }, [order.customer_info]);
+  }
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();

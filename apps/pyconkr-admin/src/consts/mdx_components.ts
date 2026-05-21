@@ -1,17 +1,4 @@
 // 후대의 개발자님께 : 컴포넌트 맨 첫글자가 대문자로 시작하지 않으면 JSX 컴포넌트가 아니라 일반 HTML 태그로 인식합니다. 제발 대문자로 시작해주세요.
-import { LottiePlayer, NetworkLottiePlayer } from "@frontend/common/components";
-import {
-  Confetti,
-  FAQAccordion,
-  Map as MDXMap,
-  PrimaryStyledDetails,
-  SecondaryStyledDetails,
-  SessionList,
-  SessionTimeTable,
-  StyledFullWidthButton,
-} from "@frontend/common/components/mdx_components";
-import { PriceDisplay, ShopContextProvider, SignInGuard, UserSignInAccount, UserSignInMethod } from "@frontend/shop/components/common";
-import { CartStatus, OrderList, PatronList, ProductImageCardList, ProductList, UserInfo } from "@frontend/shop/components/features";
 import {
   Accordion,
   AccordionActions,
@@ -138,6 +125,21 @@ import {
   Zoom,
 } from "@mui/material";
 import type { MDXComponents } from "mdx/types.js";
+import { createElement } from "react";
+
+import { LottiePlayer, NetworkLottiePlayer } from "@frontend/common/components";
+import {
+  Confetti,
+  FAQAccordion,
+  Map as MDXMap,
+  PrimaryStyledDetails,
+  SecondaryStyledDetails,
+  SessionList,
+  SessionTimeTable,
+  StyledFullWidthButton,
+} from "@frontend/common/components/mdx_components";
+import { PriceDisplay, ShopContextProvider, SignInGuard, UserSignInAccount, UserSignInMethod } from "@frontend/shop/components/common";
+import { CartStatus, OrderList, PatronList, ProductImageCardList, ProductList, UserInfo } from "@frontend/shop/components/features";
 
 const MUIMDXComponents: MDXComponents = {
   Mui__material__Accordion: Accordion,
@@ -241,7 +243,7 @@ const MUIMDXComponents: MDXComponents = {
   Mui__material__StepLabel: StepLabel,
   Mui__material__Stepper: Stepper,
   Mui__material__SvgIcon: SvgIcon,
-  Mui__material__SwipeableDrawer: SwipeableDrawer,
+  Mui__material__SwipeableDrawer: (props) => createElement(SwipeableDrawer, props),
   Mui__material__Switch: Switch,
   Mui__material__Tab: Tab,
   Mui__material__Table: Table,

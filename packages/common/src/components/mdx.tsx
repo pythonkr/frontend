@@ -1,10 +1,23 @@
 import { evaluate } from "@mdx-js/mdx";
 import * as provider from "@mdx-js/react";
-import { CircularProgress, Table, TableBody, TableCell, TableContainer, TableFooter, TableHead, TableRow } from "@mui/material";
+import {
+  CircularProgress,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableFooter,
+  TableHead,
+  TableRow,
+  Typography,
+  darken,
+  lighten,
+  useTheme,
+} from "@mui/material";
 import { ErrorBoundary } from "@suspensive/react";
 import type { MDXComponents } from "mdx/types";
-import muiComponents from "mui-mdx-components";
-import { FC, ReactNode, useEffect, useState } from "react";
+import { FC, ReactNode, createContext, useContext, useEffect, useState } from "react";
 import * as runtime from "react/jsx-runtime";
 import remarkGfm from "remark-gfm";
 import { isEmpty } from "remeda";
@@ -15,6 +28,48 @@ import { ErrorFallback } from "./error_handler";
 import { LinkHandler } from "./link_handler";
 import { StyledDivider } from "./mdx_components/styled_divider";
 import { SubContentContainer } from "./mdx_components/sub_content_container";
+
+// mui-mdx-components(deprecated)에서 가져오던 기본 매핑. 인라인 code와 블록 code를 구분하기 위해 컨텍스트 사용.
+const InlineCodeContext = createContext(true);
+
+const CodeRenderer: FC<{ className?: string; children?: ReactNode }> = (props) => {
+  const isInline = useContext(InlineCodeContext);
+  const theme = useTheme();
+  if (!isInline) return <code {...props} />;
+  const bgColor = theme.palette.mode === "light" ? darken(theme.palette.background.default, 0.2) : lighten(theme.palette.background.default, 0.2);
+  return <code {...props} style={{ borderRadius: theme.shape.borderRadius, padding: "0.1rem", backgroundColor: bgColor }} />;
+};
+
+const DefaultMUIMDXComponents: MDXComponents = {
+  p: (props) => <Typography component="p" variant="body1" {...props} />,
+  blockquote: (props) => (
+    <Paper
+      component="blockquote"
+      square
+      elevation={1}
+      sx={(theme) => ({
+        paddingLeft: theme.spacing(1),
+        paddingY: theme.spacing(0.5),
+        paddingRight: theme.spacing(0.5),
+        color: theme.palette.text.secondary,
+        borderLeft: 3,
+      })}
+      {...props}
+    />
+  ),
+  pre: ({ children, ...props }) => (
+    <Paper
+      component="pre"
+      elevation={2}
+      sx={(theme) => ({ padding: theme.spacing(1), color: theme.palette.text.secondary, overflow: "auto" })}
+      {...props}
+    >
+      <InlineCodeContext.Provider value={false}>{children}</InlineCodeContext.Provider>
+    </Paper>
+  ),
+  code: CodeRenderer,
+  wrapper: (props) => <div className="markdown-body" {...props} />,
+};
 
 const REGISTERED_KEYWORDS = [
   "import",
@@ -46,7 +101,7 @@ const CustomMDXComponents: MDXComponents = {
   h5: (props) => <h5 style={{ margin: 0 }} {...props} />,
   h6: (props) => <h6 style={{ margin: 0 }} {...props} />,
   strong: (props) => <strong {...props} />,
-  a: (props) => <LinkHandler {...props} />,
+  a: ({ href, ...props }) => <LinkHandler href={href ?? "#"} {...props} />,
   hr: (props) => <StyledDivider {...props} />,
   img: (props) => <img style={{ maxWidth: "100%" }} alt="" {...props} />,
   em: (props) => <em {...props} />,
@@ -62,8 +117,8 @@ const CustomMDXComponents: MDXComponents = {
   tbody: (props) => <TableBody {...props} />,
   tfoot: (props) => <TableFooter {...props} />, // MDX에서는 <tfoot>을 사용하지 않지만, 호환성을 위해 추가합니다.
   tr: (props) => <TableRow {...props} />,
-  th: (props) => <TableCell {...props} />,
-  td: (props) => <TableCell {...props} />,
+  th: ({ align, ...props }) => <TableCell align={align === "char" ? undefined : align} {...props} />,
+  td: ({ align, ...props }) => <TableCell align={align === "char" ? undefined : align} {...props} />,
   Content: (props) => <SubContentContainer {...props} />,
 };
 
@@ -96,10 +151,10 @@ export const MDXRenderer: FC<MDXRendererPropType> = ({ text, resetKey, format, b
   const [state, setState] = useState<{
     component: ReactNode;
     resetKey: number;
-  }>({
+  }>(() => ({
     component: <CircularProgress />,
     resetKey: Math.random(),
-  });
+  }));
 
   const setRenderResult = (component: ReactNode) => setState((prev) => ({ ...prev, component: component }));
   const setRandomResetKey = () => setState((prev) => ({ ...prev, resetKey: Math.random() }));
@@ -121,13 +176,7 @@ export const MDXRenderer: FC<MDXRendererPropType> = ({ text, resetKey, format, b
           baseUrl,
           remarkPlugins: [remarkGfm],
         });
-        setRenderResult(
-          <RenderResult
-            components={muiComponents({
-              overrides: { ...CustomMDXComponents, ...(mdxComponents || {}) },
-            })}
-          />
-        );
+        setRenderResult(<RenderResult components={{ ...DefaultMUIMDXComponents, ...CustomMDXComponents, ...(mdxComponents || {}) }} />);
       } catch (error) {
         setRenderResult(<ErrorFallback error={error as Error} reset={setRandomResetKey} />);
       }

@@ -1,6 +1,7 @@
-import { PrimaryStyledDetails, SecondaryStyledDetails } from "@frontend/common/components/mdx_components";
 import { Chip, Stack, Table, TableBody, TableCell, TableRow } from "@mui/material";
 import { FC } from "react";
+
+import { PrimaryStyledDetails, SecondaryStyledDetails } from "@frontend/common/components/mdx_components";
 const HighlightedChip: FC<{ label: string }> = ({ label }) => (
   <Chip
     label={label}

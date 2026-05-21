@@ -1,6 +1,3 @@
-import { FallbackImage, MDXRenderer } from "@frontend/common/components";
-import { OneDetailsOpener, PrimaryStyledDetails } from "@frontend/common/components/mdx_components";
-import { useCommonContext } from "@frontend/common/hooks/useCommonContext";
 import { Close } from "@mui/icons-material";
 import {
   AccordionProps,
@@ -32,6 +29,9 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { isEmpty, isNullish, isNumber, isString } from "remeda";
 
+import { FallbackImage, MDXRenderer } from "@frontend/common/components";
+import { OneDetailsOpener, PrimaryStyledDetails } from "@frontend/common/components/mdx_components";
+import { useCommonContext } from "@frontend/common/hooks/useCommonContext";
 import { formatBackendErrorMessage } from "@frontend/shop/apis";
 import { CustomerInfoFormDialog, OptionGroupInput, PriceDisplay, SignInGuard } from "@frontend/shop/components/common";
 import { useAddItemToCartMutation, usePrepareOneItemOrderMutation, useProducts, useShopClient, useShopContext } from "@frontend/shop/hooks";
@@ -427,93 +427,91 @@ type ProductListStateType = {
   oneItemOrderData?: CartItemAppendRequest;
 };
 
-export const ProductList: FC<ProductListQueryParams> = (qs) => {
-  const WrappedProductList: FC = () => {
-    const queryClient = useQueryClient();
-    const navigate = useNavigate();
-    const { language, shopImpAccountId } = useShopContext();
-    const shopAPIClient = useShopClient();
-    const oneItemOrderStartMutation = usePrepareOneItemOrderMutation(shopAPIClient);
-    const { data } = useProducts(shopAPIClient, qs);
+const WrappedProductList: FC<ProductListQueryParams> = (qs) => {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { language, shopImpAccountId } = useShopContext();
+  const shopAPIClient = useShopClient();
+  const oneItemOrderStartMutation = usePrepareOneItemOrderMutation(shopAPIClient);
+  const { data } = useProducts(shopAPIClient, qs);
 
-    const [state, setState] = useState<ProductListStateType>({
-      openDialog: false,
-      openBackdrop: false,
-      resetKey: Math.random().toString(36).substring(2),
-    });
+  const [state, setState] = useState<ProductListStateType>(() => ({
+    openDialog: false,
+    openBackdrop: false,
+    resetKey: Math.random().toString(36).substring(2),
+  }));
 
-    const foldAll = () => setState((ps) => ({ ...ps, resetKey: Math.random().toString(36).substring(2) }));
-    const openDialog = () => setState((ps) => ({ ...ps, openDialog: true }));
-    const closeDialog = () => setState((ps) => ({ ...ps, openDialog: false }));
-    const openBackdrop = () => setState((ps) => ({ ...ps, openBackdrop: true }));
-    const closeBackdrop = () => setState((ps) => ({ ...ps, openBackdrop: false }));
-    const setProductDataAndOpenDialog = (oneItemOrderData: CartItemAppendRequest) => {
-      // 부모 리렌더링에 따른 form 상태 초기화를 숨기기 위해 accordion을 닫습니다.
-      // TODO: FIXME: form 상태가 애초에 초기화되면 안됩니다. form 내부 값을 초기화되지 않도록 막고, 접히지 않도록 하세요.
-      foldAll();
-      setState((ps) => ({ ...ps, oneItemOrderData }));
-      openDialog();
-    };
+  const foldAll = () => setState((ps) => ({ ...ps, resetKey: Math.random().toString(36).substring(2) }));
+  const openDialog = () => setState((ps) => ({ ...ps, openDialog: true }));
+  const closeDialog = () => setState((ps) => ({ ...ps, openDialog: false }));
+  const openBackdrop = () => setState((ps) => ({ ...ps, openBackdrop: true }));
+  const closeBackdrop = () => setState((ps) => ({ ...ps, openBackdrop: false }));
+  const setProductDataAndOpenDialog = (oneItemOrderData: CartItemAppendRequest) => {
+    // 부모 리렌더링에 따른 form 상태 초기화를 숨기기 위해 accordion을 닫습니다.
+    // TODO: FIXME: form 상태가 애초에 초기화되면 안됩니다. form 내부 값을 초기화되지 않도록 막고, 접히지 않도록 하세요.
+    foldAll();
+    setState((ps) => ({ ...ps, oneItemOrderData }));
+    openDialog();
+  };
 
-    const pleaseRetryStr = language === "ko" ? "\n잠시 후 다시 시도해주세요." : "\nPlease try again later.";
-    const failedToOrderStr = language === "ko" ? `결제에 실패했습니다.${pleaseRetryStr}\n` : `Failed to complete the payment.${pleaseRetryStr}\n`;
-    const orderErrorStr =
-      language === "ko" ? `결제 준비 중 문제가 발생했습니다,${pleaseRetryStr}` : `An error occurred while preparing the payment,${pleaseRetryStr}`;
+  const pleaseRetryStr = language === "ko" ? "\n잠시 후 다시 시도해주세요." : "\nPlease try again later.";
+  const failedToOrderStr = language === "ko" ? `결제에 실패했습니다.${pleaseRetryStr}\n` : `Failed to complete the payment.${pleaseRetryStr}\n`;
+  const orderErrorStr =
+    language === "ko" ? `결제 준비 중 문제가 발생했습니다,${pleaseRetryStr}` : `An error occurred while preparing the payment,${pleaseRetryStr}`;
 
-    const onFormSubmit = (customer_info: CustomerInfo) => {
-      if (!state.oneItemOrderData) return;
+  const onFormSubmit = (customer_info: CustomerInfo) => {
+    if (!state.oneItemOrderData) return;
 
-      closeDialog();
-      openBackdrop();
-      oneItemOrderStartMutation.mutate(
-        { ...state.oneItemOrderData, customer_info: customer_info },
-        {
-          onSuccess: (order: Order) => {
-            startPortOnePurchase(
-              shopImpAccountId,
-              order,
-              () => {
-                queryClient.invalidateQueries();
-                queryClient.resetQueries();
-                navigate("/store/thank-you-for-your-purchase");
-              },
-              (response) => alert(failedToOrderStr + response.error_msg),
-              closeBackdrop
-            );
-          },
-          onError: (error) => alert(formatBackendErrorMessage(error, orderErrorStr)),
-        }
-      );
-    };
-
-    return (
-      <>
-        <CustomerInfoFormDialog open={state.openDialog} closeFunc={closeDialog} onSubmit={onFormSubmit} />
-        <OneDetailsOpener resetKey={state.resetKey}>
-          {data.map((p) => (
-            <FoldableProductItem
-              disabled={oneItemOrderStartMutation.isPending}
-              language={language}
-              key={p.id}
-              product={p}
-              startPurchaseProcess={setProductDataAndOpenDialog}
-            />
-          ))}
-        </OneDetailsOpener>
-      </>
+    closeDialog();
+    openBackdrop();
+    oneItemOrderStartMutation.mutate(
+      { ...state.oneItemOrderData, customer_info: customer_info },
+      {
+        onSuccess: (order: Order) => {
+          startPortOnePurchase(
+            shopImpAccountId,
+            order,
+            () => {
+              queryClient.invalidateQueries();
+              queryClient.resetQueries();
+              navigate("/store/thank-you-for-your-purchase");
+            },
+            (response) => alert(failedToOrderStr + response.error_msg),
+            closeBackdrop
+          );
+        },
+        onError: (error) => alert(formatBackendErrorMessage(error, orderErrorStr)),
+      }
     );
   };
 
   return (
-    <ErrorBoundary fallback={<div>상품 목록을 불러오는 중 문제가 발생했습니다.</div>}>
-      <Suspense fallback={<CircularProgress />}>
-        <Stack spacing={2}>
-          <WrappedProductList />
-        </Stack>
-      </Suspense>
-    </ErrorBoundary>
+    <>
+      <CustomerInfoFormDialog open={state.openDialog} closeFunc={closeDialog} onSubmit={onFormSubmit} />
+      <OneDetailsOpener resetKey={state.resetKey}>
+        {data.map((p) => (
+          <FoldableProductItem
+            disabled={oneItemOrderStartMutation.isPending}
+            language={language}
+            key={p.id}
+            product={p}
+            startPurchaseProcess={setProductDataAndOpenDialog}
+          />
+        ))}
+      </OneDetailsOpener>
+    </>
   );
 };
+
+export const ProductList: FC<ProductListQueryParams> = (qs) => (
+  <ErrorBoundary fallback={<div>상품 목록을 불러오는 중 문제가 발생했습니다.</div>}>
+    <Suspense fallback={<CircularProgress />}>
+      <Stack spacing={2}>
+        <WrappedProductList {...qs} />
+      </Stack>
+    </Suspense>
+  </ErrorBoundary>
+);
 
 type ProductImageCardListStateType = {
   openProductDialog: boolean;
@@ -523,96 +521,94 @@ type ProductImageCardListStateType = {
   oneItemOrderData?: CartItemAppendRequest;
 };
 
-export const ProductImageCardList: FC<ProductListQueryParams> = (qs) => {
-  const WrappedProductImageCardList: FC = () => {
-    const queryClient = useQueryClient();
-    const navigate = useNavigate();
-    const { language, shopImpAccountId } = useShopContext();
-    const shopAPIClient = useShopClient();
-    const oneItemOrderStartMutation = usePrepareOneItemOrderMutation(shopAPIClient);
-    const { data } = useProducts(shopAPIClient, qs);
+const WrappedProductImageCardList: FC<ProductListQueryParams> = (qs) => {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { language, shopImpAccountId } = useShopContext();
+  const shopAPIClient = useShopClient();
+  const oneItemOrderStartMutation = usePrepareOneItemOrderMutation(shopAPIClient);
+  const { data } = useProducts(shopAPIClient, qs);
 
-    const [state, setState] = useState<ProductImageCardListStateType>({
-      openProductDialog: false,
-      openCustomerInfoDialog: false,
-      openBackdrop: false,
-    });
+  const [state, setState] = useState<ProductImageCardListStateType>({
+    openProductDialog: false,
+    openCustomerInfoDialog: false,
+    openBackdrop: false,
+  });
 
-    const openProductDialog = (product: Product) => setState((ps) => ({ ...ps, product, openProductDialog: true }));
-    const closeProductDialog = () => setState((ps) => ({ ...ps, openProductDialog: false }));
-    const openCustomerInfoDialog = () => setState((ps) => ({ ...ps, openCustomerInfoDialog: true }));
-    const closeCustomerInfoDialog = () => setState((ps) => ({ ...ps, openCustomerInfoDialog: false }));
-    const openBackdrop = () => setState((ps) => ({ ...ps, openBackdrop: true }));
-    const closeBackdrop = () => setState((ps) => ({ ...ps, openBackdrop: false }));
-    const setProductDataAndOpenDialog = (oneItemOrderData: CartItemAppendRequest) => {
-      closeProductDialog();
-      setState((ps) => ({ ...ps, oneItemOrderData }));
-      openCustomerInfoDialog();
-    };
+  const openProductDialog = (product: Product) => setState((ps) => ({ ...ps, product, openProductDialog: true }));
+  const closeProductDialog = () => setState((ps) => ({ ...ps, openProductDialog: false }));
+  const openCustomerInfoDialog = () => setState((ps) => ({ ...ps, openCustomerInfoDialog: true }));
+  const closeCustomerInfoDialog = () => setState((ps) => ({ ...ps, openCustomerInfoDialog: false }));
+  const openBackdrop = () => setState((ps) => ({ ...ps, openBackdrop: true }));
+  const closeBackdrop = () => setState((ps) => ({ ...ps, openBackdrop: false }));
+  const setProductDataAndOpenDialog = (oneItemOrderData: CartItemAppendRequest) => {
+    closeProductDialog();
+    setState((ps) => ({ ...ps, oneItemOrderData }));
+    openCustomerInfoDialog();
+  };
 
-    const pleaseRetryStr = language === "ko" ? "\n잠시 후 다시 시도해주세요." : "\nPlease try again later.";
-    const failedToOrderStr = language === "ko" ? `결제에 실패했습니다.${pleaseRetryStr}\n` : `Failed to complete the payment.${pleaseRetryStr}\n`;
-    const orderErrorStr =
-      language === "ko" ? `결제 준비 중 문제가 발생했습니다,${pleaseRetryStr}` : `An error occurred while preparing the payment,${pleaseRetryStr}`;
+  const pleaseRetryStr = language === "ko" ? "\n잠시 후 다시 시도해주세요." : "\nPlease try again later.";
+  const failedToOrderStr = language === "ko" ? `결제에 실패했습니다.${pleaseRetryStr}\n` : `Failed to complete the payment.${pleaseRetryStr}\n`;
+  const orderErrorStr =
+    language === "ko" ? `결제 준비 중 문제가 발생했습니다,${pleaseRetryStr}` : `An error occurred while preparing the payment,${pleaseRetryStr}`;
 
-    const onFormSubmit = (customer_info: CustomerInfo) => {
-      if (!state.oneItemOrderData) return;
+  const onFormSubmit = (customer_info: CustomerInfo) => {
+    if (!state.oneItemOrderData) return;
 
-      closeCustomerInfoDialog();
-      openBackdrop();
-      oneItemOrderStartMutation.mutate(
-        { ...state.oneItemOrderData, customer_info: customer_info },
-        {
-          onSuccess: (order: Order) => {
-            startPortOnePurchase(
-              shopImpAccountId,
-              order,
-              () => {
-                queryClient.invalidateQueries();
-                queryClient.resetQueries();
-                navigate("/store/thank-you-for-your-purchase");
-              },
-              (response) => alert(failedToOrderStr + response.error_msg),
-              closeBackdrop
-            );
-          },
-          onError: (error) => alert(formatBackendErrorMessage(error, orderErrorStr)),
-        }
-      );
-    };
-
-    return (
-      <>
-        <CustomerInfoFormDialog open={state.openCustomerInfoDialog} closeFunc={closeCustomerInfoDialog} onSubmit={onFormSubmit} />
-        <DialogedProductItem
-          open={state.openProductDialog}
-          onClose={closeProductDialog}
-          language={language}
-          product={state.product}
-          startPurchaseProcess={setProductDataAndOpenDialog}
-        />
-        <Grid>
-          {data.map((p) => (
-            <ProductImageCard
-              disabled={oneItemOrderStartMutation.isPending}
-              language={language}
-              key={p.id}
-              product={p}
-              showDetail={openProductDialog}
-            />
-          ))}
-        </Grid>
-      </>
+    closeCustomerInfoDialog();
+    openBackdrop();
+    oneItemOrderStartMutation.mutate(
+      { ...state.oneItemOrderData, customer_info: customer_info },
+      {
+        onSuccess: (order: Order) => {
+          startPortOnePurchase(
+            shopImpAccountId,
+            order,
+            () => {
+              queryClient.invalidateQueries();
+              queryClient.resetQueries();
+              navigate("/store/thank-you-for-your-purchase");
+            },
+            (response) => alert(failedToOrderStr + response.error_msg),
+            closeBackdrop
+          );
+        },
+        onError: (error) => alert(formatBackendErrorMessage(error, orderErrorStr)),
+      }
     );
   };
 
   return (
-    <ErrorBoundary fallback={<div>상품 목록을 불러오는 중 문제가 발생했습니다.</div>}>
-      <Suspense fallback={<CircularProgress />}>
-        <Stack spacing={2}>
-          <WrappedProductImageCardList />
-        </Stack>
-      </Suspense>
-    </ErrorBoundary>
+    <>
+      <CustomerInfoFormDialog open={state.openCustomerInfoDialog} closeFunc={closeCustomerInfoDialog} onSubmit={onFormSubmit} />
+      <DialogedProductItem
+        open={state.openProductDialog}
+        onClose={closeProductDialog}
+        language={language}
+        product={state.product}
+        startPurchaseProcess={setProductDataAndOpenDialog}
+      />
+      <Grid>
+        {data.map((p) => (
+          <ProductImageCard
+            disabled={oneItemOrderStartMutation.isPending}
+            language={language}
+            key={p.id}
+            product={p}
+            showDetail={openProductDialog}
+          />
+        ))}
+      </Grid>
+    </>
   );
 };
+
+export const ProductImageCardList: FC<ProductListQueryParams> = (qs) => (
+  <ErrorBoundary fallback={<div>상품 목록을 불러오는 중 문제가 발생했습니다.</div>}>
+    <Suspense fallback={<CircularProgress />}>
+      <Stack spacing={2}>
+        <WrappedProductImageCardList {...qs} />
+      </Stack>
+    </Suspense>
+  </ErrorBoundary>
+);
