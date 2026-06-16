@@ -9,6 +9,7 @@ import { FC, ReactNode, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { PageLayout } from "@apps/pyconkr-2026/components/layout/PageLayout";
+import { PENDING_REDIRECT_KEY } from "@apps/pyconkr-2026/consts/local_stroage";
 import { useAppContext } from "@apps/pyconkr-2026/contexts/app_context";
 
 type PageeStateType = {
@@ -18,6 +19,19 @@ type PageeStateType = {
 type OAuthErrorType = {
   error: string;
   errorProcess: string | null;
+};
+
+/** sessionStorage에 저장된 복귀 URL을 검증해 same-origin 라우터 경로로 변환합니다. (open-redirect 방지) */
+const toSafeRedirectPath = (raw: string | null): string | null => {
+  if (!raw) return null;
+  try {
+    const url = new URL(raw, window.location.origin);
+    if (url.origin !== window.location.origin) return null;
+    if (url.pathname === "/account/sign-in") return null;
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return null;
+  }
 };
 
 export const ShopSignInPage: FC = Suspense.with({ fallback: <CircularProgress /> }, () => {
@@ -38,7 +52,15 @@ export const ShopSignInPage: FC = Suspense.with({ fallback: <CircularProgress />
   const triggerSignIn = (provider: "google" | "kakao" | "naver") => {
     setOauthError(null);
     setState((ps) => ({ ...ps, openBackdrop: true }));
-    SignInMutation.mutate({ provider, callback_url: window.location.origin });
+    let pending: string | null = null;
+    try {
+      pending = sessionStorage.getItem(PENDING_REDIRECT_KEY);
+    } catch {
+      pending = null;
+    }
+    // 복귀할 위치가 있으면 로그인 페이지로 되돌아와 stash를 소비한다(아래 effect). 없으면 기존처럼 origin으로.
+    const callbackUrl = toSafeRedirectPath(pending) ? `${window.location.origin}/account/sign-in` : window.location.origin;
+    SignInMutation.mutate({ provider, callback_url: callbackUrl });
   };
   const signInWithGoogle = () => triggerSignIn("google");
   const signInWithKakao = () => triggerSignIn("kakao");
@@ -53,6 +75,12 @@ export const ShopSignInPage: FC = Suspense.with({ fallback: <CircularProgress />
     const params = new URLSearchParams(window.location.search);
     const error = params.get("error");
     if (!error) return;
+    try {
+      // 로그인 시도가 실패했으므로 보류 중이던 복귀 위치를 폐기합니다. (stale redirect 방지)
+      sessionStorage.removeItem(PENDING_REDIRECT_KEY);
+    } catch {
+      // sessionStorage 미지원/차단 시 무시
+    }
     setOauthError({ error, errorProcess: params.get("error_process") });
     params.delete("error");
     params.delete("error_process");
@@ -62,6 +90,18 @@ export const ShopSignInPage: FC = Suspense.with({ fallback: <CircularProgress />
 
   useEffect(() => {
     if (data && data.meta.is_authenticated) {
+      let pending: string | null = null;
+      try {
+        pending = sessionStorage.getItem(PENDING_REDIRECT_KEY);
+        sessionStorage.removeItem(PENDING_REDIRECT_KEY);
+      } catch {
+        pending = null;
+      }
+      const redirectPath = toSafeRedirectPath(pending);
+      if (redirectPath) {
+        navigate(redirectPath, { replace: true });
+        return;
+      }
       addSnackbar(
         language === "ko" ? `이미 ${data.data.user.username}님으로 로그인되어 있습니다!` : `You are already signed in as ${data.data.user.username}!`,
         "success"

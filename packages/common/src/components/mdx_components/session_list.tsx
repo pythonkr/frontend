@@ -18,7 +18,8 @@ const SessionItem: FC<{
   enableLink?: boolean;
   fallbackImage?: ReactNode;
   getSessionUrl?: (session: SessionSchema) => string;
-}> = Suspense.with({ fallback: <CircularProgress /> }, ({ session, enableLink, fallbackImage, getSessionUrl }) => {
+  renderSessionAction?: (session: SessionSchema) => ReactNode;
+}> = Suspense.with({ fallback: <CircularProgress /> }, ({ session, enableLink, fallbackImage, getSessionUrl, renderSessionAction }) => {
   const sessionTitle = session.title.replace("\\n", "\n");
 
   let speakerImgSrc = session.image || "";
@@ -60,9 +61,22 @@ const SessionItem: FC<{
       </Stack>
     </SessionItemContainer>
   );
+  const linkedResult =
+    enableLink && sessionDetailedUrl ? <Link to={sessionDetailedUrl} style={{ textDecoration: "none" }} children={result} /> : result;
   return (
     <>
-      {enableLink && sessionDetailedUrl ? <Link to={sessionDetailedUrl} style={{ textDecoration: "none" }} children={result} /> : result}
+      {renderSessionAction ? (
+        <Stack direction="row" alignItems="center" sx={{ width: "100%" }}>
+          <Box sx={{ flexGrow: 1, minWidth: 0 }} children={linkedResult} />
+          <Box
+            sx={{ flexShrink: 0, pl: 1, pr: { xs: 1, md: 2 } }}
+            onClick={(event) => event.stopPropagation()}
+            children={renderSessionAction(session)}
+          />
+        </Stack>
+      ) : (
+        linkedResult
+      )}
       <StyledDivider />
     </>
   );
@@ -74,11 +88,12 @@ type SessionListPropType = {
   enableLink?: boolean;
   fallbackImage?: ReactNode;
   getSessionUrl?: (session: SessionSchema) => string;
+  renderSessionAction?: (session: SessionSchema) => ReactNode;
 };
 
 export const SessionList: FC<SessionListPropType> = ErrorBoundary.with(
   { fallback: ErrorFallback },
-  Suspense.with({ fallback: <CircularProgress /> }, ({ event, types, enableLink, fallbackImage, getSessionUrl }) => {
+  Suspense.with({ fallback: <CircularProgress /> }, ({ event, types, enableLink, fallbackImage, getSessionUrl, renderSessionAction }) => {
     const { language } = Common.useCommonContext();
     const backendAPIClient = BackendAPI.useBackendClient();
     const params = { ...(event && { event }), ...(types && { types: isString(types) ? types : types.join(",") }) };
@@ -129,7 +144,14 @@ export const SessionList: FC<SessionListPropType> = ErrorBoundary.with(
           )}
         </Box>
         {filteredSessions.map((s) => (
-          <SessionItem key={s.id} session={s} enableLink={enableLink} fallbackImage={fallbackImage} getSessionUrl={getSessionUrl} />
+          <SessionItem
+            key={s.id}
+            session={s}
+            enableLink={enableLink}
+            fallbackImage={fallbackImage}
+            getSessionUrl={getSessionUrl}
+            renderSessionAction={renderSessionAction}
+          />
         ))}
       </Box>
     );

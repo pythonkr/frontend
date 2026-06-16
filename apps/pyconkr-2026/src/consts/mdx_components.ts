@@ -149,6 +149,9 @@ import {
 } from "@mui/material";
 import type { MDXComponents } from "mdx/types.js";
 import { ComponentProps, FC, createElement } from "react";
+
+import { SessionScheduleToggleButton } from "../features/schedule/toggle_schedule_button";
+import { getSessionUrl } from "./session_url";
 const MUIMDXComponents: MDXComponents = {
   Mui__material__Accordion: Accordion,
   Mui__material__AccordionActions: AccordionActions,
@@ -275,14 +278,6 @@ const MUIMDXComponents: MDXComponents = {
   Mui__material__Zoom: Zoom,
 };
 
-const getPyConKR2025SessionUrl = (session: SessionSchema): string => {
-  const urlSafeTitle = session.title
-    .replace(/ /g, "-")
-    .replace(/([.])/g, "_")
-    .replace(/(?![.0-9A-Za-zㄱ-ㅣ가-힣-])./g, "");
-  return `/presentations/${session.id}#${urlSafeTitle}`;
-};
-
 const PyConKR2025FallbackImage = createElement("img", {
   src: PyCon2025Logo,
   alt: "PyCon 2025 Logo",
@@ -293,13 +288,14 @@ const PyConKR2025SessionList: FC<ComponentProps<typeof SessionList>> = (props) =
   createElement(SessionList, {
     ...props,
     fallbackImage: PyConKR2025FallbackImage,
-    getSessionUrl: getPyConKR2025SessionUrl,
+    getSessionUrl,
+    renderSessionAction: (session: SessionSchema) => createElement(SessionScheduleToggleButton, { session }),
   });
 
 const PyConKR2025SessionTimeTable: FC<ComponentProps<typeof SessionTimeTable>> = (props) =>
   createElement(SessionTimeTable, {
     ...props,
-    getSessionUrl: getPyConKR2025SessionUrl,
+    getSessionUrl,
   });
 
 const PyConKR2025MobileAccordion: FC<object> = () =>

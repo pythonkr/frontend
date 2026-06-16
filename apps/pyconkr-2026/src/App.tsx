@@ -7,6 +7,7 @@ import { isEmpty, isNullish } from "remeda";
 
 import { EVENT_NAME } from "./consts";
 import { useAppContext } from "./contexts/app_context";
+import { AuthGuardModalProvider } from "./features/auth/auth_guard";
 
 export const App: FC = () => {
   const backendAPIClient = useBackendClient();
@@ -41,7 +42,9 @@ export const App: FC = () => {
   return (
     <>
       <ScrollRestoration />
-      <Outlet />
+      <AuthGuardModalProvider>
+        <Outlet />
+      </AuthGuardModalProvider>
     </>
   );
 };
