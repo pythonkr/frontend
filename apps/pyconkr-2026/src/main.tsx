@@ -14,6 +14,7 @@ import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import "./main.css";
 
+import { FontSwitcher } from "./components/FontSwitcher.tsx";
 import { IS_DEBUG_ENV } from "./consts";
 import { LOCAL_STORAGE_LANGUAGE_KEY } from "./consts/local_stroage.ts";
 import { PyConKRMDXComponents } from "./consts/mdx_components.ts";
@@ -98,6 +99,7 @@ export const MainApp: FC = () => {
                     <ThemeProvider theme={muiTheme}>
                       <CssBaseline />
                       <Global styles={globalStyles} />
+                      <FontSwitcher />
                       <RouterProvider router={router} />
                     </ThemeProvider>
                   </Suspense>

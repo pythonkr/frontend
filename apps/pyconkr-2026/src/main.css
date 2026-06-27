@@ -16,3 +16,98 @@
   unicode-range: U+0030-0039; /* 숫자 */
   size-adjust: 120%;
 }
+
+/* exqt 가로 확장본 (글리프를 x축으로만 늘려 ㅏㅓㅑㅕ 곁가지가 길어지도록 재생성. 세로/행간 불변) */
+@font-face {
+  font-family: "exqtWide12";
+  src: url("assets/fonts/exqt_wide12.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "exqtWide135";
+  src: url("assets/fonts/exqt_wide135.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "exqtWide15";
+  src: url("assets/fonts/exqt_wide15.ttf") format("truetype");
+}
+
+/* 가독성 비교용 후보 폰트들 (상단 FontSwitcher select에서 전환) */
+@font-face {
+  font-family: "RoundedFixedsys"; /* 둥근모꼴+Fixedsys, https://noonnu.cc/font_page/250 */
+  src: url("assets/fonts/dunggeunmo.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PFStardust"; /* PF스타더스트 3.0, https://noonnu.cc/font_page/1614 */
+  src: url("assets/fonts/pfstardust.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Galmuri9"; /* 갈무리9 (OFL), https://galmuri.quiple.dev */
+  src: url("assets/fonts/galmuri9.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Galmuri11"; /* 갈무리11 (OFL, 닌텐도DS 스타일) */
+  src: url("assets/fonts/galmuri11.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Galmuri14"; /* 갈무리14 (OFL, 큰 크기) */
+  src: url("assets/fonts/galmuri14.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "NeoDunggeunmo"; /* Neo둥근모 (OFL), https://github.com/neodgm/neodgm */
+  src: url("assets/fonts/neodgm.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Mulmaru"; /* 물마루 (OFL), https://github.com/mushsooni/mulmaru */
+  src: url("assets/fonts/mulmaru.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "GalmuriMono11"; /* 갈무리Mono11 (OFL, 고정폭) */
+  src: url("assets/fonts/galmuri-mono11.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Galmuri11Condensed"; /* 갈무리11 Condensed (OFL, 좁은 폭) */
+  src: url("assets/fonts/galmuri11-condensed.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MaruMinya"; /* 마루민야 x12y12 (OFL), https://github.com/quiple/x12y12pxMaruMinyaHangul */
+  src: url("assets/fonts/maruminya.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DOSGothic"; /* DOS고딕 (MIT), https://noonnu.cc/font_page/239 */
+  src: url("assets/fonts/dosgothic.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DOSSaemmul"; /* DOS샘물 (MIT), https://noonnu.cc/font_page/240 */
+  src: url("assets/fonts/dossaemmul.woff") format("woff");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DOSMyungjo"; /* DOS명조 (MIT, 픽셀 명조), https://noonnu.cc/font_page/238 */
+  src: url("assets/fonts/dosmyungjo.woff") format("woff");
+  font-display: swap;
+}
