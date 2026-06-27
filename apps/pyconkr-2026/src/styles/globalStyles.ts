@@ -3,8 +3,13 @@ import { createTheme } from "@mui/material/styles";
 
 export const muiTheme = createTheme({
   typography: {
-    fontFamily:
-      'exqtEnglish, exqtNumber, exqt, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif',
+    // 실제 폰트 스택은 CSS 변수 --app-font 로 주입(상단 FontSwitcher select에서 전환). 기본값은 :root 에 정의.
+    fontFamily: "var(--app-font)",
+    // exqt 폰트의 자간이 좁아 가독성이 떨어지므로 모든 Typography variant의 자간을 통일해 넓힘.
+    // (line-height는 variant별 기본값을 유지하기 위해 의도적으로 지정하지 않음)
+    allVariants: {
+      letterSpacing: "0.04em",
+    },
   },
   palette: {
     mode: "dark",
@@ -117,29 +122,22 @@ export const muiTheme = createTheme({
 export const globalStyles = css`
   @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
 
+  /* 기본 폰트 스택. FontSwitcher select가 document.documentElement 의 --app-font 를 덮어써 전환한다. */
+  :root {
+    --app-font:
+      "exqtEnglish", "exqtNumber", "exqt", "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI",
+      "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+  }
+
   html,
   body {
-    font-family:
-      "exqtEnglish",
-      "exqtNumber",
-      "exqt",
-      "Pretendard",
-      -apple-system,
-      BlinkMacSystemFont,
-      system-ui,
-      Roboto,
-      "Helvetica Neue",
-      "Segoe UI",
-      "Apple SD Gothic Neo",
-      "Noto Sans KR",
-      "Malgun Gothic",
-      "Apple Color Emoji",
-      "Segoe UI Emoji",
-      "Segoe UI Symbol",
-      sans-serif;
+    font-family: var(--app-font);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     -webkit-touch-callout: none;
+
+    letter-spacing: 0.04em;
+    line-height: 1.7;
 
     overscroll-behavior: none;
     word-break: keep-all;
