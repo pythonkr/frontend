@@ -42,7 +42,7 @@ const InnerCartBadgeButton: FC<InnerCartBadgeButtonPropType> = ({ loading, count
 const CartBadgeButtonContent: FC<CartBadgeButtonProps> = ({ onClose }) => {
   const shopAPIClient = useShopClient();
   const { data: cart } = useCart(shopAPIClient);
-  return <InnerCartBadgeButton count={cart?.products.length} loading={false} onClose={onClose} />;
+  return <InnerCartBadgeButton count={cart?.products?.length} loading={false} onClose={onClose} />;
 };
 
 export const CartBadgeButton: FC<CartBadgeButtonProps> = ({ onClose }) => (

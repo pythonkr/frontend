@@ -67,8 +67,7 @@ export default function Footer() {
   const corpCheckBtnStr = language === "ko" ? "사업자 정보 확인" : "Check Business Registration Information";
   const corpMailOrderSalesRegistrationNumberStr =
     language === "ko" ? "통신 판매 번호 : 2023-서울강남-03501" : "Mail Order Sales Registration Number : 2023-SEOUL-GANGNAM-03501";
-  const hostingProviderStr =
-    language === "ko" ? "호스팅 제공자 : Amazon Web Services(Korea LLC)" : "Hosting Provider : Amazon Web Services(Korea LLC)";
+  const hostingProviderStr = language === "ko" ? "호스팅 제공자 : (주) 스마일서브 (iwinv)" : "Hosting Provider : SMILESERV Co., Ltd. (iwinv)";
   const contractEmailStr = language === "ko" ? "문의: " : "Contact: ";
   const copyrightStr = language === "ko" ? "© 2025, 사단법인 파이썬사용자모임, All rights reserved." : "© 2025, Python Korea, All rights reserved.";
 

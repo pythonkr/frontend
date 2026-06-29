@@ -4,15 +4,15 @@ import { useCommonContext } from "@frontend/common/hooks/useCommonContext";
 import { Box, Chip, CircularProgress, Divider, Stack, styled, Table, TableBody, TableCell, TableRow, Typography } from "@mui/material";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { DateTime } from "luxon";
-import { CSSProperties, FC, useEffect } from "react";
+import { CSSProperties, FC, ReactNode, useEffect } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { isString } from "remeda";
 
-import PyCon2025Logo from "@apps/pyconkr-2025/assets/pyconkr2025_logo.png";
 import { PageLayout } from "@apps/pyconkr-2025/components/layout/PageLayout";
 import { useAppContext } from "@apps/pyconkr-2025/contexts/app_context";
 
 const PROFILE_IMAGE_SIZE = "7rem";
+const PROFILE_FALLBACK_IMAGE_STYLE: CSSProperties = { width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" };
 
 type SimplifiedSpeakerSchema = {
   id: string;
@@ -94,19 +94,23 @@ const ProfileImageStyle: CSSProperties = {
 
 const ProfileImage = styled(FallbackImage)(ProfileImageStyle);
 
-const ProfileImageErrorFallback: FC = () => (
+const ProfileImageErrorFallback: FC<{ children?: ReactNode }> = ({ children }) => (
   <Stack alignItems="center" justifyContent="center" sx={{ ...ProfileImageStyle }}>
-    <img src={PyCon2025Logo} alt="PyCon 2025 Logo" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
+    {children}
   </Stack>
 );
 
-const PresentationSpeakerItem: FC<{ speaker: SimplifiedSpeakerSchema }> = ({ speaker }) => {
+const PresentationSpeakerItem: FC<{ speaker: SimplifiedSpeakerSchema; fallbackImage?: ReactNode }> = ({ speaker, fallbackImage }) => {
   const { baseUrl, mdxComponents } = useCommonContext();
   return (
     <>
       <Stack direction="row" spacing={4} sx={{ px: 2, py: 1 }}>
         <ProfileImageContainer sx={{ flexGrow: 0 }}>
-          <ProfileImage alt="Speaker Image" src={speaker.image || ""} errorFallback={<ProfileImageErrorFallback />} />
+          <ProfileImage
+            alt="Speaker Image"
+            src={speaker.image || ""}
+            errorFallback={<ProfileImageErrorFallback>{fallbackImage}</ProfileImageErrorFallback>}
+          />
         </ProfileImageContainer>
         <Stack alignItems="flex-start" justifyContent="center" sx={{ flexGrow: 1 }}>
           <Typography variant="h4" fontWeight="700" fontSize="2rem" children={speaker.nickname} />
@@ -154,6 +158,11 @@ export const PresentationDetailPage: FC = ErrorBoundary.with(
     const { data: presentation } = useSessionQuery(backendClient, id || "");
 
     if (!id || !presentation) return <Navigate to="/" replace />;
+
+    const presentationEvent = presentation.presentation_type.event;
+    const speakerFallbackImage = presentationEvent.logo ? (
+      <img src={presentationEvent.logo} alt={presentationEvent.name} style={PROFILE_FALLBACK_IMAGE_STYLE} />
+    ) : undefined;
 
     const descriptionFallback = language === "ko" ? "해당 발표의 설명은 준비 중이에요!" : "Description of the presentation is under preparation!";
     const categoriesStr = language === "ko" ? "카테고리" : "Categories";
@@ -270,7 +279,7 @@ export const PresentationDetailPage: FC = ErrorBoundary.with(
             <Typography variant="h5" fontWeight="bold" sx={{ width: "100%", px: 2, py: 4 }} children={speakersStr} />
             <Stack spacing={2} sx={{ width: "100%", px: 3 }}>
               {presentation.speakers.map((speaker) => (
-                <PresentationSpeakerItem key={speaker.id} speaker={speaker as SimplifiedSpeakerSchema} />
+                <PresentationSpeakerItem key={speaker.id} speaker={speaker as SimplifiedSpeakerSchema} fallbackImage={speakerFallbackImage} />
               ))}
             </Stack>
           </>

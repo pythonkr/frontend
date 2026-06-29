@@ -1,6 +1,6 @@
 import { CenteredPage, CommonContextProvider } from "@frontend/common/components";
 import type { ContextOptions } from "@frontend/common/contexts";
-import { registerChunkLoadErrorReloadHandler } from "@frontend/common/utils";
+import { initFaro, registerChunkLoadErrorReloadHandler } from "@frontend/common/utils";
 import { CircularProgress, createTheme, CssBaseline, ThemeProvider } from "@mui/material";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { matchQuery, MutationCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -39,6 +39,7 @@ const muiTheme = createTheme();
 const backendApiDomain = import.meta.env.DEV ? "" : import.meta.env.VITE_PYCONKR_BACKEND_API_DOMAIN;
 
 const CommonOptions: ContextOptions = {
+  appType: "participant_portal",
   language: "ko",
   debug: IS_DEBUG_ENV,
   baseUrl: ".",
@@ -84,6 +85,15 @@ export const MainApp: FC = () => {
   );
 };
 
+initFaro({
+  enabled: import.meta.env.PROD,
+  url: import.meta.env.VITE_FARO_COLLECTOR_URL,
+  app: {
+    name: "pyconkr-participant-portal",
+    version: import.meta.env.VITE_APP_VERSION,
+    environment: import.meta.env.MODE as "development" | "production",
+  },
+});
 registerChunkLoadErrorReloadHandler();
 
 createRoot(document.getElementById("root")!).render(<MainApp />);

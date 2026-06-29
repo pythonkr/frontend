@@ -23,9 +23,9 @@ const InnerSocialAccountSection: FC<{ userId: string }> = ErrorBoundary.with(
   { fallback: ErrorFallback },
   Suspense.with({ fallback: <CircularProgress /> }, ({ userId }) => {
     const client = useBackendAdminClient();
-    const listQuery = useListPaginatedQuery<SocialAccountRow>(client, "allauth", "social-account", { user: userId });
+    const listQuery = useListPaginatedQuery<SocialAccountRow>(client, "allauth", "socialaccount", { user: userId });
     const items = listQuery.data?.results ?? [];
-    const removeMutation = useRemovePreparedMutation(client, "allauth", "social-account");
+    const removeMutation = useRemovePreparedMutation(client, "allauth", "socialaccount");
 
     const handleDelete = (id: number, label: string) => {
       if (
@@ -71,7 +71,7 @@ const InnerSocialAccountSection: FC<{ userId: string }> = ErrorBoundary.with(
               <TableRow key={sa.id} hover>
                 <TableCell>{sa.provider}</TableCell>
                 <TableCell>
-                  <Link to={`/allauth/social-account/${sa.id}`}>
+                  <Link to={`/allauth/socialaccount/${sa.id}`}>
                     <code>{sa.uid}</code>
                   </Link>
                 </TableCell>

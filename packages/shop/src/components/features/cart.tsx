@@ -77,6 +77,11 @@ type CartStatusStateType = {
   openBackdrop: boolean;
 };
 
+/**
+ * 로그인 사용자의 장바구니 상태를 보여주는 컴포넌트. 담긴 상품 목록·총 결제 금액·결제 버튼을 렌더하고,
+ * 상품 삭제와 (고객 정보 입력 후) 결제 진행까지 처리한다. 비로그인 시에는 로그인 안내를 보여준다.
+ * @example <Shop__Feature__CartStatus />
+ */
 export const CartStatus: FC = Suspense.with({ fallback: <CircularProgress /> }, () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();

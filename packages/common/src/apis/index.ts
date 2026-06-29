@@ -1,4 +1,5 @@
 import {
+  EventSchema,
   FlattenedSiteMapSchema,
   PageSchema,
   SessionQueryParameterSchema,
@@ -10,6 +11,7 @@ import {
 import { BackendAPIClient, BackendAPIClientError as _BackendAPIClientError } from "./client";
 
 export const BackendAPIClientError = _BackendAPIClientError;
+export const listEvents = (client: BackendAPIClient) => () => client.get<EventSchema[]>("v1/event/");
 export const listSiteMaps = (client: BackendAPIClient) => () => client.get<FlattenedSiteMapSchema[]>("v1/cms/sitemap/");
 export const retrievePage = (client: BackendAPIClient) => (id: string) => client.get<PageSchema>(`v1/cms/page/${id}/`);
 export const listSponsors = (client: BackendAPIClient, params?: SponsorQueryParameterSchema) => () =>

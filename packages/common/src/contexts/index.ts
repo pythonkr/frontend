@@ -1,6 +1,10 @@
 import { MDXComponents } from "mdx/types";
 import { createContext } from "react";
+
+export type AppType = "main" | "admin" | "participant_portal";
+
 export type ContextOptions = {
+  appType: AppType;
   language: "ko" | "en";
   frontendDomain?: string;
   baseUrl: string;
@@ -14,6 +18,7 @@ export type ContextOptions = {
 };
 
 export const context = createContext<ContextOptions>({
+  appType: "main",
   language: "ko",
   frontendDomain: "",
   baseUrl: "",

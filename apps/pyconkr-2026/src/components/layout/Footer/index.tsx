@@ -52,6 +52,7 @@ export default function Footer() {
   const { sendEmail } = useEmail();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const muiMd = theme.breakpoints.values.md;
 
   const { language } = useAppContext();
 
@@ -69,8 +70,7 @@ export default function Footer() {
   const corpCheckBtnStr = language === "ko" ? "사업자 정보 확인" : "Check Business Registration Information";
   const corpMailOrderSalesRegistrationNumberStr =
     language === "ko" ? "통신 판매 번호 : 2023-서울강남-03501" : "Mail Order Sales Registration Number : 2023-SEOUL-GANGNAM-03501";
-  const hostingProviderStr =
-    language === "ko" ? "호스팅 제공자 : Amazon Web Services(Korea LLC)" : "Hosting Provider : Amazon Web Services(Korea LLC)";
+  const hostingProviderStr = language === "ko" ? "호스팅 제공자 : (주) 스마일서브 (iwinv)" : "Hosting Provider : SMILESERV Co., Ltd. (iwinv)";
   const contractEmailStr = language === "ko" ? "문의: " : "Contact: ";
   const copyrightStr = language === "ko" ? "© 2026, 사단법인 파이썬사용자모임, All rights reserved." : "© 2026, Python Korea, All rights reserved.";
 
@@ -92,7 +92,7 @@ export default function Footer() {
   return (
     <FooterContainer>
       <FooterContent>
-        <FooterText>
+        <FooterText muiMd={muiMd}>
           <strong>{corpPasamoStr}</strong>
           <br />
           {corpAddressStr}
@@ -157,7 +157,7 @@ const FooterContainer = styled.footer`
   justify-content: center;
   width: 100%;
   max-height: 16rem;
-  padding: 1rem 0;
+  padding: 5rem 0 1rem;
 `;
 
 const FooterContent = styled.div`
@@ -168,7 +168,7 @@ const FooterContent = styled.div`
   gap: 0.75rem;
 `;
 
-const FooterText = styled.div`
+const FooterText = styled.div<{ muiMd: number }>`
   padding: 0 2rem;
   margin: 0.1rem;
 
@@ -195,6 +195,18 @@ const FooterText = styled.div`
 
   strong {
     font-size: 12pt;
+  }
+
+  @media (min-width: ${(props) => props.muiMd}px) {
+    font-size: 12pt;
+
+    a > button {
+      font-size: 10pt;
+    }
+
+    strong {
+      font-size: 15pt;
+    }
   }
 `;
 

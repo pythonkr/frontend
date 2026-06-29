@@ -467,8 +467,16 @@ const OrderItem: FC<OrderItemProps> = ({ order, disabled, ...props }) => {
   );
 };
 
-type OrderListProps = { groupByYear?: boolean };
+type OrderListProps = {
+  /** `true`면 주문을 연도별로 묶어서 보여준다. */
+  groupByYear?: boolean;
+};
 
+/**
+ * 로그인 사용자의 주문 내역 목록. 각 주문을 접이식으로 펼쳐 주문 정보·고객 정보·상품 목록을 보여주고,
+ * 환불(전체/단일)·영수증·참가확인서 발급·티켓 참가자 정보 수정을 처리한다. 비로그인 시 로그인 안내를 보여준다.
+ * @example <Shop__Feature__OrderList groupByYear />
+ */
 export const OrderList: FC<OrderListProps> = ({ groupByYear = false }) => {
   const WrappedOrderList: FC = () => {
     const { language } = useShopContext();

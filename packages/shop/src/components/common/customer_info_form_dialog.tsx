@@ -5,6 +5,7 @@ import { FC, MouseEventHandler, useRef } from "react";
 
 import { useShopClient, useShopContext, useUserStatus } from "@frontend/shop/hooks";
 import type { CustomerInfo } from "@frontend/shop/schemas";
+import { PHONE_REGEX } from "@frontend/shop/utils";
 
 type CustomerInfoFormDialogPropsType = {
   open: boolean;
@@ -63,7 +64,7 @@ export const CustomerInfoFormDialog: FC<CustomerInfoFormDialogPropsType> = Suspe
                 defaultValue={defaultValue?.phone}
                 slotProps={{
                   htmlInput: {
-                    pattern: new RegExp(/^((010-\d{4}-\d{4})|(\+\d{11,14}))$/, "i").source,
+                    pattern: PHONE_REGEX.source,
                     title: phoneValidationFailedStr,
                   },
                 }}

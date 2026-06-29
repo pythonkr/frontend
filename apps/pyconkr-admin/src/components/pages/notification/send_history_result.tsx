@@ -35,12 +35,11 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { BackendAdminSignInGuard } from "@apps/pyconkr-admin/components/elements/admin_signin_guard";
 import { ErrorFallback } from "@apps/pyconkr-admin/components/elements/error_fallback";
+import { NotificationChannel } from "@apps/pyconkr-admin/components/pages/notification/channels";
 import { addErrorSnackbar, addSnackbar } from "@apps/pyconkr-admin/utils/snackbar";
 
-type NotificationChannelApp = "notification/email" | "notification/kakao-alimtalk" | "notification/sms";
-
 type AdminNotificationHistoryEditorProps = {
-  app: NotificationChannelApp;
+  channel: NotificationChannel;
 };
 
 type NotificationStatus = "CREATED" | "SENDING" | "SENT" | "FAILED";
@@ -84,8 +83,6 @@ type NotificationHistorySchema = {
   sent_to_status_summary: NotificationHistorySentToStatusSummary;
 };
 
-const RESOURCE = "history";
-
 const STATUS_COLOR: Record<NotificationStatus, "info" | "warning" | "success" | "error"> = {
   CREATED: "info",
   SENDING: "warning",
@@ -96,16 +93,17 @@ const ReadOnlyFieldNames: (keyof NotificationHistorySchema)[] = ["id", "created_
 
 type SentToListItemProps = {
   item: NotificationHistorySentToSchema;
-  app: NotificationChannelApp;
+  app: string;
+  resource: string;
   historyId: string;
   selected: boolean;
   onSelect: (sentToId: string) => void;
 };
 
-const SentToListItem: FC<SentToListItemProps> = ({ item, app, historyId, selected, onSelect }) => {
+const SentToListItem: FC<SentToListItemProps> = ({ item, app, resource, historyId, selected, onSelect }) => {
   const [open, setOpen] = useState(false);
   const backendAdminClient = useBackendAdminClient();
-  const retryMutation = useRetrySentToMutation(backendAdminClient, app, RESOURCE, historyId, item.id);
+  const retryMutation = useRetrySentToMutation(backendAdminClient, app, resource, historyId, item.id);
 
   const handleClick = () => {
     setOpen((o) => !o);
@@ -163,12 +161,13 @@ const SentToListItem: FC<SentToListItemProps> = ({ item, app, historyId, selecte
 
 const InnerAdminNotificationHistoryEditor: FC<AdminNotificationHistoryEditorProps> = ErrorBoundary.with(
   { fallback: ErrorFallback },
-  Suspense.with({ fallback: <CircularProgress /> }, ({ app }) => {
+  Suspense.with({ fallback: <CircularProgress /> }, ({ channel }) => {
+    const { app, historyResource, templateResource } = channel;
     const navigate = useNavigate();
     const { id } = useParams<{ id?: string }>();
 
     const backendAdminClient = useBackendAdminClient();
-    const { data: retrievedData } = useRetrieveQuery<NotificationHistorySchema>(backendAdminClient, app, RESOURCE, id || "");
+    const { data: retrievedData } = useRetrieveQuery<NotificationHistorySchema>(backendAdminClient, app, historyResource, id || "");
     const [statusFilter, setStatusFilter] = useState<Record<NotificationStatus, boolean>>({
       CREATED: true,
       SENDING: true,
@@ -177,14 +176,14 @@ const InnerAdminNotificationHistoryEditor: FC<AdminNotificationHistoryEditorProp
     });
     const [selectedSentToId, setSelectedSentToId] = useState<string | null>(null);
     const [renderTab, setRenderTab] = useState<0 | 1>(0);
-    const renderQuery = useRenderSentToQuery(backendAdminClient, app, RESOURCE, id ?? "", selectedSentToId);
-    const retryHistoryMutation = useRetryHistoryMutation(backendAdminClient, app, RESOURCE, id ?? "");
+    const renderQuery = useRenderSentToQuery(backendAdminClient, app, historyResource, id ?? "", selectedSentToId);
+    const retryHistoryMutation = useRetryHistoryMutation(backendAdminClient, app, historyResource, id ?? "");
 
     if (!retrievedData) return null;
 
     const selectedItem = retrievedData.sent_to_list.find((s) => s.id === selectedSentToId) ?? null;
-    const onClose = () => navigate(`/${app}/${RESOURCE}`);
-    const goToCreateNew = () => navigate(`/${app}/${RESOURCE}/create`);
+    const onClose = () => navigate(`/${app}/${historyResource}`);
+    const goToCreateNew = () => navigate(`/${app}/${historyResource}/create`);
     const failedCount = retrievedData.sent_to_status_summary.failed;
     const handleRetryAllFailed = () => {
       if (retryHistoryMutation.isPending || failedCount === 0) return;
@@ -198,7 +197,7 @@ const InnerAdminNotificationHistoryEditor: FC<AdminNotificationHistoryEditorProp
     return (
       <Box sx={{ flexGrow: 1, width: "100%", minHeight: "100%" }}>
         <Stack direction="row" justifyContent="space-between">
-          <Typography variant="h5">{`${app.toUpperCase()} > ${RESOURCE.toUpperCase()} > 발송 이력`}</Typography>
+          <Typography variant="h5">{`${app.toUpperCase()} > ${historyResource.toUpperCase()} > 발송 이력`}</Typography>
           <IconButton onClick={onClose} children={<Close />} />
         </Stack>
         {id && (
@@ -220,7 +219,7 @@ const InnerAdminNotificationHistoryEditor: FC<AdminNotificationHistoryEditorProp
                 <TableRow>
                   <TableCell>template</TableCell>
                   <TableCell>
-                    <Link to={`/${app}/template/${retrievedData.template}`}>{retrievedData.template_code}</Link>
+                    <Link to={`/${app}/${templateResource}/${retrievedData.template}`}>{retrievedData.template_code}</Link>
                   </TableCell>
                 </TableRow>
               </TableBody>
@@ -296,6 +295,7 @@ const InnerAdminNotificationHistoryEditor: FC<AdminNotificationHistoryEditorProp
                     key={item.id}
                     item={item}
                     app={app}
+                    resource={historyResource}
                     historyId={retrievedData.id}
                     selected={selectedSentToId === item.id}
                     onSelect={setSelectedSentToId}

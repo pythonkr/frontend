@@ -5,6 +5,7 @@ export { Map, type MapPropType } from "./map";
 export { MobileAccordion } from "./mobile_accordion";
 export { MobileCover } from "./mobile_cover";
 export { OneDetailsOpener } from "./one_details_opener";
+export { PyConKR2026CoverLayers, PyConKR2026MainCover } from "./pyconkr2026_main_cover";
 export { SessionList } from "./session_list";
 export { SessionTimeTable } from "./session_timetable";
 export { PrimaryStyledDetails, HighlightedStyledDetails as SecondaryStyledDetails } from "./styled_details";

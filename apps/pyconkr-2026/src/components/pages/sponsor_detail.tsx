@@ -17,12 +17,41 @@ const CenteredLoadingPage: FC = () => (
   </CenteredPage>
 );
 
+const LogoImageContainer = styled(Stack)(({ theme }) => ({
+  width: "100%",
+  height: "20rem",
+  justifyContent: "center",
+  alignItems: "center",
+
+  backgroundColor: "#ddd4ee",
+
+  border: `1px solid ${theme.palette.primary.dark}`,
+  borderRadius: "0.5rem",
+
+  transition: "all 0.3s ease-in-out",
+
+  "&:hover": {
+    backgroundColor: "#e9e3f3",
+    border: `1px solid ${theme.palette.primary.light}`,
+    boxShadow: theme.shadows[3],
+  },
+
+  padding: theme.spacing(4, 0),
+  marginBottom: theme.spacing(4),
+
+  [theme.breakpoints.down("lg")]: {
+    padding: theme.spacing(2, 0),
+  },
+  [theme.breakpoints.down("sm")]: {
+    padding: theme.spacing(1, 0),
+  },
+}));
+
 const LogoImage = styled("img")(({ theme }) => ({
   maxWidth: "20rem",
   height: "auto",
 
   padding: theme.spacing(8, 0),
-  marginBottom: theme.spacing(4),
 
   [theme.breakpoints.down("lg")]: {
     padding: theme.spacing(4),
@@ -76,7 +105,9 @@ export const SponsorDetailPage: FC = ErrorBoundary.with(
 
     return (
       <PageLayout sx={{ maxWidth: "960px" }}>
-        <LogoImage src={sponsor.logo} alt={sponsor.name} loading="lazy" />
+        <LogoImageContainer>
+          <LogoImage src={sponsor.logo} alt={sponsor.name} loading="lazy" />
+        </LogoImageContainer>
         <Divider flexItem />
         <Typography variant="h4" fontWeight="700" textAlign="start" sx={{ width: "100%", p: 2 }}>
           {sponsor.name.replace(/\\n/g, "\n")}

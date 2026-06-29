@@ -3,7 +3,7 @@ import { useCommonContext } from "@frontend/common/hooks/useCommonContext";
 import { Autocomplete, Box, Chip, Divider, MenuItem, Stack, styled, Tab, Tabs, TextField, Typography } from "@mui/material";
 import { FC, useState } from "react";
 
-import { PublicFilePicker } from "@apps/pyconkr-admin/components/elements/public_file_picker";
+import { PublicFilePicker } from "@apps/pyconkr-admin/components/elements/choice_picker";
 import { ProductFormValues, SetField } from "@apps/pyconkr-admin/components/pages/shop/product/form";
 import { CategoryGroupAdminWithCategories, TagAdmin } from "@apps/pyconkr-admin/components/pages/shop/product/types";
 import { IMAGE_FILE_EXTENSIONS } from "@apps/pyconkr-admin/consts/file_extensions";
@@ -43,15 +43,7 @@ export const BasicInfoTab: FC<Props> = ({ values, setField, disabled, groups, ta
 
   return (
     <Stack spacing={2}>
-      <PublicFilePicker
-        label="대표 이미지"
-        value={values.image}
-        onChange={(v) => setField("image", v)}
-        choicesApp="shop"
-        choicesResource="products"
-        choicesField="image"
-        acceptExtensions={IMAGE_FILE_EXTENSIONS}
-      />
+      <PublicFilePicker label="대표 이미지" value={values.image} onChange={(v) => setField("image", v)} acceptExtensions={IMAGE_FILE_EXTENSIONS} />
 
       <TextField select label="카테고리" required value={values.category} onChange={(e) => setField("category", e.target.value)} fullWidth>
         {groups.flatMap((group) => [

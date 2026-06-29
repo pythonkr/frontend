@@ -4,7 +4,7 @@ import { createTheme } from "@mui/material/styles";
 export const muiTheme = createTheme({
   typography: {
     fontFamily:
-      'Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif',
+      'exqtEnglish, exqtNumber, exqt, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif',
   },
   palette: {
     mode: "dark",
@@ -120,6 +120,9 @@ export const globalStyles = css`
   html,
   body {
     font-family:
+      "exqtEnglish",
+      "exqtNumber",
+      "exqt",
       "Pretendard",
       -apple-system,
       BlinkMacSystemFont,
@@ -154,5 +157,13 @@ export const globalStyles = css`
   a {
     text-decoration: none;
     color: inherit;
+  }
+
+  @media (min-width: 900px) {
+    /* mui가 md를 900px로 보는 중 */
+    html,
+    body {
+      font-size: 120%;
+    }
   }
 `;

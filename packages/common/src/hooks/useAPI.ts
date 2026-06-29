@@ -1,7 +1,7 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useContext } from "react";
 
-import { listSessions, listSiteMaps, listSponsors, retrievePage, retrieveSession } from "@frontend/common/apis";
+import { listEvents, listSessions, listSiteMaps, listSponsors, retrievePage, retrieveSession } from "@frontend/common/apis";
 import { BackendAPIClient } from "@frontend/common/apis/client";
 import { context as backendContext } from "@frontend/common/contexts";
 import { SessionQueryParameterSchema, SponsorQueryParameterSchema } from "@frontend/common/schemas/backendAPI";
@@ -10,6 +10,7 @@ const QUERY_KEYS = {
   PAGE: ["query", "page"],
   SPONSOR_LIST: ["query", "sponsor", "list"],
   SESSION_LIST: ["query", "session", "list"],
+  EVENT_LIST: ["query", "event", "list"],
 };
 
 export const useBackendContext = () => {
@@ -39,6 +40,12 @@ export const useSponsorQuery = (client: BackendAPIClient, params?: SponsorQueryP
   useSuspenseQuery({
     queryKey: [...QUERY_KEYS.SPONSOR_LIST, client.language, ...(params ? [JSON.stringify(params)] : [])],
     queryFn: listSponsors(client, params),
+  });
+
+export const useEventsQuery = (client: BackendAPIClient) =>
+  useQuery({
+    queryKey: [...QUERY_KEYS.EVENT_LIST, client.language],
+    queryFn: listEvents(client),
   });
 
 export const useSessionsQuery = (client: BackendAPIClient, params?: SessionQueryParameterSchema) =>

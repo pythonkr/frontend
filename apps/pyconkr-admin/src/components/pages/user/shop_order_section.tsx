@@ -24,7 +24,7 @@ const InnerShopOrderSection: FC<{ userId: string }> = ErrorBoundary.with(
   { fallback: ErrorFallback },
   Suspense.with({ fallback: <CircularProgress /> }, ({ userId }) => {
     const client = useBackendAdminClient();
-    const ordersQuery = useListPaginatedQuery<OrderListRow>(client, "shop", "orders", { user_id: userId });
+    const ordersQuery = useListPaginatedQuery<OrderListRow>(client, "shop", "order", { user_id: userId });
     const orders = ordersQuery.data?.results ?? [];
 
     return (
@@ -60,7 +60,7 @@ const InnerShopOrderSection: FC<{ userId: string }> = ErrorBoundary.with(
               return (
                 <TableRow key={order.id} hover>
                   <TableCell>
-                    <Link to={`/shop/orders/${order.id}`}>
+                    <Link to={`/shop/order/${order.id}`}>
                       <code>{order.id.slice(0, 8)}</code>
                     </Link>
                   </TableCell>

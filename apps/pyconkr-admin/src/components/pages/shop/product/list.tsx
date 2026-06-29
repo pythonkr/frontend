@@ -54,8 +54,8 @@ const InnerProductList: FC = ErrorBoundary.with(
     if (categoryQuery) apiParams.category = categoryQuery;
     if (statusQuery !== "all") apiParams.status = statusQuery;
 
-    const productsQuery = useListQuery<ProductAdmin>(client, "shop", "products", apiParams);
-    const groupsQuery = useListQuery<CategoryGroupAdminWithCategories>(client, "shop", "category-groups", {});
+    const productsQuery = useListQuery<ProductAdmin>(client, "shop", "product", apiParams);
+    const groupsQuery = useListQuery<CategoryGroupAdminWithCategories>(client, "shop", "categorygroup", {});
 
     const products = productsQuery.data ?? [];
     const groups = useMemo(() => groupsQuery.data ?? [], [groupsQuery.data]);
@@ -78,7 +78,7 @@ const InnerProductList: FC = ErrorBoundary.with(
     };
 
     const deleteMutation = useMutation({
-      mutationFn: async (id: string) => client.delete<void>(`v1/admin-api/shop/products/${id}/`),
+      mutationFn: async (id: string) => client.delete<void>(`v1/admin-api/shop/product/${id}/`),
       onSuccess: () => addSnackbar("상품을 삭제했습니다.", "success"),
       onError: addErrorSnackbar,
     });
@@ -93,7 +93,7 @@ const InnerProductList: FC = ErrorBoundary.with(
       <Stack sx={{ flexGrow: 1, width: "100%", minHeight: "100%" }} spacing={2}>
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Typography variant="h5">SHOP &gt; PRODUCTS &gt; 목록</Typography>
-          <Button variant="contained" startIcon={<Add />} onClick={() => navigate("/shop/products/create")}>
+          <Button variant="contained" startIcon={<Add />} onClick={() => navigate("/shop/product/create")}>
             새 상품 추가
           </Button>
         </Stack>
@@ -174,7 +174,7 @@ const InnerProductList: FC = ErrorBoundary.with(
               return (
                 <TableRow key={product.id} hover>
                   <TableCell>
-                    <Link to={`/shop/products/${product.id}`}>{product.name_ko || product.str_repr}</Link>
+                    <Link to={`/shop/product/${product.id}`}>{product.name_ko || product.str_repr}</Link>
                   </TableCell>
                   <TableCell>{cat ? `${cat.groupName} > ${cat.categoryName}` : "—"}</TableCell>
                   <TableCell align="right">{formatPrice(product.price)}</TableCell>
@@ -183,7 +183,7 @@ const InnerProductList: FC = ErrorBoundary.with(
                     <Chip label={status.label} size="small" color={status.color} />
                   </TableCell>
                   <TableCell>
-                    <IconButton size="small" onClick={() => navigate(`/shop/products/${product.id}`)} aria-label="수정">
+                    <IconButton size="small" onClick={() => navigate(`/shop/product/${product.id}`)} aria-label="수정">
                       <Edit fontSize="small" />
                     </IconButton>
                     <IconButton

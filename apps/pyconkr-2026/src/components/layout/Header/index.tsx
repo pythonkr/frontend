@@ -1,4 +1,3 @@
-import { PythonKorea } from "@frontend/common/components";
 import { NestedSiteMapSchema } from "@frontend/common/schemas/backendAPI";
 import { ArrowForwardIos, OpenInNew } from "@mui/icons-material";
 import { Box, Button, CircularProgress, Divider, Stack, styled, SxProps, Theme, Typography, useMediaQuery, useTheme } from "@mui/material";
@@ -12,6 +11,7 @@ import LanguageSelector from "@apps/pyconkr-2026/components/layout/LanguageSelec
 import { UserMenuButton } from "@apps/pyconkr-2026/components/layout/UserMenuButton";
 import { useAppContext } from "@apps/pyconkr-2026/contexts/app_context";
 
+import { PyConLogo } from "../../pycon_logo";
 import { MobileHeader } from "./Mobile/MobileHeader";
 
 type MenuType = NestedSiteMapSchema;
@@ -43,7 +43,9 @@ export default function Header() {
 
   useEffect(resetDepths, [language]);
 
-  if (isMobile) return <MobileHeader />;
+  if (isMobile) {
+    return <MobileHeader />;
+  }
 
   let breadCrumbRoute = "";
   let breadCrumbArray = currentSiteMapDepth.slice(1, -1);
@@ -52,26 +54,19 @@ export default function Header() {
   const headerStyle: SxProps<Theme> = shouldShowTitleBanner ? {} : { backgroundColor: "transparent" };
 
   return (
-    <Box
-      sx={{
-        position: "relative",
-        "&:has(.nav-dropdown:hover) .header-title-text": { opacity: 1 },
-      }}
-      onMouseLeave={resetDepths}
-    >
+    <Box sx={{ position: "relative" }} onMouseLeave={resetDepths}>
       <HeaderContainer sx={headerStyle}>
         <HeaderInner>
           <NavSideElementContainer>
             <Link to="/" onClick={resetDepths}>
               <Stack direction="row" alignItems="center" spacing={0.75}>
-                <PythonKorea style={{ width: 36, height: 36 }} />
+                <PyConLogo style={{ width: 32, height: 32 }} />
                 <Typography className="header-title-text" sx={{ color: "#ededde", fontWeight: 600, fontSize: "1rem" }}>
                   PyCon Korea 2026
                 </Typography>
               </Stack>
             </Link>
           </NavSideElementContainer>
-
           {siteMapNode ? (
             <Stack direction="row" alignItems="center" justifyContent="center" spacing={0.5}>
               {Object.values(siteMapNode.children)
@@ -107,20 +102,20 @@ export default function Header() {
       </HeaderContainer>
 
       {navState.depth1 && (
-        <NavDropdownOuter className="nav-dropdown">
-          <NavDropdownInner>
-            <Typography variant="h2" sx={{ fontSize: "1.5rem", fontWeight: 700, color: "#ededde" }}>
+        <NavOuterContainer>
+          <NavInnerContainer>
+            <Typography variant="h2" sx={{ fontSize: "1.5rem", fontWeight: 700 }}>
               {navState.depth1.name}
             </Typography>
-            <HighlightDivider flexItem />
+            <Depth1to2Divider flexItem />
             <Stack direction="row" spacing={4}>
               <Stack spacing={1.25}>
                 {Object.values(navState.depth1.children)
                   .filter((s) => !s.hide)
                   .map((r) => (
                     <Depth2Item
-                      key={r.id}
                       className={r.id === navState.depth2?.id ? "active" : ""}
+                      key={r.id}
                       onClick={resetDepths}
                       onMouseEnter={() => setDepth2(r)}
                       onMouseLeave={() => isEmpty(navState.depth2?.children ?? {}) && setDepth2(undefined)}
@@ -136,14 +131,15 @@ export default function Header() {
 
               {navState.depth2 && !isEmpty(navState.depth2.children) && (
                 <>
-                  <Depth2to3Divider orientation="vertical" flexItem />
+                  {!isEmpty(navState.depth2.children) && <Depth2to3Divider orientation="vertical" flexItem />}
+
                   <Stack spacing={1.5}>
                     {Object.values(navState.depth2.children)
                       .filter((s) => !s.hide)
                       .map((r) => (
                         <Depth3Item
-                          key={r.id}
                           className={r.id === navState.depth3?.id ? "active" : ""}
+                          key={r.id}
                           onClick={resetDepths}
                           onMouseEnter={() => setDepth3(r)}
                           onMouseLeave={() => setDepth3(undefined)}
@@ -159,11 +155,10 @@ export default function Header() {
                 </>
               )}
             </Stack>
-          </NavDropdownInner>
-        </NavDropdownOuter>
+          </NavInnerContainer>
+        </NavOuterContainer>
       )}
-
-      {shouldShowTitleBanner && (
+      {shouldShowTitleBanner ? (
         <>
           <BreadCrumbContainer>
             <BreadCrumbInner>
@@ -185,18 +180,28 @@ export default function Header() {
               </Typography>
             </BreadCrumbInner>
           </BreadCrumbContainer>
+          {/* Spacer for fixed header */}
           <Box sx={{ height: `calc(${HeaderHeight} + ${BreadCrumbHeight})` }} />
         </>
+      ) : (
+        <Box sx={{ height: HeaderHeight }} />
       )}
     </Box>
   );
 }
 
-const ResponsivePadding = ({ theme }: MUIStyledCommonProps) => ({
+const ResponsivePaddingDefinition = ({ theme }: MUIStyledCommonProps) => ({
   paddingRight: theme!.spacing(16),
   paddingLeft: theme!.spacing(16),
-  [theme!.breakpoints.down("lg")]: { paddingRight: theme!.spacing(4), paddingLeft: theme!.spacing(4) },
-  [theme!.breakpoints.down("sm")]: { paddingRight: theme!.spacing(2), paddingLeft: theme!.spacing(2) },
+
+  [theme!.breakpoints.down("lg")]: {
+    paddingRight: theme!.spacing(4),
+    paddingLeft: theme!.spacing(4),
+  },
+  [theme!.breakpoints.down("sm")]: {
+    paddingRight: theme!.spacing(2),
+    paddingLeft: theme!.spacing(2),
+  },
 });
 
 const HeaderContainer = styled("header")(({ theme }) => ({
@@ -207,12 +212,13 @@ const HeaderContainer = styled("header")(({ theme }) => ({
   backdropFilter: "blur(12px)",
   WebkitBackdropFilter: "blur(12px)",
   borderBottom: "1px solid rgba(237, 94, 189, 0.2)",
-  color: "#ededde",
+  color: theme.palette.text.primary,
+
   fontWeight: 500,
+
   zIndex: theme.zIndex.appBar,
   transition: "background-color 0.3s ease-in-out",
   "& .header-title-text": {
-    // TODO: FIXME: HeaderInner의 좌측 정렬 모드를 중앙 정렬("1fr auto 1fr")로 되돌릴 때 opacity를 다시 0으로 변경할 것 (hover 시에만 노출되는 원래 동작 복귀)
     opacity: 1,
     transition: "opacity 0.2s ease",
   },
@@ -223,25 +229,23 @@ const HeaderContainer = styled("header")(({ theme }) => ({
 
 const HeaderInner = styled("div")(({ theme }) => ({
   display: "grid",
-  // TODO: FIXME: sitemap 항목이 충분히 등록되면 gridTemplateColumns를 "1fr auto 1fr"로 되돌려 중앙 정렬로 복귀하고, columnGap도 제거할 것
-  gridTemplateColumns: "auto auto 1fr",
-  columnGap: theme.spacing(2),
+  gridTemplateColumns: "1fr auto 1fr",
   alignItems: "center",
   width: "100%",
   height: "100%",
   maxWidth: MaxContentWidth,
   marginInline: "auto",
-  ...ResponsivePadding({ theme }),
+  ...ResponsivePaddingDefinition({ theme }),
 }));
 
-const NavButton = styled(Button)<{ isActive?: boolean }>(({ isActive }) => ({
-  color: isActive ? "#ed5ebd" : "#ededde",
+const NavButton = styled(Button)<{ isActive?: boolean }>(({ theme, isActive }) => ({
+  color: isActive ? theme.palette.primary.main : theme.palette.text.primary,
   minWidth: 0,
   textTransform: "none",
   fontSize: "0.9rem",
   fontWeight: isActive ? 700 : 400,
   transition: "color 0.2s ease",
-  "&:hover": { color: "#ed5ebd", backgroundColor: "transparent" },
+  "&:hover": { color: theme.palette.primary.main, backgroundColor: "transparent" },
 }));
 
 const NavSideElementContainer = styled(Stack)({
@@ -249,58 +253,66 @@ const NavSideElementContainer = styled(Stack)({
   alignItems: "center",
 });
 
-const NavDropdownOuter = styled(Stack)(({ theme }) => ({
+const NavOuterContainer = styled(Stack)(({ theme }) => ({
   width: "100vw",
+
   position: "fixed",
   left: 0,
   top: HeaderHeight,
+
   zIndex: theme.zIndex.appBar + 1,
+
   backgroundColor: "rgba(18, 9, 30, 0.95)",
   boxShadow: "0 5px 20px rgba(0, 0, 0, 0.4)",
   backdropFilter: "blur(12px)",
+
   WebkitBackdropFilter: "blur(12px)",
   borderBottom: "1px solid rgba(237, 94, 189, 0.2)",
 }));
 
-const NavDropdownInner = styled(Stack)(({ theme }) => ({
+const NavInnerContainer = styled(Stack)(({ theme }) => ({
   width: "100%",
   maxWidth: MaxContentWidth,
   marginInline: "auto",
   minHeight: "10rem",
   overflowY: "auto",
   gap: "1rem",
+
   paddingTop: "1.5rem",
   paddingBottom: "2rem",
-  color: "#ededde",
-  ...ResponsivePadding({ theme }),
+
+  ...ResponsivePaddingDefinition({ theme }),
 }));
 
-const HighlightDivider = styled(Divider)({
+const Depth1to2Divider = styled(Divider)(({ theme }) => ({
   width: "3rem",
-  borderBottom: "4px solid #f5c73d",
-  borderColor: "#f5c73d",
-});
+  borderBottom: `4px solid ${theme.palette.highlight.main}`,
+}));
 
-const Depth2Item = styled(Link)({
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "0.25rem",
-  color: "#ededde",
+const Depth2Item = styled(Link)(({ theme }) => ({
+  color: theme.palette.text.primary,
   fontWeight: 300,
   textDecoration: "none",
   width: "fit-content",
   borderBottom: "2px solid transparent",
-  transition: "color 0.15s ease",
-  "&.active": { fontWeight: 700, borderBottom: "2px solid #ed5ebd", color: "#ed5ebd" },
-  "&:hover": { color: "#ed5ebd" },
-});
+
+  "&.active": {
+    fontWeight: 700,
+    borderBottom: `2px solid ${theme.palette.primary.main}`,
+    color: theme.palette.primary.main,
+  },
+  "&:hover": {
+    color: theme.palette.primary.main,
+  },
+}));
 
 const Depth2to3Divider = styled(Divider)({ borderColor: "rgba(237, 94, 189, 0.3)" });
 
 const Depth3Item = styled(Depth2Item)({ fontSize: "0.75rem" });
 
-const BreadCrumbContainer = styled("div")(({ theme }) => ({
+const BreadCrumbContainer = styled(Stack)(({ theme }) => ({
   position: "fixed",
+
   top: HeaderHeight,
   width: "100%",
   height: BreadCrumbHeight,
@@ -320,12 +332,17 @@ const BreadCrumbInner = styled(Stack)(({ theme }) => ({
   gap: "0.25rem",
   justifyContent: "center",
   alignItems: "flex-start",
-  ...ResponsivePadding({ theme }),
+
+  ...ResponsivePaddingDefinition({ theme }),
+
   "& a": {
-    color: "#f5c73d",
+    color: theme.palette.highlight.main,
     fontWeight: 300,
     fontSize: "0.75rem",
     textDecoration: "none",
-    "&:hover": { textDecoration: "underline" },
+
+    "&:hover": {
+      textDecoration: "underline",
+    },
   },
 }));

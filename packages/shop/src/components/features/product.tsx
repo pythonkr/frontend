@@ -29,14 +29,14 @@ import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { enqueueSnackbar, OptionsObject } from "notistack";
 import { FC, FocusEventHandler, PropsWithChildren, ReactNode, useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { useForm, UseFormRegister } from "react-hook-form";
+import { FieldErrors, useForm, UseFormRegister } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { isEmpty, isNullish, isNumber, isString } from "remeda";
 
 import { formatBackendErrorMessage } from "@frontend/shop/apis";
 import { CustomerInfoFormDialog, OptionGroupInput, PriceDisplay, SignInGuard } from "@frontend/shop/components/common";
 import { useAddItemToCartMutation, usePrepareOneItemOrderMutation, useProducts, useShopClient, useShopContext } from "@frontend/shop/hooks";
-import type { Cart, CartItemAppendRequest, CustomerInfo, Product, ProductListQueryParams, TicketInfoRequest } from "@frontend/shop/schemas";
+import type { Cart, CartItemAppendRequest, CustomerInfo, OptionGroup, Product, TicketInfoRequest } from "@frontend/shop/schemas";
 import {
   getCannotAddMoreOptionGroupReason,
   getOptionGroupNotOrderableReason,
@@ -63,12 +63,36 @@ const getTicketInfoPayload = (product: Product, formValue: { [key: string]: stri
 const ticketInfoToCustomerInfo = (ticketInfo?: TicketInfoRequest): CustomerInfo | null =>
   ticketInfo ? { name: ticketInfo.name, phone: ticketInfo.phone, email: ticketInfo.email, organization: ticketInfo.organization || null } : null;
 
+// 참가자 정보 필드(name/email/phone)의 검증 오류를 사용자에게 보여줄 메시지로 변환한다.
+const getTicketFieldErrorMessage = (language: "ko" | "en", errors: FieldErrors<Record<string, string>>, fieldName: string): string | undefined => {
+  const error = errors[fieldName];
+  if (!error) return undefined;
+  const isKo = language === "ko";
+  switch (fieldName) {
+    case TICKET_FORM_FIELD.name:
+      return isKo ? "참가자 성명을 입력해주세요." : "Please enter the participant's name.";
+    case TICKET_FORM_FIELD.email:
+      return isKo ? "이메일 주소를 입력해주세요." : "Please enter the email address.";
+    case TICKET_FORM_FIELD.phone:
+      return error.type === "pattern"
+        ? isKo
+          ? "전화번호 형식이 올바르지 않습니다. 예: 010-1234-5678 또는 +821012345678"
+          : "Invalid phone number format. e.g., 010-1234-5678 or +821012345678"
+        : isKo
+          ? "전화번호를 입력해주세요."
+          : "Please enter the phone number.";
+    default:
+      return undefined;
+  }
+};
+
 const TicketInfoFormSection: FC<{
   language: "ko" | "en";
   product: Product;
   register: UseFormRegister<Record<string, string>>;
+  errors: FieldErrors<Record<string, string>>;
   disabled?: boolean;
-}> = ({ language, product, register, disabled }) => {
+}> = ({ language, product, register, errors, disabled }) => {
   const sectionTitle = language === "ko" ? "참가자 정보" : "Participant Information";
   const helpStr = language === "ko" ? "티켓에 기재될 참가자 정보를 입력해주세요." : "Please enter the participant's information for this ticket.";
   const nameLabel = language === "ko" ? "참가자 성명" : "Participant Name";
@@ -87,6 +111,10 @@ const TicketInfoFormSection: FC<{
   const { ref: orgRef, ...orgRest } = register(TICKET_FORM_FIELD.organization);
   const { ref: contributionRef, ...contributionRest } = register(TICKET_FORM_FIELD.contribution_message);
 
+  const nameError = getTicketFieldErrorMessage(language, errors, TICKET_FORM_FIELD.name);
+  const emailError = getTicketFieldErrorMessage(language, errors, TICKET_FORM_FIELD.email);
+  const phoneError = getTicketFieldErrorMessage(language, errors, TICKET_FORM_FIELD.phone);
+
   return (
     <Stack spacing={2}>
       <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
@@ -95,9 +123,28 @@ const TicketInfoFormSection: FC<{
       <Typography variant="body2" color="text.secondary">
         {helpStr}
       </Typography>
-      <TextField inputRef={nameRef} {...nameRest} label={nameLabel} disabled={disabled} required fullWidth />
+      <TextField
+        inputRef={nameRef}
+        {...nameRest}
+        label={nameLabel}
+        disabled={disabled}
+        required
+        fullWidth
+        error={!!nameError}
+        helperText={nameError}
+      />
       <TextField inputRef={orgRef} {...orgRest} label={orgLabel} disabled={disabled} fullWidth />
-      <TextField inputRef={emailRef} {...emailRest} label={emailLabel} type="email" disabled={disabled} required fullWidth />
+      <TextField
+        inputRef={emailRef}
+        {...emailRest}
+        label={emailLabel}
+        type="email"
+        disabled={disabled}
+        required
+        fullWidth
+        error={!!emailError}
+        helperText={emailError}
+      />
       <TextField
         inputRef={phoneRef}
         {...phoneRest}
@@ -105,6 +152,8 @@ const TicketInfoFormSection: FC<{
         disabled={disabled}
         required
         fullWidth
+        error={!!phoneError}
+        helperText={phoneError}
         slotProps={{ htmlInput: { pattern: PHONE_REGEX.source, title: phoneTitle } }}
       />
       {product.donation_allowed && (
@@ -131,7 +180,8 @@ const getCartAppendRequestPayload = (
       const optionGroup = product.option_groups.find((group) => group.id === groupId);
       if (!optionGroup) throw new Error(`Option group ${groupId} not found`);
 
-      const product_option = optionGroup.is_custom_response ? null : value;
+      // 빈 값은 "선택해주세요"(미선택) 상태 — product_option 을 null 로 보낸다.
+      const product_option = optionGroup.is_custom_response ? null : value || null;
       const custom_response = optionGroup.is_custom_response ? value : null;
       return { product_option_group: groupId, product_option, custom_response };
     });
@@ -144,6 +194,10 @@ const getCartAppendRequestPayload = (
     ...(ticket_info ? { ticket_info } : {}),
   };
 };
+
+// placeholder_mode 가 hidden 이 아니면 "선택해주세요"(빈 값)를 기본 선택으로 둔다. hidden 이면 첫 옵션을 선택.
+const getOptionGroupDefaultValue = (group: OptionGroup, reason: string | null): string =>
+  reason || group.placeholder_mode !== "hidden" ? "" : group.options[0]?.id || "";
 
 const getProductNotPurchasableReason = (language: "ko" | "en", product: Product): string | null => {
   // 상품이 구매 가능 기간 내에 있고, 상품이 매진되지 않았으며, 매진된 상품 옵션 재고가 없으면 true
@@ -239,6 +293,7 @@ const ProductItem: FC<ProductItemPropType> = ({ disabled: rootDisabled, language
     language === "ko"
       ? "상품 가격이 0원 이하입니다. 상품을 구매할 수 없습니다."
       : "The product price is 0 or less. You cannot purchase this product.";
+  const pleaseFillRequiredStr = language === "ko" ? "필수 정보를 모두 올바르게 입력해주세요." : "Please fill in all required fields correctly.";
   const donationLabelStr = language === "ko" ? "추가 기부 금액" : "Additional Donation Amount";
   const thankYouForDonationStr =
     language === "ko"
@@ -374,6 +429,16 @@ const ProductItem: FC<ProductItemPropType> = ({ disabled: rootDisabled, language
     startPurchaseProcess(formData);
   };
 
+  // 입력란 아래에 표시되는 개별 오류와 별개로, 버튼 위에 모아 보여줄 검증 오류 메시지.
+  const ticketValidationMessages = product.is_ticket
+    ? [TICKET_FORM_FIELD.name, TICKET_FORM_FIELD.email, TICKET_FORM_FIELD.phone]
+        .map((field) => getTicketFieldErrorMessage(language, formState.errors, field))
+        .filter((message): message is string => !!message)
+    : [];
+  const validationMessages = [...(helperText ? [helperText] : []), ...ticketValidationMessages];
+  // 구체적 오류가 없더라도 필수 입력이 비어 폼이 무효한 경우(사용자가 한 번이라도 입력을 건드린 뒤)엔 안내 메시지를 보여준다.
+  const summaryMessages = validationMessages.length > 0 ? validationMessages : !formState.isValid && formState.isDirty ? [pleaseFillRequiredStr] : [];
+
   return (
     <>
       <MDXRenderer text={product.description || ""} format="mdx" baseUrl={baseUrl} mdxComponents={mdxComponents} />
@@ -410,13 +475,15 @@ const ProductItem: FC<ProductItemPropType> = ({ disabled: rootDisabled, language
                   )}
                 </>
               )}
-              {product.is_ticket && <TicketInfoFormSection language={language} product={product} register={register} disabled={disabled} />}
+              {product.is_ticket && (
+                <TicketInfoFormSection language={language} product={product} register={register} errors={formState.errors} disabled={disabled} />
+              )}
               {requiredGroupsData.map(({ group, reason }) => (
                 <OptionGroupInput
                   key={group.id}
                   optionGroup={group}
                   options={group.options}
-                  defaultValue={reason ? "" : group.options[0]?.id || ""}
+                  defaultValue={getOptionGroupDefaultValue(group, reason)}
                   disabled={disabled || !!reason}
                   disabledReason={reason ?? undefined}
                   control={control}
@@ -436,7 +503,7 @@ const ProductItem: FC<ProductItemPropType> = ({ disabled: rootDisabled, language
                           <OptionGroupInput
                             optionGroup={{ ...group, id: instance.id }}
                             options={group.options}
-                            defaultValue={reason ? "" : group.options[0]?.id || ""}
+                            defaultValue={getOptionGroupDefaultValue(group, reason)}
                             disabled={disabled || !!reason}
                             disabledReason={reason ?? undefined}
                             control={control}
@@ -484,6 +551,15 @@ const ProductItem: FC<ProductItemPropType> = ({ disabled: rootDisabled, language
       {isNullish(notPurchasableReason) && (
         <SignInGuard fallback={<NotPurchasable>{requiresSignInStr}</NotPurchasable>}>
           {disabledRequiredGroupReason && <NotPurchasable>{disabledRequiredGroupReason}</NotPurchasable>}
+          {summaryMessages.length > 0 && (
+            <Stack spacing={0.5} sx={{ mt: 2 }}>
+              {summaryMessages.map((message, idx) => (
+                <Typography key={idx} variant="body2" color="error" sx={{ textAlign: "right", whiteSpace: "pre-line" }}>
+                  {message}
+                </Typography>
+              ))}
+            </Stack>
+          )}
           <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end", mt: 2 }}>
             <Button {...actionButtonProps} onClick={addItemToCart} children={addToCartStr} />
             <Button {...actionButtonProps} onClick={onOrderOneItemButtonClick} children={orderOneItemStr} />
@@ -617,7 +693,22 @@ type ProductListStateType = {
   oneItemOrderData?: CartItemAppendRequest;
 };
 
-export const ProductList: FC<ProductListQueryParams> = (qs) => {
+// 매니페스트(mdx-components.json) props 노출용 로컬 타입. react-docgen-typescript 는 임포트한 타입 별칭
+// (schemas 의 ProductListQueryParams)의 멤버를 추출하지 못하므로 같은 구조를 여기서 다시 선언한다.
+// 두 타입이 어긋나면 아래 useProducts(client, qs) 호출에서 컴파일 에러가 나므로 드리프트가 방지된다.
+type ProductListProps = {
+  /** 조회할 카테고리 그룹 코드. 지정하면 해당 그룹의 상품만 보여준다. */
+  category_group?: string;
+  /** 조회할 카테고리 코드. 지정하면 해당 카테고리의 상품만 보여준다. */
+  category?: string;
+};
+
+/**
+ * 상품 목록을 접이식(아코디언) 형태로 보여주는 컴포넌트. 각 상품을 펼치면 설명·옵션 선택·기부 금액 입력이 나오고,
+ * 장바구니 담기와 즉시 구매를 처리한다.
+ * @example <Shop__Feature__ProductList category="tshirt" />
+ */
+export const ProductList: FC<ProductListProps> = (qs) => {
   const WrappedProductList: FC = () => {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
@@ -731,7 +822,11 @@ type ProductImageCardListStateType = {
   oneItemOrderData?: CartItemAppendRequest;
 };
 
-export const ProductImageCardList: FC<ProductListQueryParams> = (qs) => {
+/**
+ * 상품 목록을 이미지 카드 그리드로 보여주는 컴포넌트. 카드를 누르면 상세 다이얼로그가 열려 옵션 선택·구매가 가능하다.
+ * @example <Shop__Feature__ProductImageCardList category_group="merch" />
+ */
+export const ProductImageCardList: FC<ProductListProps> = (qs) => {
   const WrappedProductImageCardList: FC = () => {
     const queryClient = useQueryClient();
     const navigate = useNavigate();

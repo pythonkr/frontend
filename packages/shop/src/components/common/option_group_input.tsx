@@ -5,7 +5,7 @@ import { Control, Controller, FieldValues } from "react-hook-form";
 import { isEmpty, isNonNull, isNumber, isString } from "remeda";
 
 import { useShopContext } from "@frontend/shop/hooks";
-import type { Option, OrderProductItem } from "@frontend/shop/schemas";
+import type { Option, OptionGroupPlaceholderMode, OrderProductItem } from "@frontend/shop/schemas";
 import { getCustomResponsePattern, getOrderProductOptionNotModifiableReason, isOrderProductOptionModifiable } from "@frontend/shop/utils";
 
 import { PriceDisplay } from "./price_display";
@@ -17,6 +17,7 @@ type CommonOptionGroupType = {
 type SelectableOptionGroupType = CommonOptionGroupType & {
   is_custom_response: false;
   custom_response_pattern: null;
+  placeholder_mode: OptionGroupPlaceholderMode;
 };
 type CustomResponseOptionGroupType = CommonOptionGroupType & {
   is_custom_response: true;
@@ -37,6 +38,7 @@ const SelectableOptionGroupInput: FC<{
   disabledReason?: string;
   control: Control<FieldValues, unknown, FieldValues>;
 }> = ({ language, optionGroup, options, defaultValue, disabled, disabledReason, control }) => {
+  const required = optionGroup.placeholder_mode !== "optional";
   const optionElements = options.map((option) => {
     const isOptionOutOfStock = isNumber(option.leftover_stock) && option.leftover_stock <= 0;
 
@@ -53,6 +55,13 @@ const SelectableOptionGroupInput: FC<{
       </MenuItem>
     );
   });
+  if (optionGroup.placeholder_mode !== "hidden") {
+    optionElements.unshift(
+      <MenuItem key="__placeholder" value="">
+        <em>{language === "ko" ? "선택해주세요" : "Please select"}</em>
+      </MenuItem>
+    );
+  }
 
   return (
     <FormControl fullWidth>
@@ -60,7 +69,7 @@ const SelectableOptionGroupInput: FC<{
       <Controller
         control={control}
         name={optionGroup.id}
-        rules={{ required: true }}
+        rules={{ required }}
         disabled={disabled}
         defaultValue={defaultValue || ""}
         render={({ field }) => <Select label={`${optionGroup.id}label`} {...field} children={optionElements} />}

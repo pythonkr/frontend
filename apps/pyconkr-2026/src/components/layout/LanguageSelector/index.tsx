@@ -6,8 +6,7 @@ import { useAppContext } from "@apps/pyconkr-2026/contexts/app_context";
 
 export default function LanguageSelector() {
   const { language, setAppContext } = useAppContext();
-  const toggleLanguage = () => {
-    const newLanguage = language === "ko" ? "en" : "ko";
+  const toggleLanguage = (newLanguage: "ko" | "en") => {
     localStorage.setItem(LOCAL_STORAGE_LANGUAGE_KEY, newLanguage);
     setAppContext((ps) => ({ ...ps, language: newLanguage }));
   };
@@ -15,10 +14,10 @@ export default function LanguageSelector() {
   return (
     <Stack direction="row" alignItems="center" spacing={0.5}>
       <Language sx={{ color: (theme) => theme.palette.primary.nonFocus, w: "1.5rem", h: "1.5rem" }} />
-      <LanguageItem onClick={toggleLanguage} selected={language === "ko"}>
+      <LanguageItem onClick={() => toggleLanguage("ko")} selected={language === "ko"}>
         KO
       </LanguageItem>
-      <LanguageItem onClick={toggleLanguage} selected={language === "en"}>
+      <LanguageItem onClick={() => toggleLanguage("en")} selected={language === "en"}>
         EN
       </LanguageItem>
     </Stack>

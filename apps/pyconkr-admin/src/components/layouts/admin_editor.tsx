@@ -1,13 +1,6 @@
 import { retrieve } from "@frontend/common/apis/admin_api";
 import { LottieDebugPanel, MDXRenderer, MarkdownEditor } from "@frontend/common/components";
-import {
-  useBackendAdminClient,
-  useChoicesQuery,
-  useCreateMutation,
-  useRemoveMutation,
-  useSchemaQuery,
-  useUpdateMutation,
-} from "@frontend/common/hooks/useAdminAPI";
+import { useBackendAdminClient, useCreateMutation, useRemoveMutation, useSchemaQuery, useUpdateMutation } from "@frontend/common/hooks/useAdminAPI";
 import { useCommonContext } from "@frontend/common/hooks/useCommonContext";
 import {
   filterPropertiesByLanguageInJsonSchema,
@@ -19,14 +12,8 @@ import {
   Box,
   Button,
   ButtonProps,
-  Chip,
   CircularProgress,
-  FormControl,
   IconButton,
-  InputLabel,
-  MenuItem,
-  OutlinedSelectProps,
-  Select,
   Stack,
   styled,
   Tab,
@@ -40,29 +27,17 @@ import {
 } from "@mui/material";
 import Form, { IChangeEvent } from "@rjsf/core";
 import MuiForm from "@rjsf/mui";
-import { Field, FieldProps, RJSFSchema, UiSchema } from "@rjsf/utils";
+import { Field, RJSFSchema, UiSchema } from "@rjsf/utils";
 import { customizeValidator } from "@rjsf/validator-ajv8";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import AjvDraft04 from "ajv-draft-04";
-import { JSONSchema7 } from "json-schema";
-import {
-  ChangeEvent,
-  FC,
-  FocusEvent,
-  FormEvent,
-  MouseEventHandler,
-  PropsWithChildren,
-  SyntheticEvent,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { ChangeEvent, FC, FormEvent, MouseEventHandler, PropsWithChildren, SyntheticEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { addProp, isArray, isNonNullish, isObjectType, isString } from "remeda";
+import { isArray, isNonNullish, isObjectType, isString } from "remeda";
 
 import { BackendAdminSignInGuard } from "@apps/pyconkr-admin/components/elements/admin_signin_guard";
-import { AutocompleteSelectWidget } from "@apps/pyconkr-admin/components/elements/autocomplete_select_widget";
+import { ChoicePicker } from "@apps/pyconkr-admin/components/elements/choice_picker";
+import { ChoicePickerWidget } from "@apps/pyconkr-admin/components/elements/choice_picker_widget";
 import { ErrorFallback } from "@apps/pyconkr-admin/components/elements/error_fallback";
 import { addErrorSnackbar, addSnackbar } from "@apps/pyconkr-admin/utils/snackbar";
 
@@ -114,74 +89,24 @@ const FileField: Field = (p) => (
   />
 );
 
-type DescriptedEnum = { const: string; title: string };
-type DescriptedEnumObject = Record<string, DescriptedEnum>;
-
-const SelectdChipRenderer: FC<{ selectable: DescriptedEnumObject; selected: string[] }> = ({ selectable, selected }) => {
-  const children = selected.map((v) => <Chip key={v} label={selectable[v].title || ""} />);
-  return <Stack sx={{ flexWrap: "wrap" }} direction="row" spacing={0.5} children={children} />;
-};
-
-const fieldPropsToSelectedProps = (props: FieldProps): OutlinedSelectProps & { defaultValue: string[] } => {
-  const {
-    name,
-    formData,
-    autofocus: autoFocus,
-    readonly: readOnly,
-    onFocus: rawOnFocus,
-    onBlur: rawOnBlur,
-    onChange: rawOnChange,
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    required: _,
-
-    schema,
-    errorSchema,
-    uiSchema,
-    idSchema,
-    formContext,
-    wasPropertyKeyModified,
-    registry,
-    rawErrors,
-    hideError,
-    idPrefix,
-    idSeparator,
-    color,
-    ...rest
-  } = props;
-  const data = {
-    schema,
-    errorSchema,
-    uiSchema,
-    idSchema,
-    formContext,
-    wasPropertyKeyModified,
-    registry,
-    rawErrors,
-    hideError,
-    idPrefix,
-    idSeparator,
-  };
-  const onFocus = (event: FocusEvent<HTMLInputElement>) => rawOnFocus(event.currentTarget.name, event.currentTarget.value);
-  const onBlur = (event: FocusEvent<HTMLInputElement>) => rawOnBlur(event.currentTarget.name, event.currentTarget.value);
-  const onChange = (event: ChangeEvent<HTMLInputElement>) => rawOnChange(event.target.value, undefined, event.target.name);
-  const sx: OutlinedSelectProps["sx"] = color ? { color, borderColor: color } : {};
-  const defaultValue = (formData ? (isArray(formData) ? formData : [formData.toString()]) : []) as string[];
-  return addProp({ ...rest, name, label: name, defaultValue, autoFocus, readOnly, onFocus, onBlur, onChange, sx }, "data-rjsf", data);
-};
-
 const M2MSelect: Field = ErrorBoundary.with(
   { fallback: ErrorFallback },
   Suspense.with({ fallback: <CircularProgress /> }, (props) => {
-    const selectable = (props.schema.items as JSONSchema7).oneOf as DescriptedEnum[];
-    const selectableListObj: DescriptedEnumObject = selectable.reduce((a, i) => ({ ...a, [i.const]: i }), {} as DescriptedEnumObject);
-    const children = selectable.map((i) => <MenuItem key={i.const} value={i.const} children={i.title || i.const} />);
-    const selectRenderer = (selected: string[]) => <SelectdChipRenderer selectable={selectableListObj} selected={selected} />;
+    const uiOptions = props.uiSchema?.["ui:options"] as { choiceApp?: string; choiceResource?: string } | undefined;
+    // M2M 은 백엔드가 항상 choiceApp/choiceResource 제공 → selectables 로 조회
+    const source = uiOptions?.choiceApp && uiOptions?.choiceResource ? { app: uiOptions.choiceApp, resource: uiOptions.choiceResource } : undefined;
+    const value = (isArray(props.formData) ? props.formData : []).map((v) => String(v));
     return (
-      <FormControl fullWidth>
-        <InputLabel id={`${props.name}-label`} children={props.name} />
-        <Select {...fieldPropsToSelectedProps(props)} children={children} multiple fullWidth renderValue={selectRenderer} />
-      </FormControl>
+      <ChoicePicker
+        multiple
+        id={props.idSchema?.$id}
+        label={props.name}
+        source={source}
+        value={value}
+        required={props.required}
+        disabled={props.disabled || props.readonly}
+        onChange={(newValue) => props.onChange(newValue, undefined, props.name)}
+      />
     );
   })
 );
@@ -327,22 +252,6 @@ const InnerAdminEditor: FC<AppResourceIdType & AdminEditorPropsType> = ErrorBoun
 
       const backendAdminClient = useBackendAdminClient();
       const { data: schemaInfo } = useSchemaQuery(backendAdminClient, app, resource);
-      const { data: choicesData } = useChoicesQuery(backendAdminClient, app, resource);
-
-      // Merge choices into schema ONLY for M2M (array) fields — M2MSelect reads from schema.items.oneOf.
-      // Single-value FK choices are NOT merged here because AJV blows up when compiling a oneOf with
-      // thousands of const entries (e.g. user FK on EmailAddress). Those choices are attached to
-      // uiSchema below as enumOptions and rendered by AutocompleteSelectWidget instead.
-      useMemo(() => {
-        if (!choicesData || !schemaInfo.schema.properties) return;
-        for (const [fieldName, items] of Object.entries(choicesData)) {
-          const prop = (schemaInfo.schema.properties as Record<string, RJSFSchema>)[fieldName];
-          if (!prop) continue;
-          if (prop.type === "array" && prop.items) {
-            (prop.items as RJSFSchema).oneOf = items;
-          }
-        }
-      }, [choicesData, schemaInfo.schema]);
 
       const setTab = (_: SyntheticEvent, tab: number) => setEditorState((ps) => ({ ...ps, tab }));
       const setFormData = (formData?: Record<string, string>) => setEditorState((ps) => ({ ...ps, formData }));
@@ -421,19 +330,17 @@ const InnerAdminEditor: FC<AppResourceIdType & AdminEditorPropsType> = ErrorBoun
         selectedLanguage
       );
       const baseUiSchema: UiSchema = schemaInfo.ui_schema;
-      // Force AutocompleteSelectWidget on single-value FKs that have choices. Choices themselves are
-      // passed through formContext (see below) rather than uiSchema, because RJSF overwrites
-      // ui:options.enumOptions with [] when the schema has no enum/oneOf.
       const uiSchema: UiSchema = useMemo(() => {
-        if (!choicesData) return baseUiSchema;
+        const props = schemaInfo.schema.properties as Record<string, RJSFSchema> | undefined;
         const enriched: UiSchema = { ...baseUiSchema };
-        for (const fieldName of Object.keys(choicesData)) {
-          const prop = (schemaInfo.schema.properties as Record<string, RJSFSchema> | undefined)?.[fieldName];
-          if (!prop || prop.type === "array") continue;
-          enriched[fieldName] = { ...(enriched[fieldName] ?? {}), "ui:widget": "autocomplete_select" };
+        for (const [fieldName, fieldUi] of Object.entries(baseUiSchema)) {
+          const opts = (fieldUi as UiSchema | undefined)?.["ui:options"] as { choiceResource?: string } | undefined;
+          const prop = props?.[fieldName];
+          if (!opts?.choiceResource || !prop || prop.type === "array") continue;
+          enriched[fieldName] = { ...(enriched[fieldName] ?? {}), "ui:widget": "choice_picker" };
         }
         return enriched;
-      }, [choicesData, schemaInfo.schema, baseUiSchema]);
+      }, [schemaInfo.schema, baseUiSchema]);
       const disabled = createMutation.isPending || modifyMutation.isPending || deleteMutation.isPending;
       const title = `${app.toUpperCase()} > ${resource.toUpperCase()} > ${id ? "편집: " + id : "새 객체 추가"}`;
 
@@ -513,13 +420,13 @@ const InnerAdminEditor: FC<AppResourceIdType & AdminEditorPropsType> = ErrorBoun
                 formData={languageFilteredFormData}
                 liveValidate
                 focusOnFirstError
-                formContext={{ readonlyAsDisabled: true, choicesData }}
+                formContext={{ readonlyAsDisabled: true }}
                 onChange={({ formData }) => appendFormDataState(formData)}
                 onSubmit={onSubmitFunc}
                 disabled={disabled}
                 showErrorList={false}
                 fields={{ file: FileField, m2m_select: M2MSelect, markdown: MDEditorField }}
-                widgets={{ SelectWidget: AutocompleteSelectWidget, autocomplete_select: AutocompleteSelectWidget }}
+                widgets={{ SelectWidget: ChoicePickerWidget, choice_picker: ChoicePickerWidget }}
               />
             </Box>
           </Stack>

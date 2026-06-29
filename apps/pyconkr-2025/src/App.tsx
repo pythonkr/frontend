@@ -27,10 +27,7 @@ export const App: FC = () => {
           .at(-1)
           ?.children?.reduce((acc, child) => ({ ...acc, [child.route_code]: child }), {} as Record<string, NestedSiteMapSchema>);
         currentSiteMapDepth.push(childrenMap?.[routeCode]);
-        if (isNullish(currentSiteMapDepth.at(-1))) {
-          console.warn(`Route not found in site map: ${routeCode}`);
-          break;
-        }
+        if (isNullish(currentSiteMapDepth.at(-1))) break;
       }
 
       setAppContext((ps) => ({ ...ps, siteMapNode, sponsorTiers, currentSiteMapDepth }));

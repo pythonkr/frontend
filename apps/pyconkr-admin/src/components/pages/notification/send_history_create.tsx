@@ -26,12 +26,11 @@ import { useNavigate } from "react-router-dom";
 
 import { BackendAdminSignInGuard } from "@apps/pyconkr-admin/components/elements/admin_signin_guard";
 import { ErrorFallback } from "@apps/pyconkr-admin/components/elements/error_fallback";
+import { NotificationChannel, NotificationChannelKind } from "@apps/pyconkr-admin/components/pages/notification/channels";
 import { addErrorSnackbar, addSnackbar } from "@apps/pyconkr-admin/utils/snackbar";
 
-type NotificationChannelApp = "notification/email" | "notification/kakao-alimtalk" | "notification/sms";
-
 type AdminNotificationHistoryCreateProps = {
-  app: NotificationChannelApp;
+  channel: NotificationChannel;
 };
 
 type NotificationHistorySentToCreateRequest = {
@@ -64,9 +63,6 @@ type OnMemorySentTo = {
   context: Record<string, string>;
 };
 
-const RESOURCE = "history";
-const TEMPLATE_RESOURCE = "template";
-
 const createEmptySentTo = (): OnMemorySentTo => ({
   trackId: Math.random().toString(36).substring(2, 15),
   recipient: "",
@@ -96,10 +92,10 @@ const isValidEmail = (value: string) => EMAIL_REGEX.test(value);
 const isValidUrl = (value: string) => URL_REGEX.test(value);
 const isValidPhone = (value: string) => KOREAN_PHONE_REGEX.test(value) || INTERNATIONAL_PHONE_REGEX.test(value);
 
-const validateRecipientForApp = (app: NotificationChannelApp, value: string): string | null => {
+const validateRecipientForKind = (kind: NotificationChannelKind, value: string): string | null => {
   const trimmed = value.trim();
   if (!trimmed) return null;
-  if (app === "notification/email") return isValidEmail(trimmed) ? null : "이메일 형식이 아닙니다";
+  if (kind === "email") return isValidEmail(trimmed) ? null : "이메일 형식이 아닙니다";
   return isValidPhone(trimmed) ? null : "휴대폰번호 형식이 아닙니다";
 };
 
@@ -139,16 +135,16 @@ const TemplateVariableField: FC<TemplateVariableFieldProps> = ({ name, value, on
 
 type SentToFormProps = {
   item: OnMemorySentTo;
-  app: NotificationChannelApp;
+  kind: NotificationChannelKind;
   perRecipientVarNames: string[];
   onChange: (item: OnMemorySentTo) => void;
   onRemove: (item: OnMemorySentTo) => void;
   onPreview?: (item: OnMemorySentTo) => void;
 };
 
-const SentToForm: FC<SentToFormProps> = ({ item, app, perRecipientVarNames, onChange, onRemove, onPreview }) => {
+const SentToForm: FC<SentToFormProps> = ({ item, kind, perRecipientVarNames, onChange, onRemove, onPreview }) => {
   const setContextField = (varName: string, value: string) => onChange({ ...item, context: { ...item.context, [varName]: value } });
-  const recipientError = validateRecipientForApp(app, item.recipient);
+  const recipientError = validateRecipientForKind(kind, item.recipient);
   return (
     <Card variant="outlined">
       <CardContent>
@@ -193,10 +189,11 @@ const SentToForm: FC<SentToFormProps> = ({ item, app, perRecipientVarNames, onCh
 
 const InnerAdminNotificationHistoryCreate: FC<AdminNotificationHistoryCreateProps> = ErrorBoundary.with(
   { fallback: ErrorFallback },
-  Suspense.with({ fallback: <CircularProgress /> }, ({ app }) => {
+  Suspense.with({ fallback: <CircularProgress /> }, ({ channel }) => {
+    const { app, kind, historyResource, templateResource } = channel;
     const navigate = useNavigate();
     const backendAdminClient = useBackendAdminClient();
-    const createMutation = useCreateMutation<NotificationHistoryCreateRequest>(backendAdminClient, app, RESOURCE);
+    const createMutation = useCreateMutation<NotificationHistoryCreateRequest>(backendAdminClient, app, historyResource);
 
     const [formData, setFormData] = useState<{
       template: string | null;
@@ -211,15 +208,15 @@ const InnerAdminNotificationHistoryCreate: FC<AdminNotificationHistoryCreateProp
     const [templateContext, setTemplateContext] = useState<Record<string, string>>({});
     const [globalVarFlags, setGlobalVarFlags] = useState<Record<string, boolean>>({});
 
-    const templateListQuery = useListQuery<NotificationTemplateSchema>(backendAdminClient, app, TEMPLATE_RESOURCE);
-    const renderTemplateMutation = useRenderTemplateMutation(backendAdminClient, app, TEMPLATE_RESOURCE);
+    const templateListQuery = useListQuery<NotificationTemplateSchema>(backendAdminClient, app, templateResource);
+    const renderTemplateMutation = useRenderTemplateMutation(backendAdminClient, app, templateResource);
     const selectedTemplate = templateListQuery.data?.find((t) => t.id === formData.template) ?? null;
     const templateVariables = selectedTemplate?.template_variables ?? [];
 
     const isGlobalVar = (varName: string) => globalVarFlags[varName] ?? !NotAppliableToAllRecipientsFieldList.includes(varName);
     const perRecipientVarNames = templateVariables.filter((v) => !isGlobalVar(v));
 
-    const onClose = () => navigate(`/${app}/${RESOURCE}`);
+    const onClose = () => navigate(`/${app}/${historyResource}`);
     const onAddSentTo = () => setSentToList((p) => [...p, createEmptySentTo()]);
     const onChangeSentTo = (item: OnMemorySentTo) => setSentToList((p) => p.map((s) => (s.trackId === item.trackId ? item : s)));
     const onRemoveSentTo = (item: OnMemorySentTo) => setSentToList((p) => p.filter((s) => s.trackId !== item.trackId));
@@ -247,14 +244,14 @@ const InnerAdminNotificationHistoryCreate: FC<AdminNotificationHistoryCreateProp
     };
     const onToggleGlobalVar = (varName: string, checked: boolean) => setGlobalVarFlags((p) => ({ ...p, [varName]: checked }));
 
-    const sentFromError = !selectedTemplate ? validateRecipientForApp(app, formData.sent_from) : null;
+    const sentFromError = !selectedTemplate ? validateRecipientForKind(kind, formData.sent_from) : null;
 
     // 발송 버튼 비활성화 사유: 우선순위에 따라 첫 번째로 매칭되는 메시지 반환. 모두 통과하면 null.
     // 우선순위: 템플릿 선택 → 수신자 연락처 (누락/형식) → sent_from 형식 → 템플릿 변수 (누락/형식).
     const submitBlockMessage = ((): string | null => {
       if (!formData.template) return "템플릿을 선택해주세요";
       if (sentToList.length === 0 || sentToList.some((s) => !s.recipient.trim())) return "수신자 연락처 입력이 누락되었습니다";
-      if (sentToList.some((s) => validateRecipientForApp(app, s.recipient))) return "수신자 연락처 형식이 올바르지 않습니다";
+      if (sentToList.some((s) => validateRecipientForKind(kind, s.recipient))) return "수신자 연락처 형식이 올바르지 않습니다";
       if (sentFromError) return "sent_from 형식이 올바르지 않습니다";
       for (const varName of templateVariables) {
         if (isGlobalVar(varName)) {
@@ -299,13 +296,13 @@ const InnerAdminNotificationHistoryCreate: FC<AdminNotificationHistoryCreateProp
         onSuccess: (data) => {
           addSnackbar("발송 요청을 완료했습니다.", "success");
           const newId = (data as NotificationHistoryCreateRequest).id;
-          if (newId) navigate(`/${app}/${RESOURCE}/${newId}`);
+          if (newId) navigate(`/${app}/${historyResource}/${newId}`);
         },
         onError: addErrorSnackbar,
       });
     };
 
-    const title = `${app.toUpperCase()} > ${RESOURCE.toUpperCase()} > 새로 발송`;
+    const title = `${app.toUpperCase()} > ${historyResource.toUpperCase()} > 새로 발송`;
 
     return (
       <Box sx={{ flexGrow: 1, width: "100%", minHeight: "100%" }}>
@@ -422,7 +419,7 @@ const InnerAdminNotificationHistoryCreate: FC<AdminNotificationHistoryCreateProp
                 <SentToForm
                   key={item.trackId}
                   item={item}
-                  app={app}
+                  kind={kind}
                   perRecipientVarNames={perRecipientVarNames}
                   onChange={onChangeSentTo}
                   onRemove={onRemoveSentTo}

@@ -4,6 +4,7 @@ import { App } from "./App.tsx";
 import MainLayout from "./components/layout/index.tsx";
 import { CfpPage } from "./components/pages/cfp.tsx";
 import { PageIdParamRenderer, RouteRenderer } from "./components/pages/dynamic_route.tsx";
+import { MDXPreviewPage } from "./components/pages/mdx_preview.tsx";
 import { MyPage } from "./components/pages/my/index.tsx";
 import { MyTimeTablePage } from "./components/pages/my/timetable.tsx";
 import { PresentationDetailPage } from "./components/pages/presentation_detail.tsx";
@@ -20,6 +21,7 @@ export const router = createBrowserRouter([
       {
         element: <MainLayout />,
         children: [
+          { path: "/preview", element: <MDXPreviewPage /> },
           { path: "/account/sign-in", element: <ShopSignInPage /> },
           { path: "/store/cart", element: <StoreCartPage /> },
           { path: "/store/order-histories", element: <StoreOrderHistoriesPage /> },

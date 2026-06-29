@@ -13,8 +13,12 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
   FormControlLabel,
   IconButton,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
   Table,
   TableBody,
@@ -27,8 +31,24 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { FC, useEffect, useState } from "react";
 
-import { OptionAdmin, OptionGroupAdmin } from "@apps/pyconkr-admin/components/pages/shop/product/types";
+import { OptionAdmin, OptionGroupAdmin, OptionGroupPlaceholderMode } from "@apps/pyconkr-admin/components/pages/shop/product/types";
 import { addErrorSnackbar, addSnackbar } from "@apps/pyconkr-admin/utils/snackbar";
+
+// 백엔드 OptionGroup.PlaceholderMode 와 동일한 라벨.
+const PLACEHOLDER_MODE_OPTIONS: { value: OptionGroupPlaceholderMode; label: string }[] = [
+  { value: "hidden", label: "선택해주세요 미노출" },
+  { value: "optional", label: "노출, 선택해도 통과" },
+  { value: "required", label: "노출, 선택 시 검증 실패" },
+];
+const placeholderModeLabel = (mode: OptionGroupPlaceholderMode): string => PLACEHOLDER_MODE_OPTIONS.find((o) => o.value === mode)?.label ?? mode;
+
+// 빈 값/NaN 일 때만 fallback 을 사용한다. (유효한 0 입력이 falsy 로 걸러지지 않도록)
+const parseNumberOr = (value: string, fallback: number): number => {
+  const trimmed = value.trim();
+  if (trimmed === "") return fallback;
+  const parsed = Number(trimmed);
+  return Number.isNaN(parsed) ? fallback : parsed;
+};
 
 // ----------------- Option dialog -----------------
 type OptionFormValues = {
@@ -49,7 +69,7 @@ type OptionDialogProps = {
 
 const OptionDialog: FC<OptionDialogProps> = ({ open, onClose, optionGroup, option }) => {
   const client = useBackendAdminClient();
-  const updateMutation = useUpdateMutation<OptionGroupAdmin>(client, "shop", "option-groups", optionGroup.id);
+  const updateMutation = useUpdateMutation<OptionGroupAdmin>(client, "shop", "optiongroup", optionGroup.id);
   const [values, setValues] = useState<OptionFormValues>({
     name_ko: "",
     name_en: "",
@@ -84,10 +104,10 @@ const OptionDialog: FC<OptionDialogProps> = ({ open, onClose, optionGroup, optio
     const optionPayload = {
       name_ko: values.name_ko,
       name_en: values.name_en,
-      additional_price: Number(values.additional_price) || 0,
-      stock: Number(values.stock) || 0,
-      max_quantity_per_user: Number(values.max_quantity_per_user) || 0,
-      priority: Number(values.priority) || 0,
+      additional_price: parseNumberOr(values.additional_price, 0),
+      stock: parseNumberOr(values.stock, 0),
+      max_quantity_per_user: parseNumberOr(values.max_quantity_per_user, 0),
+      priority: parseNumberOr(values.priority, 0),
       group: optionGroup.id,
     };
     const newOptions = option
@@ -185,6 +205,7 @@ type OptionGroupFormValues = {
   custom_response_pattern: string;
   priority: string;
   response_modifiable_ends_at: string;
+  placeholder_mode: OptionGroupPlaceholderMode;
 };
 
 type OptionGroupDialogProps = {
@@ -197,8 +218,8 @@ type OptionGroupDialogProps = {
 
 const OptionGroupDialog: FC<OptionGroupDialogProps> = ({ open, onClose, productId, group, existingGroupCount }) => {
   const client = useBackendAdminClient();
-  const createMutation = useCreateMutation<OptionGroupAdmin>(client, "shop", "option-groups");
-  const updateMutation = useUpdateMutation<OptionGroupAdmin>(client, "shop", "option-groups", group?.id ?? "");
+  const createMutation = useCreateMutation<OptionGroupAdmin>(client, "shop", "optiongroup");
+  const updateMutation = useUpdateMutation<OptionGroupAdmin>(client, "shop", "optiongroup", group?.id ?? "");
 
   const [values, setValues] = useState<OptionGroupFormValues>({
     name_ko: "",
@@ -214,6 +235,7 @@ const OptionGroupDialog: FC<OptionGroupDialogProps> = ({ open, onClose, productI
     custom_response_pattern: "",
     priority: "0",
     response_modifiable_ends_at: "",
+    placeholder_mode: "hidden",
   });
 
   useEffect(() => {
@@ -232,6 +254,7 @@ const OptionGroupDialog: FC<OptionGroupDialogProps> = ({ open, onClose, productI
         custom_response_pattern: group?.custom_response_pattern ?? "",
         priority: group ? String(group.priority) : String(existingGroupCount * 10),
         response_modifiable_ends_at: group?.response_modifiable_ends_at ?? "",
+        placeholder_mode: group?.placeholder_mode ?? "hidden",
       });
     }
   }, [open, group, existingGroupCount]);
@@ -248,12 +271,12 @@ const OptionGroupDialog: FC<OptionGroupDialogProps> = ({ open, onClose, productI
 
     const payload = {
       product: productId,
-      priority: Number(values.priority) || 0,
+      priority: parseNumberOr(values.priority, 0),
       name_ko: values.name_ko,
       name_en: values.name_en,
-      min_quantity_per_product: Number(values.min_quantity_per_product) || 0,
-      max_quantity_per_product: Number(values.max_quantity_per_product) || 1,
-      max_quantity_per_user: Number(values.max_quantity_per_user) || 0,
+      min_quantity_per_product: parseNumberOr(values.min_quantity_per_product, 0),
+      max_quantity_per_product: parseNumberOr(values.max_quantity_per_product, 1),
+      max_quantity_per_user: parseNumberOr(values.max_quantity_per_user, 0),
       visible_starts_at: values.visible_starts_at || null,
       visible_ends_at: values.visible_ends_at || null,
       orderable_starts_at: values.orderable_starts_at || null,
@@ -261,6 +284,8 @@ const OptionGroupDialog: FC<OptionGroupDialogProps> = ({ open, onClose, productI
       is_custom_response: values.is_custom_response,
       custom_response_pattern: values.is_custom_response ? values.custom_response_pattern : "",
       response_modifiable_ends_at: values.response_modifiable_ends_at || null,
+      // placeholder_mode 는 선택형 그룹에만 의미가 있음 — custom response 그룹은 hidden 으로 고정.
+      placeholder_mode: values.is_custom_response ? "hidden" : values.placeholder_mode,
       options: group?.options ?? [],
     };
 
@@ -385,6 +410,23 @@ const OptionGroupDialog: FC<OptionGroupDialogProps> = ({ open, onClose, productI
               helperText="예: ^.{1,20}$"
             />
           )}
+          {!values.is_custom_response && (
+            <FormControl fullWidth>
+              <InputLabel id="placeholder-mode-label">&quot;선택해주세요&quot; 옵션</InputLabel>
+              <Select
+                labelId="placeholder-mode-label"
+                label='"선택해주세요" 옵션'
+                value={values.placeholder_mode}
+                onChange={(e) => setValues((p) => ({ ...p, placeholder_mode: e.target.value as OptionGroupPlaceholderMode }))}
+              >
+                {PLACEHOLDER_MODE_OPTIONS.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
           <TextField
             label="응답 수정 가능 종료"
             type="datetime-local"
@@ -420,7 +462,7 @@ export const OptionGroupsTab: FC<Props> = ({ productId, optionGroups }) => {
   const [optionDialog, setOptionDialog] = useState<{ open: boolean; optionGroup?: OptionGroupAdmin; option?: OptionAdmin }>({ open: false });
 
   const deleteGroupMutation = useMutation({
-    mutationFn: async (groupId: string) => client.delete<void>(`v1/admin-api/shop/option-groups/${groupId}/`),
+    mutationFn: async (groupId: string) => client.delete<void>(`v1/admin-api/shop/optiongroup/${groupId}/`),
     onSuccess: () => addSnackbar("옵션 그룹을 삭제했습니다.", "success"),
     onError: addErrorSnackbar,
   });
@@ -428,7 +470,7 @@ export const OptionGroupsTab: FC<Props> = ({ productId, optionGroups }) => {
   const deleteOptionMutation = useMutation({
     mutationFn: async (params: { group: OptionGroupAdmin; optionId: string }) => {
       const newOptions = params.group.options.filter((o) => o.id !== params.optionId);
-      return client.patch(`v1/admin-api/shop/option-groups/${params.group.id}/`, { ...params.group, options: newOptions });
+      return client.patch(`v1/admin-api/shop/optiongroup/${params.group.id}/`, { ...params.group, options: newOptions });
     },
     onSuccess: () => addSnackbar("옵션을 삭제했습니다.", "success"),
     onError: addErrorSnackbar,
@@ -471,6 +513,9 @@ export const OptionGroupsTab: FC<Props> = ({ productId, optionGroups }) => {
               <Stack direction="row" spacing={2} alignItems="center" sx={{ width: "100%", pr: 2 }}>
                 <Typography sx={{ fontWeight: 500 }}>{group.name_ko}</Typography>
                 {group.is_custom_response && <Chip label="사용자 입력" size="small" />}
+                {!group.is_custom_response && group.placeholder_mode !== "hidden" && (
+                  <Chip label={`선택해주세요: ${placeholderModeLabel(group.placeholder_mode)}`} size="small" variant="outlined" />
+                )}
                 <Box sx={{ flexGrow: 1 }} />
                 <Typography variant="caption" color="text.secondary">
                   최소 {group.min_quantity_per_product} / 최대 {group.max_quantity_per_product} · 옵션 {options.length}개

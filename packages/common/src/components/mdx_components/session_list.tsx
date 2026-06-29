@@ -1,6 +1,6 @@
 import { Box, Button, Chip, CircularProgress, Stack, styled, Typography } from "@mui/material";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
-import { FC, ReactNode, useMemo, useState } from "react";
+import { CSSProperties, FC, ReactNode, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { isArray, isEmpty, isString } from "remeda";
 
@@ -8,18 +8,19 @@ import { ErrorFallback } from "@frontend/common/components/error_handler";
 import { FallbackImage } from "@frontend/common/components/fallback_image";
 import { BackendAPI, Common } from "@frontend/common/hooks";
 import { SessionSchema } from "@frontend/common/schemas/backendAPI";
+import { getSessionDetailUrl } from "@frontend/common/utils";
 
 import { StyledDivider } from "./styled_divider";
 
 const EXCLUDE_CATEGORIES = ["후원사", "Sponsor"];
+const SESSION_FALLBACK_IMAGE_STYLE: CSSProperties = { width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" };
 
 const SessionItem: FC<{
   session: SessionSchema;
   enableLink?: boolean;
-  fallbackImage?: ReactNode;
-  getSessionUrl?: (session: SessionSchema) => string;
+  linkable?: boolean;
   renderSessionAction?: (session: SessionSchema) => ReactNode;
-}> = Suspense.with({ fallback: <CircularProgress /> }, ({ session, enableLink, fallbackImage, getSessionUrl, renderSessionAction }) => {
+}> = Suspense.with({ fallback: <CircularProgress /> }, ({ session, enableLink, linkable, renderSessionAction }) => {
   const sessionTitle = session.title.replace("\\n", "\n");
 
   let speakerImgSrc = session.image || "";
@@ -32,7 +33,12 @@ const SessionItem: FC<{
     }
   }
 
-  const sessionDetailedUrl = getSessionUrl ? getSessionUrl(session) : undefined;
+  const sessionEvent = session.presentation_type.event;
+  const resolvedFallbackImage = sessionEvent.logo ? (
+    <img src={sessionEvent.logo} alt={sessionEvent.name} style={SESSION_FALLBACK_IMAGE_STYLE} />
+  ) : undefined;
+
+  const sessionDetailedUrl = linkable ? getSessionDetailUrl(session) : undefined;
   const result = (
     <SessionItemContainer direction="row">
       <SessionImageContainer
@@ -41,7 +47,7 @@ const SessionItem: FC<{
             src={speakerImgSrc}
             alt="Session Image"
             loading="lazy"
-            errorFallback={<SessionImageErrorFallback>{fallbackImage}</SessionImageErrorFallback>}
+            errorFallback={<SessionImageErrorFallback>{resolvedFallbackImage}</SessionImageErrorFallback>}
           />
         }
       />
@@ -83,18 +89,26 @@ const SessionItem: FC<{
 });
 
 type SessionListPropType = {
+  /** 세션을 조회할 이벤트(연도) slug. 미지정 시 기본 이벤트를 사용한다. */
   event?: string;
+  /** 필터할 세션 유형. 단일 문자열 또는 배열(내부에서 콤마로 join). */
   types?: string | string[];
+  /** `true`면 각 세션을 상세 페이지 링크로 감싼다. */
   enableLink?: boolean;
-  fallbackImage?: ReactNode;
-  getSessionUrl?: (session: SessionSchema) => string;
+  /** 지정 시 각 세션 행 우측에 액션(예: 담기/빼기 버튼)을 렌더한다. */
   renderSessionAction?: (session: SessionSchema) => ReactNode;
 };
 
+/**
+ * 백엔드에서 발표 세션 목록을 불러와 발표자 이미지·제목·요약·카테고리 칩이 있는 카드 목록으로 보여준다.
+ * 카테고리가 2개 이상이면 클릭으로 켜고 끄는 필터 버튼을 함께 제공한다.
+ * @example <Common__Components__Session__List types="talk" enableLink />
+ */
 export const SessionList: FC<SessionListPropType> = ErrorBoundary.with(
   { fallback: ErrorFallback },
-  Suspense.with({ fallback: <CircularProgress /> }, ({ event, types, enableLink, fallbackImage, getSessionUrl, renderSessionAction }) => {
-    const { language } = Common.useCommonContext();
+  Suspense.with({ fallback: <CircularProgress /> }, ({ event, types, enableLink, renderSessionAction }) => {
+    const { language, appType } = Common.useCommonContext();
+    const linkable = appType === "main";
     const backendAPIClient = BackendAPI.useBackendClient();
     const params = { ...(event && { event }), ...(types && { types: isString(types) ? types : types.join(",") }) };
     const { data: sessions } = BackendAPI.useSessionsQuery(backendAPIClient, params);
@@ -144,14 +158,7 @@ export const SessionList: FC<SessionListPropType> = ErrorBoundary.with(
           )}
         </Box>
         {filteredSessions.map((s) => (
-          <SessionItem
-            key={s.id}
-            session={s}
-            enableLink={enableLink}
-            fallbackImage={fallbackImage}
-            getSessionUrl={getSessionUrl}
-            renderSessionAction={renderSessionAction}
-          />
+          <SessionItem key={s.id} session={s} enableLink={enableLink} linkable={linkable} renderSessionAction={renderSessionAction} />
         ))}
       </Box>
     );

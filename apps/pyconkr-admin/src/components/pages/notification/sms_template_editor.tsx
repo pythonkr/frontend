@@ -15,8 +15,8 @@ import { BackendAdminSignInGuard } from "@apps/pyconkr-admin/components/elements
 import { ErrorFallback } from "@apps/pyconkr-admin/components/elements/error_fallback";
 import { addErrorSnackbar, addSnackbar } from "@apps/pyconkr-admin/utils/snackbar";
 
-const APP = "notification/sms";
-const RESOURCE = "template";
+const APP = "notification";
+const RESOURCE = "nhncloudsmsnotificationtemplate";
 
 type SMSTemplateFormData = {
   code: string;

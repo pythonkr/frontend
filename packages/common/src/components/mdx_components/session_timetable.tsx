@@ -10,6 +10,7 @@ import { CenteredPage } from "@frontend/common/components/centered_page";
 import { ErrorFallback } from "@frontend/common/components/error_handler";
 import { BackendAPI, Common } from "@frontend/common/hooks";
 import { SessionSchema } from "@frontend/common/schemas/backendAPI";
+import { getSessionDetailUrl } from "@frontend/common/utils";
 
 import { StyledDivider } from "./styled_divider";
 
@@ -109,9 +110,9 @@ const SessionColumn: FC<{
   rowSpan: number;
   colSpan?: number;
   session: SessionSchema;
-  getSessionUrl?: (session: SessionSchema) => string;
-}> = ({ rowSpan, colSpan, session, getSessionUrl }) => {
-  const sessionUrl = getSessionUrl ? getSessionUrl(session) : undefined;
+  linkable?: boolean;
+}> = ({ rowSpan, colSpan, session, linkable }) => {
+  const sessionUrl = linkable ? getSessionDetailUrl(session) : undefined;
   const clickable = isArray(session.speakers) && !isEmpty(session.speakers) && !!sessionUrl;
   // Firefox는 rowSpan된 td의 height를 계산할 때 rowSpan을 고려하지 않습니다. 따라서 직접 계산하여 height를 설정합니다.
   const sessionBoxHeight = `${TD_HEIGHT * rowSpan}rem`;
@@ -148,19 +149,26 @@ const BreakTime: FC<{ language: "ko" | "en"; duration: number }> = ({ language, 
 };
 
 type SessionTimeTablePropType = {
+  /** 세션을 조회할 이벤트(연도) slug. 미지정 시 기본 이벤트를 사용한다. */
   event?: string;
+  /** 필터할 세션 유형. 단일 문자열 또는 배열(내부에서 콤마로 join). */
   types?: string | string[];
-  getSessionUrl?: (session: SessionSchema) => string;
   /** 지정 시 시간표 상단에 '세션 발표 추가' 버튼을 표시하고 이 경로로 이동합니다. */
   proposeSessionUrl?: string;
 };
 
+/**
+ * 발표 세션을 날짜·시간·발표장(room) 기준의 표로 보여주는 타임테이블.
+ * 날짜 선택 탭, 발표장별 열, 휴식 시간 표시를 포함한다.
+ * @example <Common__Components__Session__TimeTable types="talk" />
+ */
 export const SessionTimeTable: FC<SessionTimeTablePropType> = ErrorBoundary.with(
   { fallback: ErrorFallback },
-  Suspense.with({ fallback: <CenteredPage children={<CircularProgress />} /> }, ({ event, types, getSessionUrl, proposeSessionUrl }) => {
+  Suspense.with({ fallback: <CenteredPage children={<CircularProgress />} /> }, ({ event, types, proposeSessionUrl }) => {
     const [confDate, setConfDate] = useState("");
 
-    const { language } = Common.useCommonContext();
+    const { language, appType } = Common.useCommonContext();
+    const linkable = appType === "main";
     const backendAPIClient = BackendAPI.useBackendClient();
     const params = { ...(event && { event }), ...(types && { types: isString(types) ? types : types.join(",") }) };
     const { data: sessionList } = BackendAPI.useSessionsQuery(backendAPIClient, params);
@@ -281,12 +289,7 @@ export const SessionTimeTable: FC<SessionTimeTablePropType> = ErrorBoundary.with
                   return (
                     <SessionTableRow>
                       <SessionTableCell align="center" children={time} />
-                      <SessionColumn
-                        rowSpan={firstSessionInfo.rowSpan}
-                        colSpan={roomCount}
-                        session={firstSessionInfo.session}
-                        getSessionUrl={getSessionUrl}
-                      />
+                      <SessionColumn rowSpan={firstSessionInfo.rowSpan} colSpan={roomCount} session={firstSessionInfo.session} linkable={linkable} />
                     </SessionTableRow>
                   );
                 }
@@ -305,7 +308,7 @@ export const SessionTimeTable: FC<SessionTimeTablePropType> = ErrorBoundary.with
                       }
                       // 세션이 여러 줄에 걸쳐있는 경우, n-1 줄만큼 해당 room에 column을 생성하지 않도록 합니다.
                       if (roomDatum.rowSpan > 1) rooms[room] = roomDatum.rowSpan - 1;
-                      return <SessionColumn key={room} rowSpan={roomDatum.rowSpan} session={roomDatum.session} getSessionUrl={getSessionUrl} />;
+                      return <SessionColumn key={room} rowSpan={roomDatum.rowSpan} session={roomDatum.session} linkable={linkable} />;
                     })}
                   </SessionTableRow>
                 );

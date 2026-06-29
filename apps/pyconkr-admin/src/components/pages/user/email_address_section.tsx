@@ -46,15 +46,15 @@ const InnerEmailAddressSection: FC<{ userId: string }> = ErrorBoundary.with(
   { fallback: ErrorFallback },
   Suspense.with({ fallback: <CircularProgress /> }, ({ userId }) => {
     const client = useBackendAdminClient();
-    const listQuery = useListPaginatedQuery<EmailAddressRow>(client, "allauth", "email-address", { user: userId });
+    const listQuery = useListPaginatedQuery<EmailAddressRow>(client, "allauth", "emailaddress", { user: userId });
     const items = listQuery.data?.results ?? [];
 
     const [newEmail, setNewEmail] = useState("");
     const [newVerified, setNewVerified] = useState(false);
     const [newPrimary, setNewPrimary] = useState(false);
 
-    const createMutation = useCreateMutation<EmailAddressCreateRequest>(client, "allauth", "email-address");
-    const removeMutation = useRemovePreparedMutation(client, "allauth", "email-address");
+    const createMutation = useCreateMutation<EmailAddressCreateRequest>(client, "allauth", "emailaddress");
+    const removeMutation = useRemovePreparedMutation(client, "allauth", "emailaddress");
 
     const handleCreate = (e: FormEvent) => {
       e.preventDefault();
@@ -112,7 +112,7 @@ const InnerEmailAddressSection: FC<{ userId: string }> = ErrorBoundary.with(
             {items.map((ea) => (
               <TableRow key={ea.id} hover>
                 <TableCell>
-                  <Link to={`/allauth/email-address/${ea.id}`}>{ea.email}</Link>
+                  <Link to={`/allauth/emailaddress/${ea.id}`}>{ea.email}</Link>
                 </TableCell>
                 <TableCell align="center">{ea.verified ? <Chip label="verified" size="small" color="success" /> : "—"}</TableCell>
                 <TableCell align="center">{ea.primary ? <Chip label="primary" size="small" color="primary" /> : "—"}</TableCell>

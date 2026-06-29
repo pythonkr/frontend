@@ -3,6 +3,7 @@ import { createBrowserRouter } from "react-router-dom";
 import { App } from "./App.tsx";
 import MainLayout from "./components/layout/index.tsx";
 import { PageIdParamRenderer, RouteRenderer } from "./components/pages/dynamic_route.tsx";
+import { MDXPreviewPage } from "./components/pages/mdx_preview.tsx";
 import { PresentationDetailPage } from "./components/pages/presentation_detail.tsx";
 import { ShopSignInPage } from "./components/pages/sign_in.tsx";
 import { SponsorDetailPage } from "./components/pages/sponsor_detail.tsx";
@@ -17,6 +18,7 @@ export const router = createBrowserRouter([
         element: <MainLayout />,
         children: [
           ...(IS_DEBUG_ENV ? [{ path: "/debug", element: <Test /> }] : []),
+          { path: "/preview", element: <MDXPreviewPage /> },
           { path: "/account/sign-in", element: <ShopSignInPage /> },
           { path: "/sponsors/:id", element: <SponsorDetailPage /> },
           { path: "/presentations/:id", element: <PresentationDetailPage /> },

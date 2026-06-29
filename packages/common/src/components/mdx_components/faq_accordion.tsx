@@ -3,15 +3,23 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Accordion as MuiAccordion, AccordionDetails, AccordionSummary } from "@mui/material";
 import { FC, Fragment } from "react";
 export interface FAQItem {
+  /** 항목 고유 식별자이자 헤더 왼쪽에 표시되는 번호. */
   id: string;
+  /** 질문 텍스트. 아코디언 헤더에 표시된다. */
   question: string;
+  /** 펼쳤을 때 표시되는 답변 텍스트. */
   answer: string;
 }
 
 export interface FAQAccordionProps {
+  /** 표시할 FAQ 항목 목록. 각 항목은 `{ id, question, answer }` (모두 string). 항목 사이에는 구분선이 들어간다. */
   items: FAQItem[];
 }
 
+/**
+ * 자주 묻는 질문(FAQ) 아코디언. `items` 배열을 받아 질문을 클릭하면 답변이 펼쳐지는 목록을 렌더한다.
+ * @example <Common__Components__MDX__FAQAccordion items={[{ id: "1", question: "환불 되나요?", answer: "행사 7일 전까지 가능합니다." }]} />
+ */
 export const FAQAccordion: FC<FAQAccordionProps> = ({ items }) => {
   return (
     <AccordionWrapper>

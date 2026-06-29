@@ -5,6 +5,7 @@ import {
   FAQAccordion,
   Map as MDXMap,
   PrimaryStyledDetails,
+  PyConKR2026MainCover,
   SecondaryStyledDetails,
   SessionList,
   SessionTimeTable,
@@ -276,6 +277,7 @@ const PyConKRCommonMDXComponents: MDXComponents = {
   Common__Components__MDX__FullWidthStyledButton: StyledFullWidthButton,
   Common__Components__Session__List: SessionList,
   Common__Components__Session__TimeTable: SessionTimeTable,
+  Common__Components__MDX__PyConKR2026MainCover: PyConKR2026MainCover,
 };
 
 const PythonKRShopMDXComponents: MDXComponents = {

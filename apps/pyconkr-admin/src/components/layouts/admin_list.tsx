@@ -1,10 +1,10 @@
 import {
   useBackendAdminClient,
-  useChoicesQueries,
-  useChoicesQuery,
+  useFieldSelectablesQuery,
   useListAutoQuery,
   useOpenApiSchemaQuery,
   useRemovePreparedMutation,
+  useSelectablesQueries,
 } from "@frontend/common/hooks/useAdminAPI";
 import { ChoicesResponse } from "@frontend/common/schemas/backendAdminAPI";
 import { extractQueryParameters } from "@frontend/common/utils";
@@ -58,8 +58,6 @@ export type AdminListColumn = {
 export type FilterChoicesSource = {
   app: string;
   resource: string;
-  /** Field name in the source resource's choices response. Defaults to the local field name (the map key). */
-  field?: string;
 };
 
 type AdminListProps = {
@@ -101,22 +99,21 @@ const InnerAdminList: FC<AdminListProps> = ErrorBoundary.with(
         [openApiSchemaQuery.data, app, resource]
       );
 
-      const choicesQuery = useChoicesQuery(backendAdminClient, app, resource);
+      const fieldChoices = useFieldSelectablesQuery(backendAdminClient, app, resource);
 
       const overrideEntries = useMemo(() => Object.entries(filterChoicesFrom ?? {}), [filterChoicesFrom]);
-      const overrideQueries = useChoicesQueries(
+      const overrideQueries = useSelectablesQueries(
         backendAdminClient,
         overrideEntries.map(([, src]) => ({ app: src.app, resource: src.resource }))
       );
       const mergedChoices = useMemo<ChoicesResponse>(() => {
-        const merged: ChoicesResponse = { ...(choicesQuery.data ?? {}) };
-        overrideEntries.forEach(([localField, src], i) => {
-          const sourceField = src.field ?? localField;
-          const sourceChoices = overrideQueries[i]?.data?.[sourceField];
-          if (sourceChoices) merged[localField] = sourceChoices;
+        const merged: ChoicesResponse = { ...fieldChoices };
+        overrideEntries.forEach(([localField], i) => {
+          const results = overrideQueries[i]?.data?.results;
+          if (results) merged[localField] = results;
         });
         return merged;
-      }, [choicesQuery.data, overrideEntries, overrideQueries]);
+      }, [fieldChoices, overrideEntries, overrideQueries]);
 
       const removeMutation = useRemovePreparedMutation(backendAdminClient, app, resource);
 

@@ -1,7 +1,7 @@
 import { Global } from "@emotion/react";
 import { CenteredPage, CommonContextProvider, ErrorFallback } from "@frontend/common/components";
 import type { ContextOptions } from "@frontend/common/contexts";
-import { captureSessionTokenFromURL, registerChunkLoadErrorReloadHandler } from "@frontend/common/utils";
+import { captureSessionTokenFromURL, initFaro, registerChunkLoadErrorReloadHandler } from "@frontend/common/utils";
 import { ShopContextProvider } from "@frontend/shop/components/common";
 import { ContextOptions as ShopContextOptions } from "@frontend/shop/contexts";
 import { CircularProgress, CssBaseline, ThemeProvider } from "@mui/material";
@@ -49,6 +49,7 @@ const queryClient = new QueryClient({
 const backendApiDomain = import.meta.env.DEV ? "" : import.meta.env.VITE_PYCONKR_BACKEND_API_DOMAIN;
 
 const CommonOptions: ContextOptions = {
+  appType: "main",
   language: "ko",
   debug: IS_DEBUG_ENV,
   baseUrl: ".",
@@ -108,6 +109,16 @@ export const MainApp: FC = () => {
   );
 };
 
+initFaro({
+  enabled: import.meta.env.PROD,
+  tracing: false,
+  url: import.meta.env.VITE_FARO_COLLECTOR_URL,
+  app: {
+    name: "pyconkr-2025",
+    version: import.meta.env.VITE_APP_VERSION,
+    environment: import.meta.env.MODE as "development" | "production",
+  },
+});
 registerChunkLoadErrorReloadHandler();
 captureSessionTokenFromURL(import.meta.env.VITE_PYCONKR_BACKEND_SESSION_COOKIE_NAME);
 

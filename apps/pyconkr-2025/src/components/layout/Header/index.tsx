@@ -3,7 +3,7 @@ import { NestedSiteMapSchema } from "@frontend/common/schemas/backendAPI";
 import { ArrowForwardIos } from "@mui/icons-material";
 import { Box, Button, CircularProgress, Divider, Stack, styled, SxProps, Theme, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { MUIStyledCommonProps } from "@mui/system";
-import { CSSProperties, FC, Fragment, useEffect, useState } from "react";
+import { CSSProperties, Fragment, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { isEmpty, isNonNullish, isString } from "remeda";
 
@@ -26,7 +26,7 @@ type NavigationStateType = {
 const HeaderHeight: CSSProperties["height"] = "3.625rem";
 const BreadCrumbHeight: CSSProperties["height"] = "4.5rem";
 
-const Header: FC = () => {
+export default function Header() {
   const { title, language, siteMapNode, currentSiteMapDepth, shouldShowTitleBanner } = useAppContext();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -105,7 +105,6 @@ const Header: FC = () => {
                             key={r.id}
                             onClick={resetDepths}
                             onMouseEnter={() => setDepth2(r)}
-                            // 하위 depth가 있는 경우, 하위 depth를 선택할 수 있도록 유지하기 위해 depth2도 유지합니다.
                             onMouseLeave={() => isEmpty(navState.depth2?.children ?? {}) && setDepth2(undefined)}
                             target={isString(r.external_link) ? "_blank" : undefined}
                             rel={isString(r.external_link) ? "noopener noreferrer" : undefined}
@@ -179,7 +178,7 @@ const Header: FC = () => {
       )}
     </Box>
   );
-};
+}
 
 const ResponsivePaddingDefinition = ({ theme }: MUIStyledCommonProps) => ({
   paddingRight: theme!.spacing(16),
@@ -309,5 +308,3 @@ const BreadCrumbContainer = styled(Stack)(({ theme }) => ({
     fontSize: "0.75rem",
   },
 }));
-
-export default Header;

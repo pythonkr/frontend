@@ -10,12 +10,16 @@ const MAP_TYPES: SupportedMapType[] = ["kakao", "google", "naver"];
 type LangType = "ko" | "en";
 
 export type MapPropType = {
+  /** 지도 중심 좌표. `lat`=위도, `lng`=경도. */
   geo: {
     lat: number;
     lng: number;
   };
+  /** 장소 이름. 언어별(`ko`/`en`)로 지정하며 카카오맵 마커 안내에 표시된다. */
   placeName: { [key in LangType]: string };
+  /** 각 지도 서비스의 장소 코드. `kakao`/`google`/`naver` 별 '열기' 링크를 만드는 데 사용한다. */
   placeCode: { [key in SupportedMapType]: string };
+  /** 구글 지도 탭에 임베드할 iframe 의 src URL. */
   googleMapIframeSrc: string;
 };
 
@@ -55,6 +59,11 @@ const MapData: { [key in SupportedMapType]: MapDataType } = {
   },
 };
 
+/**
+ * 카카오맵·구글지도·네이버지도 탭으로 특정 장소를 보여주는 지도 컴포넌트.
+ * 각 지도 서비스로 바로 여는 버튼도 함께 렌더하며, 주로 행사장 위치 안내에 사용한다.
+ * @example <Common__Components__MDX__Map geo={{ lat: 37.5665, lng: 126.978 }} placeName={{ ko: "서울시청", en: "Seoul City Hall" }} placeCode={{ kakao: "7942135", google: "ChIJ...", naver: "..." }} googleMapIframeSrc="https://www.google.com/maps/embed?pb=..." />
+ */
 export const Map: FC<MapPropType> = ({ geo, placeName, placeCode, googleMapIframeSrc }) => {
   const { language } = useCommonContext();
   const kakaoMapRef = useRef<HTMLDivElement>(null);
@@ -68,20 +77,26 @@ export const Map: FC<MapPropType> = ({ geo, placeName, placeCode, googleMapIfram
 
     const kakaoMapUrl = MapData.kakao.basePlaceInfoUrl + placeCode.kakao;
     const content: string = renderToStaticMarkup(
-      <a href={kakaoMapUrl} target="_blank" rel="noopener noreferrer" style={{ width: "max-content", height: "max-content" }}>
-        <div
-          style={{
-            width: "100%",
-            height: "100%",
-            textAlign: "center",
-            fontSize: "18px",
-            whiteSpace: "pre-wrap",
-            textWrap: "nowrap",
-          }}
-        >
-          {placeName[language]}
-        </div>
-      </a>
+      <a
+        href={kakaoMapUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: "inline-block",
+          boxSizing: "border-box",
+          width: "max-content",
+          maxWidth: "240px",
+          padding: "8px 12px",
+          textAlign: "center",
+          fontSize: "20px",
+          lineHeight: 1.4,
+          whiteSpace: "normal",
+          wordBreak: "keep-all",
+          color: "#000",
+          textDecoration: "none",
+        }}
+        children={placeName[language]}
+      />
     );
     const position = new window.kakao.maps.LatLng(geo.lat, geo.lng);
     const map = new window.kakao.maps.Map(kakaoMapDiv, { center: position, level: 3 });

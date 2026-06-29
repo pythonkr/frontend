@@ -1,7 +1,7 @@
 import {
   useBackendAdminClient,
-  useChoicesQuery,
   useListQuery,
+  useSelectablesQuery,
   useRemovePreparedMutation,
   useUpdatePreparedMutation,
 } from "@frontend/common/hooks/useAdminAPI";
@@ -265,8 +265,8 @@ const DomainGroupSelector: FC = ErrorBoundary.with(
   { fallback: ErrorFallback },
   Suspense.with({ fallback: <CircularProgress /> }, () => {
     const backendAdminAPIClient = useBackendAdminClient();
-    const { data: choices } = useChoicesQuery(backendAdminAPIClient, "cms", "sitemap");
-    const domainGroupChoices = (choices["domain_group"] ?? []).filter((c): c is { const: string; title: string } => c.const !== null);
+    const { data } = useSelectablesQuery(backendAdminAPIClient, "cms", "domaingroup");
+    const domainGroupChoices = data.results.filter((c): c is { const: string; title: string } => c.const !== null);
 
     const [domainGroupId, setDomainGroupId] = useState<string>(() => domainGroupChoices[0]?.const ?? "");
 

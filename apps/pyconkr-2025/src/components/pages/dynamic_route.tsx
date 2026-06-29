@@ -1,62 +1,15 @@
 import { BackendAPIClientError } from "@frontend/common/apis";
-import { CenteredPage, ErrorFallback, MDXRenderer } from "@frontend/common/components";
+import { CenteredPage, ErrorFallback, MDXSections } from "@frontend/common/components";
 import { useBackendClient, usePageQuery } from "@frontend/common/hooks/useAPI";
-import { useCommonContext } from "@frontend/common/hooks/useCommonContext";
-import { parseCss } from "@frontend/common/utils";
-import { CircularProgress, Stack, Theme } from "@mui/material";
+import { CircularProgress } from "@mui/material";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AxiosError, AxiosResponse } from "axios";
-import { CSSProperties, FC, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { FC, useEffect, useState } from "react";
+import { useLocation, useParams } from "react-router-dom";
 import { isEmpty, isString } from "remeda";
 
 import { useAppContext } from "@apps/pyconkr-2025/contexts/app_context";
-
-const initialPageStyle: (additionalStyle: CSSProperties) => (theme: Theme) => CSSProperties = (additionalStyle) => (theme) => ({
-  width: "100%",
-  display: "flex",
-  justifyContent: "flex-start",
-  alignItems: "center",
-  flexDirection: "column",
-
-  marginTop: theme.spacing(4),
-
-  ...(!isEmpty(additionalStyle)
-    ? additionalStyle
-    : {
-        [theme.breakpoints.down("lg")]: {
-          marginTop: theme.spacing(2),
-        },
-        [theme.breakpoints.down("sm")]: {
-          marginTop: theme.spacing(1),
-        },
-      }),
-});
-
-const initialSectionStyle: (additionalStyle: CSSProperties) => (theme: Theme) => CSSProperties = (additionalStyle) => (theme) => ({
-  width: "100%",
-  maxWidth: "1200px",
-  display: "flex",
-  justifyContent: "flex-start",
-  alignItems: "center",
-  paddingRight: theme.spacing(16),
-  paddingLeft: theme.spacing(16),
-
-  "& .markdown-body": { width: "100%" },
-  ...(!isEmpty(additionalStyle)
-    ? additionalStyle
-    : {
-        [theme.breakpoints.down("lg")]: {
-          paddingRight: theme.spacing(4),
-          paddingLeft: theme.spacing(4),
-        },
-        [theme.breakpoints.down("sm")]: {
-          paddingRight: theme.spacing(2),
-          paddingLeft: theme.spacing(2),
-        },
-      }),
-});
 
 const LoginRequired: FC = () => <>401 Login Required</>;
 const PermissionDenied: FC = () => <>403 Permission Denied</>;
@@ -105,7 +58,6 @@ const WaitedCenteredLoadingPage: FC = Suspense.with({ fallback: <CenteredLoading
 
 const InnerPageRenderer: FC<{ id: string }> = Suspense.with({ fallback: <CenteredLoadingPage /> }, ({ id }) => {
   const { setAppContext } = useAppContext();
-  const { baseUrl, mdxComponents } = useCommonContext();
   const backendClient = useBackendClient();
   const { data } = usePageQuery(backendClient, id);
 
@@ -118,15 +70,7 @@ const InnerPageRenderer: FC<{ id: string }> = Suspense.with({ fallback: <Centere
     }));
   }, [data, setAppContext]);
 
-  return (
-    <Stack sx={initialPageStyle(parseCss(data.css))}>
-      {data.sections.map((s) => (
-        <Stack sx={initialSectionStyle(parseCss(s.css))} key={s.id}>
-          <MDXRenderer text={s.body} format="mdx" baseUrl={baseUrl} mdxComponents={mdxComponents} />
-        </Stack>
-      ))}
-    </Stack>
-  );
+  return <MDXSections css={data.css} sections={data.sections} />;
 });
 
 export const PageRenderer: FC<{ id: string }> = ({ id }) => (
@@ -138,8 +82,15 @@ export const PageRenderer: FC<{ id: string }> = ({ id }) => (
 export const RouteRenderer: FC = ErrorBoundary.with(
   { fallback: RouteErrorFallback },
   Suspense.with({ fallback: <CenteredLoadingPage /> }, () => {
+    const { pathname } = useLocation();
     const { siteMapNode, currentSiteMapDepth } = useAppContext();
     const routeInfo = !isEmpty(currentSiteMapDepth) && currentSiteMapDepth[currentSiteMapDepth.length - 1];
+
+    useEffect(() => {
+      if (siteMapNode && !isEmpty(currentSiteMapDepth) && !routeInfo) {
+        console.warn(`Route not found in site map: ${pathname}`);
+      }
+    }, [pathname, siteMapNode, currentSiteMapDepth, routeInfo]);
 
     if (!(siteMapNode && routeInfo)) return <WaitedCenteredLoadingPage />;
     if (isString(routeInfo.page)) return <PageRenderer id={routeInfo.page} />;

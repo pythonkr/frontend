@@ -56,9 +56,9 @@ const InnerProductEditor: FC = ErrorBoundary.with(
     const client = useBackendAdminClient();
 
     const isCreate = !id;
-    const productQuery = useRetrieveQuery<ProductAdmin>(client, "shop", "products", id ?? "");
-    const groupsQuery = useListQuery<CategoryGroupAdminWithCategories>(client, "shop", "category-groups", {});
-    const tagsQuery = useListQuery<TagAdmin>(client, "shop", "tags", {});
+    const productQuery = useRetrieveQuery<ProductAdmin>(client, "shop", "product", id ?? "");
+    const groupsQuery = useListQuery<CategoryGroupAdminWithCategories>(client, "shop", "categorygroup", {});
+    const tagsQuery = useListQuery<TagAdmin>(client, "shop", "tag", {});
 
     const existing = isCreate ? undefined : (productQuery.data ?? undefined);
     const groups = groupsQuery.data ?? [];
@@ -71,9 +71,9 @@ const InnerProductEditor: FC = ErrorBoundary.with(
       if (existing) setValues(buildDefaultFormValues(existing));
     }, [existing]);
 
-    const createMutation = useCreateMutation<ProductAdmin>(client, "shop", "products");
-    const updateMutation = useUpdateMutation<ProductAdmin>(client, "shop", "products", id ?? "");
-    const deleteMutation = useRemoveMutation(client, "shop", "products", id ?? "");
+    const createMutation = useCreateMutation<ProductAdmin>(client, "shop", "product");
+    const updateMutation = useUpdateMutation<ProductAdmin>(client, "shop", "product", id ?? "");
+    const deleteMutation = useRemoveMutation(client, "shop", "product", id ?? "");
 
     const setField = <K extends keyof ProductFormValues>(key: K, value: ProductFormValues[K]) => {
       setValues((prev) => ({ ...prev, [key]: value }));
@@ -98,7 +98,7 @@ const InnerProductEditor: FC = ErrorBoundary.with(
         createMutation.mutate(payload as unknown as ProductAdmin, {
           onSuccess: (data) => {
             addSnackbar("상품을 생성했습니다.", "success");
-            navigate(`/shop/products/${(data as unknown as ProductAdmin).id}`);
+            navigate(`/shop/product/${(data as unknown as ProductAdmin).id}`);
           },
           onError: addErrorSnackbar,
         });
@@ -111,7 +111,7 @@ const InnerProductEditor: FC = ErrorBoundary.with(
         deleteMutation.mutate(undefined, {
           onSuccess: () => {
             addSnackbar("상품을 삭제했습니다.", "success");
-            navigate("/shop/products");
+            navigate("/shop/product");
           },
           onError: addErrorSnackbar,
         });
@@ -229,7 +229,7 @@ const InnerProductEditor: FC = ErrorBoundary.with(
         <Stack direction="row" spacing={2} justifyContent="flex-end">
           {existing ? (
             <>
-              <Button variant="outlined" color="info" startIcon={<Add />} onClick={() => navigate("/shop/products/create")} disabled={disabled}>
+              <Button variant="outlined" color="info" startIcon={<Add />} onClick={() => navigate("/shop/product/create")} disabled={disabled}>
                 새 객체 추가
               </Button>
               <Button variant="outlined" color="error" startIcon={<Delete />} onClick={onDelete} disabled={disabled}>

@@ -1,6 +1,6 @@
 import { isEmpty, isNullish, isString } from "remeda";
 
-import type { OptionGroup, OrderProductItem, Product } from "@frontend/shop/schemas";
+import type { OptionGroup, Order, OrderProductItem, Product } from "@frontend/shop/schemas";
 
 export { startPortOnePurchase } from "./portone";
 
@@ -92,3 +92,10 @@ export const getOptionGroupNotOrderableReason = (
   }
   return null;
 };
+
+// 주문 전액 환불 가능: 남은 결제액이 있고, 완료 또는 부분환불 상태일 때.
+export const canRefundOrder = (order: Pick<Order, "current_paid_price" | "current_status">): boolean =>
+  order.current_paid_price > 0 && (order.current_status === "completed" || order.current_status === "partial_refunded");
+
+// 상품 부분 환불 가능: 해당 상품이 결제 완료(paid) 상태일 때.
+export const canRefundProduct = (product: Pick<OrderProductItem, "status">): boolean => product.status === "paid";

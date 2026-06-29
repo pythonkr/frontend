@@ -1,6 +1,6 @@
 import { evaluate } from "@mdx-js/mdx";
 import * as provider from "@mdx-js/react";
-import { CircularProgress, Table, TableBody, TableCell, TableContainer, TableFooter, TableHead, TableRow } from "@mui/material";
+import { CircularProgress, styled, Table, TableBody, TableCell, TableContainer, TableFooter, TableHead, TableRow, Theme } from "@mui/material";
 import { ErrorBoundary } from "@suspensive/react";
 import type { MDXComponents } from "mdx/types";
 import muiComponents from "mui-mdx-components";
@@ -38,6 +38,17 @@ const REGISTERED_KEYWORDS = [
   "}",
 ];
 
+// 좁은 화면에서는 목록의 들여쓰기(기본 padding-inline-start: 40px)를 제거한다.
+// padding을 0으로 두면 기본값(outside)에서 마커가 바깥으로 잘리므로 inside로 함께 둔다.
+const responsiveListStyle = (theme: Theme) => ({
+  [theme.breakpoints.down("sm")]: {
+    paddingInlineStart: 0,
+    listStylePosition: "inside" as const,
+  },
+});
+const StyledUl = styled("ul")(({ theme }) => responsiveListStyle(theme));
+const StyledOl = styled("ol")(({ theme }) => responsiveListStyle(theme));
+
 const CustomMDXComponents: MDXComponents = {
   h1: (props) => <h1 style={{ margin: 0 }} {...props} />,
   h2: (props) => <h2 style={{ margin: 0 }} {...props} />,
@@ -50,8 +61,8 @@ const CustomMDXComponents: MDXComponents = {
   hr: (props) => <StyledDivider {...props} />,
   img: (props) => <img style={{ maxWidth: "100%" }} alt="" {...props} />,
   em: (props) => <em {...props} />,
-  ul: (props) => <ul {...props} />,
-  ol: (props) => <ol {...props} />,
+  ul: (props) => <StyledUl {...props} />,
+  ol: (props) => <StyledOl {...props} />,
   li: (props) => <li {...props} />,
   table: (props) => (
     <TableContainer>

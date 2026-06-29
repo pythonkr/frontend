@@ -1,4 +1,3 @@
-import { PythonKorea } from "@frontend/common/components";
 import { Box, Stack, styled, Typography } from "@mui/material";
 import { FC, useState } from "react";
 import { Link } from "react-router-dom";
@@ -8,6 +7,7 @@ import { useAppContext } from "@apps/pyconkr-2026/contexts/app_context";
 
 import { HamburgerButton } from "./HamburgerButton";
 import { MobileNavigation } from "./MobileNavigation";
+import { PyConLogo } from "@apps/pyconkr-2026/components/pycon_logo";
 
 export const MobileHeader: FC = () => {
   const { siteMapNode } = useAppContext();
@@ -19,10 +19,10 @@ export const MobileHeader: FC = () => {
         <LeftContent>
           <HamburgerButton isOpen={isOpen} onClick={() => setIsOpen(!isOpen)} />
           <Link to="/" style={{ textDecoration: "none" }}>
-            <Stack direction="row" alignItems="center" spacing={0.5}>
-              <PythonKorea style={{ width: 28, height: 28 }} />
+            <Stack direction="row" alignItems="center" spacing={0.75}>
+              <PyConLogo style={{ width: 28, height: 28 }} />
               <Typography variant="h6" sx={{ color: "#ededde", fontSize: 17, fontWeight: 600 }}>
-                파이콘 한국 2026
+                PyCon Korea 2026
               </Typography>
             </Stack>
           </Link>

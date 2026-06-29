@@ -11,7 +11,7 @@ const columns: AdminListColumn[] = [
     render: (row) => {
       const id = row.id as string;
       const name = String(row.name ?? "");
-      return <Link to={`/shop/category-groups/${id}`}>{name}</Link>;
+      return <Link to={`/shop/categorygroup/${id}`}>{name}</Link>;
     },
   },
   {
@@ -31,4 +31,4 @@ const columns: AdminListColumn[] = [
   },
 ];
 
-export const ShopCategoryGroupListPage: FC = () => <AdminList app="shop" resource="category-groups" columns={columns} enableRowActions />;
+export const ShopCategoryGroupListPage: FC = () => <AdminList app="shop" resource="categorygroup" columns={columns} enableRowActions />;

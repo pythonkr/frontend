@@ -1,11 +1,10 @@
-import PyCon2025Logo from "@frontend/common/assets/pyconkr2025_logo.png";
 import { CenteredPage, ErrorFallback, FallbackImage, LinkHandler, MDXRenderer } from "@frontend/common/components";
 import { useBackendClient, useSessionQuery } from "@frontend/common/hooks/useAPI";
 import { useCommonContext } from "@frontend/common/hooks/useCommonContext";
 import { Box, Chip, CircularProgress, Divider, Stack, styled, Table, TableBody, TableCell, TableRow, Typography } from "@mui/material";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { DateTime } from "luxon";
-import { CSSProperties, FC, useEffect } from "react";
+import { CSSProperties, FC, ReactNode, useEffect } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { isString } from "remeda";
 
@@ -13,6 +12,7 @@ import { PageLayout } from "@apps/pyconkr-2026/components/layout/PageLayout";
 import { useAppContext } from "@apps/pyconkr-2026/contexts/app_context";
 
 const PROFILE_IMAGE_SIZE = "7rem";
+const PROFILE_FALLBACK_IMAGE_STYLE: CSSProperties = { width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" };
 
 type SimplifiedSpeakerSchema = {
   id: string;
@@ -94,21 +94,29 @@ const ProfileImageStyle: CSSProperties = {
 
 const ProfileImage = styled(FallbackImage)(ProfileImageStyle);
 
-const ProfileImageErrorFallback: FC = () => (
+const ProfileImageErrorFallback: FC<{ children?: ReactNode }> = ({ children }) => (
   <Stack alignItems="center" justifyContent="center" sx={{ ...ProfileImageStyle }}>
-    <img src={PyCon2025Logo} alt="PyCon 2025 Logo" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
+    {children}
   </Stack>
 );
 
-const PresentationSpeakerItem: FC<{ speaker: SimplifiedSpeakerSchema }> = ({ speaker }) => {
+const PresentationSpeakerItem: FC<{ speaker: SimplifiedSpeakerSchema; fallbackImage?: ReactNode }> = ({ speaker, fallbackImage }) => {
   const { baseUrl, mdxComponents } = useCommonContext();
   return (
     <>
-      <Stack direction="row" spacing={4} sx={{ px: 2, py: 1 }}>
+      <Stack direction="row" spacing={4} sx={{ px: 2, py: 1, flexWrap: "wrap" }}>
         <ProfileImageContainer sx={{ flexGrow: 0 }}>
-          <ProfileImage alt="Speaker Image" src={speaker.image || ""} errorFallback={<ProfileImageErrorFallback />} />
+          <ProfileImage
+            alt="Speaker Image"
+            src={speaker.image || ""}
+            errorFallback={<ProfileImageErrorFallback>{fallbackImage}</ProfileImageErrorFallback>}
+          />
         </ProfileImageContainer>
-        <Stack alignItems="flex-start" justifyContent="center" sx={{ flexGrow: 1 }}>
+        <Stack
+          alignItems="flex-start"
+          justifyContent="center"
+          sx={(theme) => ({ flexGrow: 1, flexBasis: 0, minWidth: 0, [theme.breakpoints.down("sm")]: { flexBasis: "100%" } })}
+        >
           <Typography variant="h4" fontWeight="700" fontSize="2rem" children={speaker.nickname} />
           {speaker.biography ? (
             <BiographyBox children={<MDXRenderer text={speaker.biography || ""} format="md" baseUrl={baseUrl} mdxComponents={mdxComponents} />} />
@@ -155,6 +163,11 @@ export const PresentationDetailPage: FC = ErrorBoundary.with(
 
     if (!id || !presentation) return <Navigate to="/" replace />;
 
+    const presentationEvent = presentation.presentation_type.event;
+    const speakerFallbackImage = presentationEvent.logo ? (
+      <img src={presentationEvent.logo} alt={presentationEvent.name} style={PROFILE_FALLBACK_IMAGE_STYLE} />
+    ) : undefined;
+
     const descriptionFallback = language === "ko" ? "해당 발표의 설명은 준비 중이에요!" : "Description of the presentation is under preparation!";
     const categoriesStr = language === "ko" ? "카테고리" : "Categories";
     const speakersStr = language === "ko" ? "발표자" : "Speakers";
@@ -190,7 +203,7 @@ export const PresentationDetailPage: FC = ErrorBoundary.with(
       setAppContext((prev) => ({
         ...prev,
         title: language === "ko" ? "발표 상세" : "Presentation Detail",
-        shouldShowTitleBanner: true,
+        shouldShowTitleBanner: false,
         shouldShowSponsorBanner: true,
       }));
     }, [language, presentation, setAppContext]);
@@ -270,7 +283,7 @@ export const PresentationDetailPage: FC = ErrorBoundary.with(
             <Typography variant="h5" fontWeight="bold" sx={{ width: "100%", px: 2, py: 4 }} children={speakersStr} />
             <Stack spacing={2} sx={{ width: "100%", px: 3 }}>
               {presentation.speakers.map((speaker) => (
-                <PresentationSpeakerItem key={speaker.id} speaker={speaker as SimplifiedSpeakerSchema} />
+                <PresentationSpeakerItem key={speaker.id} speaker={speaker as SimplifiedSpeakerSchema} fallbackImage={speakerFallbackImage} />
               ))}
             </Stack>
           </>

@@ -21,13 +21,24 @@ const MarqueeAccordion: FC<{ marqueeText: string; marqueeLogoSrc: string }> = ({
 };
 
 type MobileAccordionProps = {
+  /** 접힌 상태에서 흐르는 마퀴 텍스트(예: `"AUG 15 - 17"`). */
   marqueeText: string;
+  /** 마퀴 텍스트 사이에 반복 표시할 로고 이미지 경로. */
   marqueeLogoSrc: string;
+  /** 펼친 상태에 크게 표시할 주최 로고 이미지 경로. */
   hostLogoBigSrc: string;
+  /** 한국어 행사장 주소(한 줄). 언어가 `ko` 일 때 표시된다. */
   venueKo: string;
+  /** 영어 행사장 주소. 줄 단위 배열로 여러 줄을 표시하며 언어가 `en` 일 때 사용된다. */
   venueEnLines: string[];
 };
 
+/**
+ * 모바일 화면용 아코디언. 접힌 상태에서는 마퀴(흐르는 텍스트+로고)를,
+ * 펼치면 주최 로고와 행사장 주소(현재 언어에 맞춰 ko/en)를 보여준다.
+ * 레지스트리에는 행사 정보가 미리 채워진 래퍼로 등록되어 MDX 에서는 prop 없이 사용한다.
+ * @example <Common__Components__MDX__MobileAccordion />
+ */
 export const MobileAccordion: FC<MobileAccordionProps> = ({ marqueeText, marqueeLogoSrc, hostLogoBigSrc, venueKo, venueEnLines }) => {
   const { language } = Common.useCommonContext();
   const [expanded, setExpanded] = useState<boolean>(false);

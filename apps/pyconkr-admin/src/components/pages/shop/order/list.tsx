@@ -103,8 +103,8 @@ const InnerOrderList: FC = ErrorBoundary.with(
       setFilters(readFilters(searchParams));
     }, [searchParams]);
 
-    const ordersQuery = useListPaginatedQuery<OrderAdmin>(client, "shop", "orders", apiParams);
-    const groupsQuery = useListQuery<CategoryGroupAdminWithCategories>(client, "shop", "category-groups", {});
+    const ordersQuery = useListPaginatedQuery<OrderAdmin>(client, "shop", "order", apiParams);
+    const groupsQuery = useListQuery<CategoryGroupAdminWithCategories>(client, "shop", "categorygroup", {});
     const { count = 0, results: orders = [] } = ordersQuery.data ?? {};
     const groups = useMemo(() => groupsQuery.data ?? [], [groupsQuery.data]);
 
@@ -301,7 +301,7 @@ const InnerOrderList: FC = ErrorBoundary.with(
               return (
                 <TableRow key={order.id} hover>
                   <TableCell>
-                    <Link to={`/shop/orders/${order.id}`}>
+                    <Link to={`/shop/order/${order.id}`}>
                       <code>{order.id.slice(0, 8)}</code>
                     </Link>
                   </TableCell>

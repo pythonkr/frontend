@@ -19,7 +19,7 @@ const columns: AdminListColumn[] = [
       const soldOut = typeof leftover === "number" && leftover <= 0;
       return (
         <>
-          <Link to={`/shop/tags/${id}`}>{name}</Link>
+          <Link to={`/shop/tag/${id}`}>{name}</Link>
           {soldOut && <Chip label="매진" size="small" color="error" sx={{ ml: 1 }} />}
         </>
       );
@@ -48,4 +48,4 @@ const columns: AdminListColumn[] = [
   },
 ];
 
-export const ShopTagListPage: FC = () => <AdminList app="shop" resource="tags" columns={columns} enableRowActions />;
+export const ShopTagListPage: FC = () => <AdminList app="shop" resource="tag" columns={columns} enableRowActions />;

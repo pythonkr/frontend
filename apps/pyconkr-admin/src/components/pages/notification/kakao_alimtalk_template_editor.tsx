@@ -8,8 +8,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { BackendAdminSignInGuard } from "@apps/pyconkr-admin/components/elements/admin_signin_guard";
 import { ErrorFallback } from "@apps/pyconkr-admin/components/elements/error_fallback";
 
-const APP = "notification/kakao-alimtalk";
-const RESOURCE = "template";
+const APP = "notification";
+const RESOURCE = "nhncloudkakaoalimtalknotificationtemplate";
 
 type KakaoAlimTalkTemplateSchema = {
   id: string;

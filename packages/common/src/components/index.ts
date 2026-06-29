@@ -11,4 +11,8 @@ export { LottieDebugPanel, LottiePlayer, NetworkLottiePlayer } from "./lottie";
 export { MarkdownEditor } from "./md_editor";
 export { MDXRenderer } from "./mdx";
 export { MDXEditor } from "./mdx_editor";
+export { MDXPreview } from "./mdx_preview";
+export type { MDXPreviewMeta } from "./mdx_preview";
+export { MDXSections } from "./mdx_sections";
+export type { MDXSection } from "./mdx_sections";
 export { PythonKorea } from "./pythonkorea";

@@ -69,7 +69,7 @@ export const AdminGoogleOAuth2Editor: FC = () => {
   };
 
   return (
-    <AdminEditor app="external-api/google" resource="oauth2" id={id}>
+    <AdminEditor app="external_api" resource="googleoauth2" id={id}>
       {id && (
         <Stack spacing={2} sx={{ my: 2 }}>
           <Button variant="outlined" color="primary" onClick={handleIssueToken} disabled={accessTokenMutation.isPending} startIcon={<VpnKey />}>

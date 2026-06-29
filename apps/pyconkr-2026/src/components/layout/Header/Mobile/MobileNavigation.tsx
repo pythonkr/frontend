@@ -1,4 +1,3 @@
-import { PythonKorea } from "@frontend/common/components";
 import { NestedSiteMapSchema } from "@frontend/common/schemas/backendAPI";
 import { ArrowBack, ArrowForward } from "@mui/icons-material";
 import { Box, Button, Chip, Drawer, IconButton, Stack, styled } from "@mui/material";
@@ -11,6 +10,7 @@ import LanguageSelector from "@apps/pyconkr-2026/components/layout/LanguageSelec
 import { UserMenuButton } from "@apps/pyconkr-2026/components/layout/UserMenuButton";
 
 import { HamburgerButton } from "./HamburgerButton";
+import { PyConLogo } from "@apps/pyconkr-2026/components/pycon_logo";
 
 type MenuType = NestedSiteMapSchema;
 
@@ -152,9 +152,9 @@ export const MobileNavigation: FC<MobileNavigationProps> = ({ isOpen, onClose, s
         <NavigationHeader>
           <HamburgerButton isOpen={true} onClick={handleClose} />
           <Link to="/" onClick={handleClose} style={{ textDecoration: "none" }}>
-            <Stack direction="row" alignItems="center" spacing={0.5}>
-              <PythonKorea style={{ width: 28, height: 28 }} />
-              <HeaderTitle>파이콘 한국 2026</HeaderTitle>
+            <Stack direction="row" alignItems="center" spacing={0.75}>
+              <PyConLogo style={{ width: 28, height: 28 }} />
+              <HeaderTitle>PyCon Korea 2026</HeaderTitle>
             </Stack>
           </Link>
         </NavigationHeader>

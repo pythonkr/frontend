@@ -17,8 +17,8 @@ import { ErrorFallback } from "@apps/pyconkr-admin/components/elements/error_fal
 import { DEFAULT_INITIAL_DOCUMENT } from "@apps/pyconkr-admin/components/pages/notification/email_template_default_document";
 import { addErrorSnackbar, addSnackbar } from "@apps/pyconkr-admin/utils/snackbar";
 
-const APP = "notification/email";
-const RESOURCE = "template";
+const APP = "notification";
+const RESOURCE = "emailnotificationtemplate";
 
 type EmailTemplateMetaFormData = {
   code: string;

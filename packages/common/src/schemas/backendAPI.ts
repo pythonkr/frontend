@@ -68,6 +68,16 @@ export type SponsorTierSchema = {
   }[];
 };
 
+export type EventSchema = {
+  id: string;
+  name: string;
+  slogan: string | null;
+  description: string | null;
+  event_start_at: string | null;
+  event_end_at: string | null;
+  logo: string | null;
+};
+
 export type SponsorQueryParameterSchema = {
   event?: string;
 };
@@ -79,6 +89,11 @@ export type SessionQueryParameterSchema = {
 
 export type SessionSchema = {
   id: string;
+  presentation_type: {
+    id: string;
+    name: string;
+    event: EventSchema;
+  };
   title: string;
   summary: string | null;
   description: string;

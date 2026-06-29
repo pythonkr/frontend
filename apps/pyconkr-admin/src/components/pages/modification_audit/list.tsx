@@ -19,7 +19,7 @@ const InnerAdminModificationAuditList: FC = ErrorBoundary.with(
   { fallback: ErrorFallback },
   Suspense.with({ fallback: <CircularProgress /> }, () => {
     const backendAdminClient = useBackendAdminClient();
-    const listQuery = useListQuery<ListRowType>(backendAdminClient, "modification-audit", "modification-audit");
+    const listQuery = useListQuery<ListRowType>(backendAdminClient, "participant_portal_api", "modificationaudit");
 
     return (
       <Stack sx={{ flexGrow: 1, width: "100%", minHeight: "100%" }}>

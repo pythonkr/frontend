@@ -17,7 +17,24 @@ export type AdminSchemaDefinition = {
   translation_fields: string[];
 };
 
-export type ChoicesResponse = Record<string, { const: string | null; title: string }[]>;
+export type ChoiceMetaValue = string | number | boolean | null;
+export type ChoiceItem = {
+  const: string | null;
+  title: string;
+  meta?: Record<string, ChoiceMetaValue>;
+};
+export type ChoicesResponse = Record<string, ChoiceItem[]>;
+
+export type ChoiceMetaFieldDef = {
+  label: string;
+  type: "string" | "number" | "boolean";
+  filter?: "search" | "select";
+  display?: "image" | "year" | "filesize";
+  filterOnly?: boolean;
+};
+export type ChoiceMetaSchema = Record<string, ChoiceMetaFieldDef>;
+
+export type SelectablesResponse = { results: ChoiceItem[]; meta_schema: ChoiceMetaSchema };
 
 export type PaginatedListResponse<T> = {
   count: number;
@@ -35,6 +52,7 @@ export type UserSchema = {
   is_staff: boolean;
   is_active: boolean;
   date_joined: string; // ISO 8601 format
+  str_repr: string;
 };
 
 export type UserSignInSchema = {
@@ -169,3 +187,83 @@ export type GoogleOAuth2AccessTokenResponseSchema = {
   audience: string | null;
   error: string | null;
 };
+
+export type DashboardChartType = "line" | "bar" | "pie" | "metric";
+
+export type DashboardParamType = "date" | "date_range" | "select" | "multi_select" | "text" | "number" | "boolean";
+
+export type DashboardParamOption = {
+  value: string | number | boolean; // JSONField — 보통 UUID 문자열 또는 enum 값
+  label: string;
+  event_id?: string | null; // 티켓 옵션: 소속 이벤트 (종속 필터용)
+  date_from?: string | null; // 이벤트 옵션: 통계 기본 기간 (YYYY-MM-DD)
+  date_to?: string | null;
+};
+
+export type DashboardChartParam = {
+  key: string;
+  label: string;
+  type: DashboardParamType;
+  required: boolean;
+  default: unknown | null;
+  options: DashboardParamOption[] | null;
+};
+
+export type DashboardChartOptions = {
+  stacked?: boolean | null;
+  show_legend?: boolean | null;
+  x_axis_label?: string | null;
+  y_axis_label?: string | null;
+  value_format?: string | null;
+  show_data_label?: boolean | null;
+};
+
+export type DashboardChartDefinition = {
+  id: string;
+  title: string;
+  type: DashboardChartType;
+  unit: string | null;
+  options: DashboardChartOptions | null;
+  endpoint: string; // ex: /v1/admin-api/dashboard/charts/{id}/data/
+  method: "GET" | "POST";
+  params: DashboardChartParam[];
+};
+
+export type DashboardDateRangeValue = {
+  date_from: string; // YYYY-MM-DD
+  date_to: string; // YYYY-MM-DD (inclusive — 백엔드가 +1d exclusive end 로 보정)
+};
+
+export type MetricChartDataResponse = {
+  chart_id: string;
+  value: number | string | null;
+  comparison?: {
+    label: string;
+    value: number;
+    unit?: string | null;
+    direction: "up" | "down" | "flat";
+  } | null;
+};
+
+export type SeriesChartSeries = {
+  key: string;
+  name: string;
+  color?: string | null;
+};
+
+export type SeriesChartDataPoint = {
+  label: string;
+  values?: Record<string, number | string | null> | null;
+  value?: number | string | null; // pie 조각용
+  color?: string | null;
+};
+
+export type SeriesChartDataResponse = {
+  chart_id: string;
+  series: SeriesChartSeries[];
+  data: SeriesChartDataPoint[];
+};
+
+export type DashboardChartDataResponse = MetricChartDataResponse | SeriesChartDataResponse;
+
+export const isMetricChartData = (data: DashboardChartDataResponse): data is MetricChartDataResponse => "value" in data && !("series" in data);

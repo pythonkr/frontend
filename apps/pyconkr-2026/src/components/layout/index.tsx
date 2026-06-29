@@ -10,6 +10,7 @@ import { Sponsor } from "./Sponsor";
 
 export default function MainLayout() {
   const { shouldShowSponsorBanner } = useAppContext();
+
   return (
     <Stack sx={{ minHeight: "100dvh" }}>
       <Header />

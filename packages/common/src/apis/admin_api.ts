@@ -1,6 +1,7 @@
 import {
   AdminSchemaDefinition,
-  ChoicesResponse,
+  DashboardChartDataResponse,
+  DashboardChartDefinition,
   GoogleOAuth2AccessTokenResponseSchema,
   ModificationAuditPreviewSchema,
   ModificationAuditSchema,
@@ -9,6 +10,7 @@ import {
   PageSectionSchema,
   PaginatedListResponse,
   PublicFileSchema,
+  SelectablesResponse,
   UserChangePasswordSchema,
   UserResetPasswordResponseSchema,
   UserSchema,
@@ -106,8 +108,8 @@ export const listSections = (client: BackendAPIClient, pageId: string) => () => 
   return client.get<PageSectionSchema[]>(`v1/admin-api/cms/page/${pageId}/section/`);
 };
 
-export const choices = (client: BackendAPIClient, app: string, resource: string) => () =>
-  client.get<ChoicesResponse>(`v1/admin-api/${app}/${resource}/choices/`);
+export const selectables = (client: BackendAPIClient, app: string, resource: string) => () =>
+  client.get<SelectablesResponse>(`v1/admin-api/${app}/${resource}/selectables/`);
 
 export const openApiSchema = (client: BackendAPIClient) => () => client.get<OpenAPISchema>("api/schema/v1/", { params: { format: "json" } });
 
@@ -115,19 +117,19 @@ export const bulkUpdateSections = (client: BackendAPIClient, pageId: string) => 
   client.put<PageSectionSchema[], { sections: PageSectionBulkUpdateSchema[] }>(`v1/admin-api/cms/page/${pageId}/section/bulk-update/`, data);
 
 export const approveModificationAudit = (client: BackendAPIClient, id: string) => (reason?: string | null) =>
-  client.patch<ModificationAuditSchema, { reason?: string | null }>(`v1/admin-api/modification-audit/modification-audit/${id}/approve/`, {
+  client.patch<ModificationAuditSchema, { reason?: string | null }>(`v1/admin-api/participant_portal_api/modificationaudit/${id}/approve/`, {
     reason: reason ?? null,
   });
 
 export const rejectModificationAudit = (client: BackendAPIClient, id: string) => (reason?: string | null) =>
-  client.patch<ModificationAuditSchema, { reason?: string | null }>(`v1/admin-api/modification-audit/modification-audit/${id}/reject/`, {
+  client.patch<ModificationAuditSchema, { reason?: string | null }>(`v1/admin-api/participant_portal_api/modificationaudit/${id}/reject/`, {
     reason: reason ?? null,
   });
 
 export const previewModificationAudit =
   <T>(client: BackendAPIClient, id: string) =>
   () =>
-    client.get<ModificationAuditPreviewSchema<T>>(`v1/admin-api/modification-audit/modification-audit/${id}/preview/`);
+    client.get<ModificationAuditPreviewSchema<T>>(`v1/admin-api/participant_portal_api/modificationaudit/${id}/preview/`);
 
 export const renderTemplate =
   (client: BackendAPIClient, app: string, resource: string) =>
@@ -144,4 +146,9 @@ export const renderSentTo = (client: BackendAPIClient, app: string, resource: st
   client.get<string>(`v1/admin-api/${app}/${resource}/${id}/sent-to/${sentToId}/render/`);
 
 export const issueGoogleOAuth2AccessToken = (client: BackendAPIClient, id: string) => () =>
-  client.post<GoogleOAuth2AccessTokenResponseSchema, undefined>(`v1/admin-api/external-api/google/oauth2/${id}/access-token/`, undefined);
+  client.post<GoogleOAuth2AccessTokenResponseSchema, undefined>(`v1/admin-api/external_api/googleoauth2/${id}/access-token/`, undefined);
+
+export const listDashboardCharts = (client: BackendAPIClient) => () => client.get<DashboardChartDefinition[]>("v1/admin-api/dashboard/charts/");
+
+export const fetchDashboardChartData = (client: BackendAPIClient, endpoint: string) => (params: Record<string, unknown>) =>
+  client.post<DashboardChartDataResponse, { params: Record<string, unknown> }>(endpoint, { params });
