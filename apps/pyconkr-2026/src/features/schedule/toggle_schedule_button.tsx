@@ -1,6 +1,6 @@
 import { SessionSchema } from "@frontend/common/schemas/backendAPI";
-import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
+import EventAvailableRoundedIcon from "@mui/icons-material/EventAvailableRounded";
+import EventBusyRoundedIcon from "@mui/icons-material/EventBusyRounded";
 import { Button, CircularProgress } from "@mui/material";
 import { FC } from "react";
 import { useNavigate } from "react-router-dom";
@@ -29,7 +29,7 @@ const assertNever = (value: never): never => {
 
 type ToggleView = {
   label: string;
-  color: "primary" | "inherit";
+  color: "primary";
   variant: "contained" | "outlined";
   disabled: boolean;
   spinner: boolean;
@@ -41,7 +41,7 @@ const toggleView = (toggle: ScheduleToggle, isKo: boolean): ToggleView => {
     case "in-flight":
       return {
         label: toggle.action === "add" ? (isKo ? "추가" : "Add") : isKo ? "빼기" : "Remove",
-        color: toggle.action === "add" ? "primary" : "inherit",
+        color: "primary",
         variant: toggle.action === "add" ? "contained" : "outlined",
         disabled: true,
         spinner: true,
@@ -51,7 +51,7 @@ const toggleView = (toggle: ScheduleToggle, isKo: boolean): ToggleView => {
         case "add":
           return { label: isKo ? "추가" : "Add", color: "primary", variant: "contained", disabled: false, spinner: false };
         case "remove":
-          return { label: isKo ? "빼기" : "Remove", color: "inherit", variant: "outlined", disabled: false, spinner: false };
+          return { label: isKo ? "빼기" : "Remove", color: "primary", variant: "outlined", disabled: false, spinner: false };
         default:
           return assertNever(toggle);
       }
@@ -80,7 +80,7 @@ export const SessionScheduleToggleButton: FC<{ session: SessionSchema }> = ({ se
         onSuccess: () => {
           if (wasMember) {
             showScheduleToast({
-              message: isKo ? "내 시간표에서 뺐어요" : "Removed from your schedule",
+              message: isKo ? "내 시간표에서 삭제되었습니다" : "Removed from your schedule",
               severity: "info",
               action: { label: isKo ? "되돌리기" : "Undo", onClick: () => mutation.mutate({ sessionId: session.id }) },
             });
@@ -114,9 +114,9 @@ export const SessionScheduleToggleButton: FC<{ session: SessionSchema }> = ({ se
         view.spinner ? (
           <CircularProgress size={14} color="inherit" />
         ) : isMember ? (
-          <CheckRoundedIcon fontSize="small" />
+          <EventBusyRoundedIcon fontSize="small" />
         ) : (
-          <AddRoundedIcon fontSize="small" />
+          <EventAvailableRoundedIcon fontSize="small" />
         )
       }
       sx={{ minWidth: "4.75rem", whiteSpace: "nowrap", flexShrink: 0 }}

@@ -1,3 +1,4 @@
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import { Button, Chip, CircularProgress, Stack, styled, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { DateTime } from "luxon";
@@ -150,11 +151,13 @@ type SessionTimeTablePropType = {
   event?: string;
   types?: string | string[];
   getSessionUrl?: (session: SessionSchema) => string;
+  /** 지정 시 시간표 상단에 '세션 발표 추가' 버튼을 표시하고 이 경로로 이동합니다. */
+  proposeSessionUrl?: string;
 };
 
 export const SessionTimeTable: FC<SessionTimeTablePropType> = ErrorBoundary.with(
   { fallback: ErrorFallback },
-  Suspense.with({ fallback: <CenteredPage children={<CircularProgress />} /> }, ({ event, types, getSessionUrl }) => {
+  Suspense.with({ fallback: <CenteredPage children={<CircularProgress />} /> }, ({ event, types, getSessionUrl, proposeSessionUrl }) => {
     const [confDate, setConfDate] = useState("");
 
     const { language } = Common.useCommonContext();
@@ -178,8 +181,17 @@ export const SessionTimeTable: FC<SessionTimeTablePropType> = ErrorBoundary.with
         ? "* 발표 목록은 발표자 사정에 따라 변동될 수 있습니다."
         : "* The list of sessions may change due to the speaker's circumstances.";
 
+    const proposeSessionLabel = language === "ko" ? "세션 발표 추가" : "Propose a Session";
+
     return (
       <Stack direction="column" sx={{ width: "100%" }}>
+        {proposeSessionUrl && (
+          <Stack direction="row" justifyContent="flex-end" sx={{ width: "100%", mb: 1 }}>
+            <Button component={Link} to={proposeSessionUrl} variant="outlined" color="primary" size="small" startIcon={<AddRoundedIcon />}>
+              {proposeSessionLabel}
+            </Button>
+          </Stack>
+        )}
         <Typography variant="body2" sx={{ width: "100%", textAlign: "right", my: 0.5, fontSize: "0.6rem" }} children={warningMessage} />
         <StyledDivider />
         <Stack spacing={2} direction="row" justifyContent="center" alignItems="center">

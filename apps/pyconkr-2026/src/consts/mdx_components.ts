@@ -296,6 +296,7 @@ const PyConKR2025SessionTimeTable: FC<ComponentProps<typeof SessionTimeTable>> =
   createElement(SessionTimeTable, {
     ...props,
     getSessionUrl,
+    proposeSessionUrl: "/cfp",
   });
 
 const PyConKR2025MobileAccordion: FC<object> = () =>

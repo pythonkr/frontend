@@ -1,7 +1,6 @@
 import { SessionSchema } from "@frontend/common/schemas/backendAPI";
 import { ceilToGranularity, floorToGranularity, minutesToGridLine } from "@frontend/common/utils";
-import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
-import { Alert, Box, Button, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Button, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { DateTime } from "luxon";
 import { FC, Fragment, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -33,26 +32,9 @@ type DayConfig = {
   dayEnd: DateTime;
   lineCount: number;
   placements: Placement[];
-  overlapKeys: Set<string>;
 };
 
 const clamp = (value: number, min: number, max: number): number => Math.max(min, Math.min(max, value));
-
-const intersects = (a: Placement, b: Placement): boolean => a.start < b.end && b.start < a.end;
-
-/** 같은 날 안에서 시간이 겹치는(=동시에 들을 수 없는) placement key 집합. O(n^2) — my-schedule(소량)에만 사용. */
-const detectOverlapKeys = (placements: Placement[]): Set<string> => {
-  const result = new Set<string>();
-  for (let i = 0; i < placements.length; i += 1) {
-    for (let j = i + 1; j < placements.length; j += 1) {
-      if (intersects(placements[i], placements[j])) {
-        result.add(placements[i].key);
-        result.add(placements[j].key);
-      }
-    }
-  }
-  return result;
-};
 
 /** 세션 → room_schedule 단위 placement로 평탄화. 유효하지 않은(역전/파싱 실패) 일정은 제외합니다. */
 const buildPlacements = (sessions: SessionSchema[]): Placement[] =>
@@ -87,7 +69,7 @@ const buildDayConfigs = (placements: Placement[], locale: string): DayConfig[] =
       const dayEnd = ceilToGranularity(maxEnd, HOUR_FLOOR_MIN);
       const lineCount = minutesToGridLine(dayEnd, dayStart, GRANULARITY_MIN);
       const label = DateTime.fromISO(dayKey).setLocale(locale).toLocaleString({ weekday: "long", month: "long", day: "numeric" });
-      return { dayKey, label, rooms, dayStart, dayEnd, lineCount, placements: dayPlacements, overlapKeys: detectOverlapKeys(dayPlacements) };
+      return { dayKey, label, rooms, dayStart, dayEnd, lineCount, placements: dayPlacements };
     });
 };
 
@@ -103,11 +85,7 @@ const buildHourMarks = (day: DayConfig): HourMark[] => {
   return marks;
 };
 
-const SessionCard: FC<{ placement: Placement; overlap: boolean; getSessionUrl?: (session: SessionSchema) => string }> = ({
-  placement,
-  overlap,
-  getSessionUrl,
-}) => {
+const SessionCard: FC<{ placement: Placement; getSessionUrl?: (session: SessionSchema) => string }> = ({ placement, getSessionUrl }) => {
   const { session, start, end } = placement;
   const timeRange = `${start.toFormat("HH:mm")}–${end.toFormat("HH:mm")}`;
   const url = getSessionUrl?.(session);
@@ -119,27 +97,32 @@ const SessionCard: FC<{ placement: Placement; overlap: boolean; getSessionUrl?: 
         overflow: "hidden",
         borderRadius: "0.5rem",
         padding: "0.25rem 0.4rem",
-        border: `1px solid ${overlap ? theme.palette.warning.main : theme.palette.primary.light}`,
-        backgroundColor: overlap ? `${theme.palette.warning.light}26` : `${theme.palette.primary.light}1A`,
+        border: `1px solid ${theme.palette.primary.light}`,
+        backgroundColor: `${theme.palette.primary.light}1A`,
         cursor: url ? "pointer" : "default",
         transition: "background-color 0.2s ease",
         "&:hover": url ? { backgroundColor: `${theme.palette.primary.light}3A` } : undefined,
       })}
     >
-      <Stack direction="row" alignItems="center" spacing={0.25} sx={{ minWidth: 0 }}>
-        {overlap && <WarningAmberRoundedIcon color="warning" sx={{ fontSize: "0.85rem", flexShrink: 0 }} />}
-        <Typography
-          variant="caption"
-          sx={{ fontWeight: 700, lineHeight: 1.15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-          children={session.title.replace("\\n", " ")}
-        />
-      </Stack>
+      <Typography
+        variant="caption"
+        sx={{ display: "block", fontWeight: 700, lineHeight: 1.15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+        children={session.title.replace("\\n", " ")}
+      />
       <Typography variant="caption" color="text.secondary" sx={{ display: "block", fontSize: "0.62rem", lineHeight: 1.2 }} children={timeRange} />
       {session.speakers.length > 0 && (
         <Typography
           variant="caption"
           color="text.secondary"
-          sx={{ display: "block", fontSize: "0.62rem", lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+          sx={{
+            display: "block",
+            fontSize: "0.62rem",
+            lineHeight: 1.2,
+            textAlign: "right",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
           children={session.speakers.map((speaker) => speaker.nickname).join(", ")}
         />
       )}
@@ -209,12 +192,6 @@ export const MyTimetableGrid: FC<{ mySessions: SessionSchema[]; getSessionUrl?: 
           </Button>
         ))}
       </Stack>
-
-      {activeDay.overlapKeys.size > 0 && (
-        <Alert severity="warning" variant="outlined">
-          {isKo ? "시간이 겹치는 세션이 있어요. 노란색으로 표시했어요." : "Some sessions overlap in time (highlighted in yellow)."}
-        </Alert>
-      )}
 
       <Box sx={{ width: "100%", overflowX: "auto" }}>
         <Box
@@ -296,7 +273,7 @@ export const MyTimetableGrid: FC<{ mySessions: SessionSchema[]; getSessionUrl?: 
                 key={placement.key}
                 sx={{ gridColumn: columnIndex + 2, gridRow: `${toRow(startLine)} / ${toRow(endLine)}`, padding: "1px 2px", zIndex: 2, minWidth: 0 }}
               >
-                <SessionCard placement={placement} overlap={activeDay.overlapKeys.has(placement.key)} getSessionUrl={getSessionUrl} />
+                <SessionCard placement={placement} getSessionUrl={getSessionUrl} />
               </Box>
             );
           })}

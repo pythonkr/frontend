@@ -1,7 +1,7 @@
 import { UserSignInAccount, UserSignInMethod } from "@frontend/shop/components/common";
 import { useShopClient, useSignOutMutation, useUserStatus } from "@frontend/shop/hooks";
 import { UserSignedInStatus } from "@frontend/shop/schemas";
-import { AccountCircle, Login, Logout, Receipt } from "@mui/icons-material";
+import { AccountCircle, CalendarMonth, Login, Logout, Person, Receipt } from "@mui/icons-material";
 import { Button, Divider, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, styled, Typography } from "@mui/material";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { FC, MouseEvent, useState } from "react";
@@ -51,6 +51,8 @@ const InnerUserMenuButton: FC<InnerUserMenuButtonPropType> = ({ loading, user, o
   const handleMenuClose = () => setAnchorEl(null);
 
   const signInLabel = language === "ko" ? "로그인" : "Sign In";
+  const myPageLabel = language === "ko" ? "마이페이지" : "My Page";
+  const myScheduleLabel = language === "ko" ? "내 시간표" : "My Schedule";
   const orderHistoryLabel = language === "ko" ? "결제 내역" : "Order History";
   const signOutLabel = language === "ko" ? "로그아웃" : "Sign Out";
 
@@ -102,6 +104,18 @@ const InnerUserMenuButton: FC<InnerUserMenuButtonPropType> = ({ loading, user, o
               </Typography>
             </UserNameItem>,
             <Divider key="divider" sx={{ my: 0.5 }} />,
+            <MenuItem key="mypage" onClick={() => goTo("/my")}>
+              <ListItemIcon>
+                <Person fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>{myPageLabel}</ListItemText>
+            </MenuItem>,
+            <MenuItem key="my-timetable" onClick={() => goTo("/my/timetable")}>
+              <ListItemIcon>
+                <CalendarMonth fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>{myScheduleLabel}</ListItemText>
+            </MenuItem>,
             <MenuItem key="orders" onClick={() => goTo("/store/order-histories")}>
               <ListItemIcon>
                 <Receipt fontSize="small" />
