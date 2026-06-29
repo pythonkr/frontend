@@ -21,7 +21,7 @@ import {
 } from "@mui/material";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { CSSProperties, FC, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 import { isEmpty } from "remeda";
 
 import { ErrorPage } from "@apps/pyconkr-participant-portal/components/elements/error_page";
@@ -97,7 +97,6 @@ type InnerLandingPageState = {
 };
 
 const InnerLandingPage: FC = () => {
-  const navigate = useNavigate();
   const { language } = useAppContext();
   const isMobile = useMediaQuery((theme) => theme.breakpoints.down("sm"));
   const participantPortalAPIClient = useParticipantPortalClient();
@@ -150,7 +149,7 @@ const InnerLandingPage: FC = () => {
                 <Typography variant="body1" children={emailStr} />
               </Stack>
               <Stack sx={{ width: "100%", maxWidth: "8rem" }}>
-                <Button variant="contained" size="small" onClick={() => navigate("/user")} children={editProfileStr} />
+                <Button variant="contained" size="small" component={RouterLink} to="/user" children={editProfileStr} />
               </Stack>
             </Stack>
           </Stack>
@@ -178,8 +177,9 @@ const InnerLandingPage: FC = () => {
                   return (
                     <ListItem key={audit.id} disablePadding sx={{ cursor: "pointer", border: "1px solid #ccc" }}>
                       <ListItemButton
+                        component={RouterLink}
+                        to={navigateTo}
                         children={<ListItemText primary={audit.str_repr} secondary={TranslatedAuditState[audit.status][language]} />}
-                        onClick={() => navigate(navigateTo)}
                       />
                     </ListItem>
                   );
@@ -196,7 +196,7 @@ const InnerLandingPage: FC = () => {
               <List>
                 {sessions.map((s) => (
                   <ListItem key={s.id} disablePadding sx={{ cursor: "pointer", border: "1px solid #ccc" }}>
-                    <ListItemButton children={<ListItemText primary={s.title} />} onClick={() => navigate(`/session/${s.id}`)} />
+                    <ListItemButton component={RouterLink} to={`/session/${s.id}`} children={<ListItemText primary={s.title} />} />
                   </ListItem>
                 ))}
               </List>
