@@ -3,7 +3,7 @@ import { Button, Chip, CircularProgress, Stack, styled, Table, TableBody, TableC
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { DateTime } from "luxon";
 import { FC, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { isArray, isEmpty, isString } from "remeda";
 
 import { CenteredPage } from "@frontend/common/components/centered_page";
@@ -14,9 +14,9 @@ import { getSessionDetailUrl } from "@frontend/common/utils";
 
 import { StyledDivider } from "./styled_divider";
 
-const TD_HEIGHT = 4;
-const TD_WIDTH = 15;
-const TD_WIDTH_MOBILE = 20;
+const TD_HEIGHT = 4; // 10분 한 줄의 기본 높이(rem). rowHeight prop으로 재정의 가능하다.
+const TD_MIN_WIDTH = 11; // 각 발표 열의 최소 너비(rem). 이보다 좁아지면 좌우 스크롤로 전환된다.
+const TIME_COL_WIDTH = "4.5rem"; // 좌측 시간 열(고정) 너비
 
 type TimeTableData = {
   [date: string]: {
@@ -35,6 +35,16 @@ const getPaddedTime = (time: DateTime) => `${time.hour}:${time.minute.toString()
 
 const getRooms = (data: SessionSchema[]) => {
   return Array.from(new Set<string>(data.reduce((acc, s) => [...acc, ...s.room_schedules.map((r) => r.room_name)], [] as string[])));
+};
+
+const getRoomOrders = (data: SessionSchema[]): { [room: string]: number } => {
+  return data.reduce(
+    (acc, s) => {
+      s.room_schedules.forEach((r) => (acc[r.room_name] = r.room_order));
+      return acc;
+    },
+    {} as { [room: string]: number }
+  );
 };
 
 const getConfStartEndTimePerDay: (data: SessionSchema[]) => {
@@ -111,15 +121,16 @@ const SessionColumn: FC<{
   colSpan?: number;
   session: SessionSchema;
   linkable?: boolean;
-}> = ({ rowSpan, colSpan, session, linkable }) => {
+  selectedDate: string;
+}> = ({ rowSpan, colSpan, session, linkable, selectedDate }) => {
   const sessionUrl = linkable ? getSessionDetailUrl(session) : undefined;
   const clickable = isArray(session.speakers) && !isEmpty(session.speakers) && !!sessionUrl;
   // Firefox는 rowSpan된 td의 height를 계산할 때 rowSpan을 고려하지 않습니다. 따라서 직접 계산하여 height를 설정합니다.
-  const sessionBoxHeight = `${TD_HEIGHT * rowSpan}rem`;
+  const sessionBoxHeight = `calc(var(--td-h, ${TD_HEIGHT}rem) * ${rowSpan})`;
   return (
     <SessionTableCell rowSpan={rowSpan} colSpan={colSpan}>
       {clickable ? (
-        <Link to={sessionUrl!} style={{ textDecoration: "none", display: "block" }}>
+        <Link to={sessionUrl!} style={{ textDecoration: "none", display: "block" }} state={{ selectedDate: selectedDate }}>
           <SessionBox className="clickable" sx={{ height: sessionBoxHeight, gap: 0.75, padding: "0.5rem" }}>
             <SessionTitle children={session.title.replace("\\n", "\n")} align="center" />
             <Stack direction="row" alignItems="center" justifyContent="center" sx={{ width: "100%", flexWrap: "wrap", gap: 0.5 }}>
@@ -149,23 +160,28 @@ const BreakTime: FC<{ language: "ko" | "en"; duration: number }> = ({ language, 
 };
 
 type SessionTimeTablePropType = {
-  /** 세션을 조회할 이벤트(연도) slug. 미지정 시 기본 이벤트를 사용한다. */
+  /** 세션을 조회할 이벤트 이름(name_ko 또는 name_en). 미지정 시 최신 활성 이벤트를 사용한다. */
   event?: string;
   /** 필터할 세션 유형. 단일 문자열 또는 배열(내부에서 콤마로 join). */
   types?: string | string[];
   /** 지정 시 시간표 상단에 '세션 발표 추가' 버튼을 표시하고 이 경로로 이동합니다. */
   proposeSessionUrl?: string;
+  /** 10분 한 줄의 높이(rem). 기본값 4. 값을 키우면 시간표가 세로로 늘어난다. */
+  rowHeight?: number;
 };
 
 /**
- * 발표 세션을 날짜·시간·발표장(room) 기준의 표로 보여주는 타임테이블.
- * 날짜 선택 탭, 발표장별 열, 휴식 시간 표시를 포함한다.
+ * 발표 세션을 날짜·시간·장소(room) 기준의 표로 보여주는 타임테이블.
+ * 날짜 선택 탭, 장소별 열, 휴식 시간 표시를 포함한다.
  * @example <Common__Components__Session__TimeTable types="talk" />
  */
 export const SessionTimeTable: FC<SessionTimeTablePropType> = ErrorBoundary.with(
   { fallback: ErrorFallback },
-  Suspense.with({ fallback: <CenteredPage children={<CircularProgress />} /> }, ({ event, types, proposeSessionUrl }) => {
-    const [confDate, setConfDate] = useState("");
+  Suspense.with({ fallback: <CenteredPage children={<CircularProgress />} /> }, ({ event, types, proposeSessionUrl, rowHeight = TD_HEIGHT }) => {
+    const location = useLocation();
+    const tdHeight = Number(rowHeight) || TD_HEIGHT; // MDX에서 문자열로 들어와도 안전하게 처리
+
+    const [confDate, setConfDate] = useState<string>(location.state?.selectedDate ?? "");
 
     const { language, appType } = Common.useCommonContext();
     const linkable = appType === "main";
@@ -177,9 +193,10 @@ export const SessionTimeTable: FC<SessionTimeTablePropType> = ErrorBoundary.with
     const dates = Object.keys(timeTableData).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
     const rooms: { [room: string]: number } = getRooms(sessionList).reduce((acc, room) => ({ ...acc, [room]: 0 }), {});
     const roomCount = Object.keys(rooms).length;
-    const sortedRoomList = Object.keys(rooms).sort();
+    const roomOrders = getRoomOrders(sessionList);
+    const sortedRoomList = Object.keys(rooms).sort((a, b) => roomOrders[a] - roomOrders[b] || a.localeCompare(b));
 
-    const selectedDate = confDate || dates[0];
+    const [selectedDate, setSelectedDate] = useState<string>(location.state?.selectedDate ?? (confDate || dates[0]));
     const selectedTableData = timeTableData[selectedDate];
 
     let breakCount = 0;
@@ -202,119 +219,154 @@ export const SessionTimeTable: FC<SessionTimeTablePropType> = ErrorBoundary.with
         )}
         <Typography variant="body2" sx={{ width: "100%", textAlign: "right", my: 0.5, fontSize: "0.6rem" }} children={warningMessage} />
         <StyledDivider />
-        <Stack spacing={2} direction="row" justifyContent="center" alignItems="center">
-          {dates.map((date, i) => {
-            const dateStr = DateTime.fromISO(date).setLocale(language).toLocaleString({ weekday: "long", month: "long", day: "numeric" });
-            return (
-              <Button variant="text" key={date} onClick={() => setConfDate(date)} className={selectedDate === date ? "selected" : ""}>
-                <SessionDateItemContainer direction="column">
-                  <SessionDateTitle children={"Day " + (i + 1)} isSelected={selectedDate === date} />
-                  <SessionDateSubTitle children={dateStr} isSelected={selectedDate === date} />
-                </SessionDateItemContainer>
-              </Button>
-            );
-          })}
-        </Stack>
-        <StyledDivider />
+        {dates.length > 1 && (
+          <>
+            <Stack spacing={2} direction="row" justifyContent="center" alignItems="center">
+              {dates.map((date, i) => {
+                const dateStr = DateTime.fromISO(date).setLocale(language).toLocaleString({ weekday: "long", month: "long", day: "numeric" });
+                return (
+                  <Button
+                    variant="text"
+                    key={date}
+                    onClick={() => {
+                      setConfDate(date);
+                      setSelectedDate(date);
+                    }}
+                    className={selectedDate === date ? "selected" : ""}
+                  >
+                    <SessionDateItemContainer direction="column">
+                      <SessionDateTitle children={"Day " + (i + 1)} isSelected={selectedDate === date} />
+                      <SessionDateSubTitle children={dateStr} isSelected={selectedDate === date} />
+                    </SessionDateItemContainer>
+                  </Button>
+                );
+              })}
+            </Stack>
+            <StyledDivider />
+          </>
+        )}
         <SessionTableContainer>
-          <SessionTable>
-            <TableHead>
-              <SessionTableCell></SessionTableCell>
-              {sortedRoomList.map((room) => (
-                <SessionTableCell key={room} sx={{ padding: "1rem" }}>
-                  <Typography
-                    variant="subtitle1"
-                    sx={{ whiteSpace: "pre-wrap", fontWeight: 600, textAlign: "center" }}
-                    children={room.replace("\\n", "\n")}
-                  />
-                </SessionTableCell>
-              ))}
-            </TableHead>
-            <SessionTableBody>
-              <SessionTableRow children={<SessionTableCell colSpan={roomCount + 1} />} /> {/* dummy first row */}
-              {Object.entries(selectedTableData).map(([time, roomData], i, a) => {
-                const hasSession = Object.values(rooms).some((c) => c >= 1) || Object.values(roomData).some((room) => room !== undefined);
+          <SessionTableScroll>
+            <SessionTable
+              sx={{
+                "--td-h": `${tdHeight}rem`, // 10분당 높이(셀·세션 박스가 공유)
+                minWidth: `calc(${TIME_COL_WIDTH} + ${roomCount} * ${TD_MIN_WIDTH}rem)`, // 이보다 좁아지면 좌우 스크롤
+              }}
+            >
+              {/* table-layout: fixed 의 열 너비 정의 (시간 열 고정, 나머지 균등 분배) */}
+              <colgroup>
+                <col style={{ width: TIME_COL_WIDTH }} />
+                {sortedRoomList.map((room) => (
+                  <col key={room} />
+                ))}
+              </colgroup>
+              <TableHead>
+                <SessionTableCell></SessionTableCell>
+                {sortedRoomList.map((room) => (
+                  <SessionTableCell key={room} sx={{ padding: "1rem" }}>
+                    <Typography
+                      variant="subtitle1"
+                      sx={{ whiteSpace: "pre-wrap", overflowWrap: "break-word", fontWeight: 600, textAlign: "center" }}
+                      children={room.replace("\\n", "\n")}
+                    />
+                  </SessionTableCell>
+                ))}
+              </TableHead>
+              <SessionTableBody>
+                <SessionTableRow children={<SessionTableCell colSpan={roomCount + 1} />} /> {/* dummy first row */}
+                {Object.entries(selectedTableData).map(([time, roomData], i, a) => {
+                  const hasSession = Object.values(rooms).some((c) => c >= 1) || Object.values(roomData).some((room) => room !== undefined);
 
-                if (!hasSession) {
-                  if (breakCount > 1) {
-                    breakCount--;
-                    return <SessionTableRow />;
-                  } else {
-                    // 지금부터 다음 세션이 존재하기 전까지의 휴식 시간을 계산합니다.
-                    breakCount = 1;
-                    for (let bi = i + 1; bi < a.length; bi++) {
-                      if (Object.values(a[bi][1]).some((room) => room !== undefined)) break;
-                      breakCount += 1;
+                  if (!hasSession) {
+                    if (breakCount > 1) {
+                      breakCount--;
+                      return <SessionTableRow />;
+                    } else {
+                      // 지금부터 다음 세션이 존재하기 전까지의 휴식 시간을 계산합니다.
+                      breakCount = 1;
+                      for (let bi = i + 1; bi < a.length; bi++) {
+                        if (Object.values(a[bi][1]).some((room) => room !== undefined)) break;
+                        breakCount += 1;
+                      }
+
+                      // I really hate this, but I can't think of a better way to do this.
+                      const height = (tdHeight * breakCount) / (breakCount <= 2 ? 1 : 3);
+                      const isLast = i === a.length - 1;
+                      const duration = breakCount * 10; // 10 minutes per row
+                      return (
+                        <SessionTableRow>
+                          <SessionTableCell rowSpan={breakCount} sx={{ height: `${height}rem !important`, border: "unset" }} align="center">
+                            <TimeLabel>{time}</TimeLabel>
+                          </SessionTableCell>
+                          <SessionTableCell
+                            colSpan={roomCount}
+                            rowSpan={breakCount}
+                            sx={{
+                              height: `${height}rem !important`,
+                              borderTop: (t) => `1px solid ${t.palette.divider} !important`,
+                              borderBottom: isLast ? "transparent" : (t) => `1px solid ${t.palette.divider} !important`,
+                            }}
+                          >
+                            <Stack direction="column" justifyContent="center" alignItems="center">
+                              {!isLast && <BreakTime language={language} duration={duration} />}
+                            </Stack>
+                          </SessionTableCell>
+                        </SessionTableRow>
+                      );
                     }
+                  }
 
-                    // I really hate this, but I can't think of a better way to do this.
-                    const height = (TD_HEIGHT * breakCount) / (breakCount <= 2 ? 1 : 3);
-                    const isLast = i === a.length - 1;
-                    const duration = breakCount * 10; // 10 minutes per row
+                  // 만약 동일 세션이 모든 방에서 진행되는 경우, 해당 줄에서는 colSpan이 roomCount인 column을 생성합니다.
+                  const sessionIds = new Set(Object.values(roomData).map((room) => room?.session.id));
+                  const firstSessionInfo = Object.values(roomData)[0];
+                  if (sessionIds.size === 1 && firstSessionInfo !== undefined) {
+                    Object.keys(rooms).forEach((room) => (rooms[room] = firstSessionInfo.rowSpan - 1));
                     return (
                       <SessionTableRow>
-                        <SessionTableCell
-                          sx={{
-                            height: `${height}rem !important`,
-                            transform: `translateY(-${height / 2}rem) !important`,
-                            border: "unset",
-                          }}
-                          align="center"
-                        >
-                          {time}
+                        <SessionTableCell align="center">
+                          <TimeLabel>{time}</TimeLabel>
                         </SessionTableCell>
-                        <SessionTableCell
-                          colSpan={roomCount + 1}
-                          rowSpan={breakCount}
-                          sx={{
-                            height: `${height}rem !important`,
-                            borderTop: (t) => `1px solid ${t.palette.divider} !important`,
-                            borderBottom: isLast ? "transparernt" : (t) => `1px solid ${t.palette.divider} !important`,
-                          }}
-                        >
-                          <Stack direction="column" justifyContent="center" alignItems="center">
-                            {!isLast && <BreakTime language={language} duration={duration} />}
-                          </Stack>
-                        </SessionTableCell>
+                        <SessionColumn
+                          rowSpan={firstSessionInfo.rowSpan}
+                          colSpan={roomCount}
+                          session={firstSessionInfo.session}
+                          linkable={linkable}
+                          selectedDate={selectedDate}
+                        />
                       </SessionTableRow>
                     );
                   }
-                }
 
-                // 만약 동일 세션이 모든 방에서 진행되는 경우, 해당 줄에서는 colSpan이 roomCount인 column을 생성합니다.
-                const sessionIds = new Set(Object.values(roomData).map((room) => room?.session.id));
-                const firstSessionInfo = Object.values(roomData)[0];
-                if (sessionIds.size === 1 && firstSessionInfo !== undefined) {
-                  Object.keys(rooms).forEach((room) => (rooms[room] = firstSessionInfo.rowSpan - 1));
                   return (
                     <SessionTableRow>
                       <SessionTableCell align="center" children={time} />
-                      <SessionColumn rowSpan={firstSessionInfo.rowSpan} colSpan={roomCount} session={firstSessionInfo.session} linkable={linkable} />
+                      {sortedRoomList.map((room) => {
+                        const roomDatum = roomData[room];
+                        if (roomDatum === undefined) {
+                          // 진행 중인 세션이 없는 경우, 해당 줄에서는 해당 room의 빈 column을 생성합니다.
+                          if (rooms[room] <= 0) return <SessionTableCell />;
+                          // 진행 중인 세션이 있는 경우, 이번 줄에서는 해당 세션들만큼 column을 생성하지 않습니다.
+                          rooms[room] -= 1;
+                          return null;
+                        }
+                        // 세션이 여러 줄에 걸쳐있는 경우, n-1 줄만큼 해당 room에 column을 생성하지 않도록 합니다.
+                        if (roomDatum.rowSpan > 1) rooms[room] = roomDatum.rowSpan - 1;
+                        return (
+                          <SessionColumn
+                            key={room}
+                            rowSpan={roomDatum.rowSpan}
+                            session={roomDatum.session}
+                            linkable={linkable}
+                            selectedDate={selectedDate}
+                          />
+                        );
+                      })}
                     </SessionTableRow>
                   );
-                }
-
-                return (
-                  <SessionTableRow>
-                    <SessionTableCell align="center" children={time} />
-                    {sortedRoomList.map((room) => {
-                      const roomDatum = roomData[room];
-                      if (roomDatum === undefined) {
-                        // 진행 중인 세션이 없는 경우, 해당 줄에서는 해당 room의 빈 column을 생성합니다.
-                        if (rooms[room] <= 0) return <SessionTableCell />;
-                        // 진행 중인 세션이 있는 경우, 이번 줄에서는 해당 세션들만큼 column을 생성하지 않습니다.
-                        rooms[room] -= 1;
-                        return null;
-                      }
-                      // 세션이 여러 줄에 걸쳐있는 경우, n-1 줄만큼 해당 room에 column을 생성하지 않도록 합니다.
-                      if (roomDatum.rowSpan > 1) rooms[room] = roomDatum.rowSpan - 1;
-                      return <SessionColumn key={room} rowSpan={roomDatum.rowSpan} session={roomDatum.session} linkable={linkable} />;
-                    })}
-                  </SessionTableRow>
-                );
-              })}
-            </SessionTableBody>
-          </SessionTable>
+                })}
+              </SessionTableBody>
+            </SessionTable>
+          </SessionTableScroll>
         </SessionTableContainer>
       </Stack>
     );
@@ -351,11 +403,27 @@ const SessionTitle = styled(Typography)({
   lineHeight: 1.25,
   textDecoration: "none",
   whiteSpace: "pre-wrap",
+  overflowWrap: "break-word", // 고정 너비 열에서 긴 제목 줄바꿈
 });
 
-const SessionTable = styled(Table)({
+// 시간 라벨을 자기 높이의 절반만큼 올려 셀 상단(격자선)에 맞춘다
+const TimeLabel = styled("span")({
+  display: "inline-block",
+  transform: "translateY(-50%)",
+});
+
+const SessionTableScroll = styled("div")({
+  width: "100%",
+  overflowX: "auto",
+  overscrollBehaviorX: "none", // 좌우 스크롤이 뒤로가기 등 상위로 전파되지 않도록
+  WebkitOverflowScrolling: "touch",
+});
+
+const SessionTable = styled(Table)(({ theme }) => ({
   width: "100%",
   maxWidth: "60rem",
+  marginInline: "auto",
+  tableLayout: "fixed", // 모든 발표 열을 동일 너비로 (colSpan은 열 수에 비례해 확장)
   alignItems: "center",
   justifyContent: "center",
   gap: "1rem",
@@ -371,33 +439,30 @@ const SessionTable = styled(Table)({
 
   "tr:first-child td": {
     borderTop: "unset",
-    transform: "unset",
-    height: `${TD_HEIGHT / 2}rem`,
+    height: `calc(var(--td-h, ${TD_HEIGHT}rem) / 2)`,
   },
 
   td: {
-    height: `${TD_HEIGHT}rem`,
+    height: `var(--td-h, ${TD_HEIGHT}rem)`,
+  },
+
+  // 좌측 시간 열: 가로 스크롤 시 고정. 배경은 변형 없이 셀 박스를 그대로 덮어 이웃 행과 빈틈없이 이어진다.
+  "th:first-child, td:first-child": {
+    position: "sticky",
+    left: 0,
+    zIndex: 2,
+    verticalAlign: "top",
+    backgroundColor: theme.palette.background.default,
   },
 
   "td:first-child": {
     borderTop: "unset",
-    transform: `translateY(-${TD_HEIGHT / 2}rem)`,
-    width: "1.5rem",
   },
 
   "td:not(:first-child)": {
-    width: `${TD_WIDTH}vw`,
-    maxWidth: `${TD_WIDTH}vw`,
     borderTop: `1px solid rgba(255, 255, 255, 0.1)`,
   },
-
-  "@media only screen and (max-width: 810px)": {
-    "td:not(:first-child)": {
-      width: `${TD_WIDTH_MOBILE}vw`,
-      maxWidth: `${TD_WIDTH_MOBILE}vw`,
-    },
-  },
-});
+}));
 
 const SessionTableBody = styled(TableBody)({
   gap: "1rem",

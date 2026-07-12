@@ -41,7 +41,24 @@ export const PresentationSettingsTabs: FC<{ eventId: string }> = ({ eventId }) =
           />
         )}
         {tab === "room" && (
-          <InlineResourceSection app="event" resource="room" filter={{ key: "event", value: eventId }} label="장소" columns={[NAME_COLUMN]} />
+          <InlineResourceSection
+            app="event"
+            resource="room"
+            filter={{ key: "event", value: eventId }}
+            label="장소"
+            orderField="order"
+            columns={[
+              NAME_COLUMN,
+              {
+                name: "order",
+                label: "순서",
+                type: "number",
+                width: 80,
+                defaultValue: (n) => String(n * 10),
+                helperText: "낮은 값이 먼저 표시됩니다.",
+              },
+            ]}
+          />
         )}
       </Box>
     </Stack>

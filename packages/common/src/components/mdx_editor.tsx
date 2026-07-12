@@ -96,9 +96,8 @@ type PublicFileType = {
 const ImageSelector: GroupOptions["children"] = Suspense.with({ fallback: <CircularProgress /> }, ({ close, getState, textApi }) => {
   const urlInputRef = useRef<HTMLInputElement>(null);
   const backendAdminAPIClient = BackendAdminAPI.useBackendAdminClient();
-  // publicfile 뷰셋은 DRF 페이지네이션을 사용하므로 응답이 배열이 아닌 {results, ...} 객체임.
-  // useListAutoQuery가 페이지네이션 여부를 정규화해 항상 items 배열을 돌려줌.
-  const { data } = BackendAdminAPI.useListAutoQuery<PublicFileType>(backendAdminAPIClient, "file", "publicfile");
+  // publicfile 뷰셋은 DRF 페이지네이션을 사용하므로 응답이 {results, ...} 객체임. 파일 선택용이라 전체를 한 번에 받도록 page_size를 키운다.
+  const { data } = BackendAdminAPI.useListPaginatedQuery<PublicFileType>(backendAdminAPIClient, "file", "publicfile", { page_size: "200" });
   const [widgetState, setWidgetState] = useState<ImageSelectorWidgetStateType>({ tab: 0 });
   const setTab = (_: SyntheticEvent, tab: number) => setWidgetState((ps) => ({ ...ps, tab }));
   const setImageUrl = (selectedImageUrl?: string) => setWidgetState((ps) => ({ ...ps, selectedImageUrl }));
@@ -143,7 +142,7 @@ const ImageSelector: GroupOptions["children"] = Suspense.with({ fallback: <Circu
             업로드 된 사진 중 선택
           </Typography>
           <Grid>
-            {data.items
+            {data.results
               .filter((item) => item.mimetype?.startsWith("image/"))
               .map((item) => ({ ...item, file: item.file.split("?")[0] })) // Remove query parameters if any
               .map((item) => {

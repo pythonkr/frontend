@@ -2,7 +2,7 @@ import { useShopClient, useSignOutMutation, useUserStatus } from "@frontend/shop
 import { Login, Logout } from "@mui/icons-material";
 import { Button, Stack } from "@mui/material";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
-import { useNavigate } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 
 import { useAppContext } from "@apps/pyconkr-2025/contexts/app_context";
 
@@ -23,24 +23,20 @@ const InnerSignInButtonImpl: React.FC<InnerSignInButtonImplPropType> = ({
   isMainPath = true,
   onClose,
 }) => {
-  const navigate = useNavigate();
   const { language } = useAppContext();
 
   const signInBtnStr = language === "ko" ? "로그인" : "Sign In";
   const signOutBtnStr = language === "ko" ? "로그아웃" : "Sign Out";
 
-  const handleClick = () => {
-    if (signedIn) {
-      onSignOut?.();
-    } else {
-      onClose?.();
-      navigate("/account/sign-in");
-    }
-  };
+  // 로그인 상태에 따라: 로그아웃은 클릭 액션, 로그인은 Ctrl+클릭(새 탭)이 동작하도록 Link로 이동.
+  const navProps = signedIn
+    ? { onClick: () => onSignOut?.() }
+    : ({ component: RouterLink, to: "/account/sign-in", onClick: () => onClose?.() } as const);
 
   if (isMobile) {
     return (
       <Button
+        {...navProps}
         variant="text"
         sx={{
           color: isMainPath ? "white" : "rgba(18, 109, 127, 0.9)",
@@ -56,7 +52,6 @@ const InnerSignInButtonImpl: React.FC<InnerSignInButtonImplPropType> = ({
           },
         }}
         loading={loading}
-        onClick={handleClick}
       >
         <Stack direction="row" alignItems="center" sx={{ gap: "3px" }}>
           {signedIn ? <Logout fontSize="small" /> : <Login fontSize="small" />}
@@ -68,10 +63,10 @@ const InnerSignInButtonImpl: React.FC<InnerSignInButtonImplPropType> = ({
 
   return (
     <Button
+      {...navProps}
       variant="text"
       sx={({ palette }) => ({ color: palette.primary.dark })}
       loading={loading}
-      onClick={() => (signedIn ? onSignOut?.() : navigate("/account/sign-in"))}
       children={signedIn ? signOutBtnStr : signInBtnStr}
     />
   );

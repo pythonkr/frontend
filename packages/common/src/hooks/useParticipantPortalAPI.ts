@@ -3,7 +3,6 @@ import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { BackendAPIClient } from "@frontend/common/apis/client";
 import {
   cancelModificationAudit,
-  changePassword,
   listModificationAudits,
   listPresentations,
   listPublicFiles,
@@ -14,7 +13,6 @@ import {
   previewPresentationModAudit,
   retrieveModificationAudit,
   retrievePresentation,
-  signIn,
   signOut,
   updateMe,
   uploadPublicFile,
@@ -32,9 +30,7 @@ const QUERY_KEYS = {
 };
 
 const MUTATION_KEYS = {
-  PARTICIPANT_SIGN_IN: ["mutation", "participant", "sign-in"],
   PARTICIPANT_SIGN_OUT: ["mutation", "participant", "sign-out"],
-  PARTICIPANT_CHANGE_PASSWORD: ["mutation", "participant", "change-password"],
   PARTICIPANT_UPDATE_ME: ["mutation", "participant", "update-me"],
   PARTICIPANT_UPLOAD_PUBLIC_FILE: ["mutation", "participant", "public-file", "upload"],
   PARTICIPANT_UPDATE_PRESENTATION: ["mutation", "participant", "update", "presentation"],
@@ -64,22 +60,10 @@ export const useUpdateMeMutation = (client: BackendAPIClient) =>
     mutationFn: updateMe(client),
   });
 
-export const useSignInMutation = (client: BackendAPIClient) =>
-  useMutation({
-    mutationKey: [...MUTATION_KEYS.PARTICIPANT_SIGN_IN],
-    mutationFn: signIn(client),
-  });
-
 export const useSignOutMutation = (client: BackendAPIClient) =>
   useMutation({
     mutationKey: [...MUTATION_KEYS.PARTICIPANT_SIGN_OUT],
     mutationFn: signOut(client),
-  });
-
-export const useChangePasswordMutation = (client: BackendAPIClient) =>
-  useMutation({
-    mutationKey: [...MUTATION_KEYS.PARTICIPANT_CHANGE_PASSWORD],
-    mutationFn: changePassword(client),
   });
 
 export const usePublicFilesQuery = (client: BackendAPIClient) =>

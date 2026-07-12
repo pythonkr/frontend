@@ -16,3 +16,4 @@ export type { MDXPreviewMeta } from "./mdx_preview";
 export { MDXSections } from "./mdx_sections";
 export type { MDXSection } from "./mdx_sections";
 export { PythonKorea } from "./pythonkorea";
+export { SocialSignInPanel } from "./social_sign_in_panel";

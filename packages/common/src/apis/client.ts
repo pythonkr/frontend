@@ -169,4 +169,14 @@ export class BackendAPIClient {
   async delete<T, D = unknown>(url: string, config?: AxiosRequestConfig<D>): Promise<T> {
     return (await this._safe_request_without_payload(this.backendAPI.delete)<T, AxiosResponse<T>, D>(url, config)).data;
   }
+  // get/put 과 달리 전체 AxiosResponse(헤더·status) 를 반환.
+  async getResponse<T, D = unknown>(url: string, config?: AxiosRequestConfig<D>): Promise<AxiosResponse<T>> {
+    return this._safe_request_without_payload(this.backendAPI.get)<T, AxiosResponse<T>, D>(url, config);
+  }
+  async putResponse<T, D = unknown>(url: string, data: D, config?: AxiosRequestConfig<D>): Promise<AxiosResponse<T>> {
+    return this._safe_request_with_payload(this.backendAPI.put)<T, AxiosResponse<T>, D>(url, data, config);
+  }
+  async headResponse<D = unknown>(url: string, config?: AxiosRequestConfig<D>): Promise<AxiosResponse<void>> {
+    return this._safe_request_without_payload(this.backendAPI.head)<void, AxiosResponse<void>, D>(url, config);
+  }
 }

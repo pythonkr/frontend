@@ -5,6 +5,7 @@ import {
   Article,
   AutoFixHigh,
   BarChart,
+  CalendarViewWeek,
   ChatBubble,
   Email,
   Event,
@@ -16,6 +17,7 @@ import {
   Login,
   ManageAccounts,
   MarkEmailRead,
+  Merge,
   Person,
   Public,
   ReceiptLong,
@@ -30,7 +32,6 @@ import { AdminEditorCreateRoutePage, AdminEditorModifyRoutePage } from "./compon
 import { AdminList } from "./components/layouts/admin_list";
 import { RouteDef } from "./components/layouts/global";
 import { AccountRedirectPage } from "./components/pages/account/account";
-import { AccountManagementPage } from "./components/pages/account/manage";
 import { SignInPage } from "./components/pages/account/sign_in";
 import { DashboardPage } from "./components/pages/dashboard";
 import { AdminEventEditor } from "./components/pages/event/editor";
@@ -54,7 +55,11 @@ import { ShopProductEditorPage } from "./components/pages/shop/product/editor";
 import { ShopProductListPage } from "./components/pages/shop/product/list";
 import { ShopTagListPage } from "./components/pages/shop/tag/list";
 import { SiteMapList } from "./components/pages/sitemap/list";
+import { SessionTimetablePage } from "./components/pages/timetable";
 import { AdminUserExtEditor } from "./components/pages/user/editor";
+import { AdminUserMergePage } from "./components/pages/user/merge/create";
+import { AdminUserMergeDetail } from "./components/pages/user/merge/detail";
+import { AdminUserMergeList } from "./components/pages/user/merge/list";
 
 export const RouteDefinitions: RouteDef[] = [
   {
@@ -79,7 +84,7 @@ export const RouteDefinitions: RouteDef[] = [
     key: "modificationaudit-modificationaudit",
     icon: AutoFixHigh,
     title: "수정 심사",
-    route: "/modification-audit",
+    route: "/participant_portal_api/modificationaudit",
   },
   {
     type: "separator",
@@ -151,6 +156,13 @@ export const RouteDefinitions: RouteDef[] = [
     title: "발표",
     app: "event",
     resource: "presentation",
+  },
+  {
+    type: "routeDefinition",
+    key: "event-timetable",
+    icon: CalendarViewWeek,
+    title: "시간표",
+    route: "/event/timetable",
   },
   {
     type: "separator",
@@ -280,6 +292,13 @@ export const RouteDefinitions: RouteDef[] = [
     resource: "organization",
   },
   {
+    type: "routeDefinition",
+    key: "user-merge",
+    icon: Merge,
+    title: "계정 병합",
+    route: "/user/usermergehistory",
+  },
+  {
     type: "separator",
     key: "allauth-separator",
     title: "소셜 계정 관리",
@@ -349,6 +368,9 @@ export const RegisteredRoutes = {
   "/file/publicfile/:id": <AdminEditorModifyRoutePage app="file" resource="publicfile" notModifiable notDeletable />,
   "/user/userext": <AdminList app="user" resource="userext" hideCreatedAt hideUpdatedAt />,
   "/user/userext/:id": <AdminUserExtEditor />,
+  "/user/usermergehistory": <AdminUserMergeList />,
+  "/user/usermergehistory/create": <AdminUserMergePage />,
+  "/user/usermergehistory/:id": <AdminUserMergeDetail />,
   "/allauth/socialapp": <AdminList app="allauth" resource="socialapp" hideCreatedAt hideUpdatedAt />,
   "/allauth/socialaccount": (
     <AdminList
@@ -367,7 +389,6 @@ export const RegisteredRoutes = {
   "/dashboard": <DashboardPage />,
   "/account": <AccountRedirectPage />,
   "/account/sign-in": <SignInPage />,
-  "/account/manage": <AccountManagementPage />,
   "/cms/sitemap": <SiteMapList />,
   "/cms/sitemap/create": <SiteMapList />,
   "/cms/sitemap/:id": <SiteMapList />,
@@ -375,8 +396,9 @@ export const RegisteredRoutes = {
   "/event/event/:id": <AdminEventEditor />,
   "/event/presentation/create": <AdminPresentationEditor />,
   "/event/presentation/:id": <AdminPresentationEditor />,
-  "/modification-audit": <AdminModificationAuditList />,
-  "/modification-audit/modification-audit/:id": <AdminModificationAuditEditor />,
+  "/event/timetable": <SessionTimetablePage />,
+  "/participant_portal_api/modificationaudit": <AdminModificationAuditList />,
+  "/participant_portal_api/modificationaudit/:id": <AdminModificationAuditEditor />,
   "/shop/categorygroup": <ShopCategoryGroupListPage />,
   "/shop/categorygroup/create": <ShopCategoryGroupEditorPage />,
   "/shop/categorygroup/:id": <ShopCategoryGroupEditorPage />,
@@ -387,3 +409,13 @@ export const RegisteredRoutes = {
   "/shop/order": <ShopOrderListPage />,
   "/shop/order/:id": <ShopOrderEditorPage />,
 };
+
+const ADMIN_DETAIL_RESOURCES: ReadonlySet<string> = new Set(
+  Object.keys(RegisteredRoutes)
+    .map((path) => /^\/([^/]+)\/([^/]+)\/:id$/.exec(path))
+    .filter((match): match is RegExpExecArray => match !== null)
+    .map((match) => `${match[1]}/${match[2]}`)
+);
+
+export const adminDetailPathFor = (app: string, resource: string, id: string): string | null =>
+  ADMIN_DETAIL_RESOURCES.has(`${app}/${resource}`) ? `/${app}/${resource}/${id}` : null;

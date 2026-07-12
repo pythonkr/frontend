@@ -1,5 +1,6 @@
 import { useBackendAdminClient, useSignOutMutation, useSignedInUserQuery } from "@frontend/common/hooks/useAdminAPI";
-import { AccountCircle, Login, Logout, ManageAccounts } from "@mui/icons-material";
+import { useCommonContext } from "@frontend/common/hooks/useCommonContext";
+import { AccountCircle, Login, Logout, OpenInNew } from "@mui/icons-material";
 import { CircularProgress, Divider, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from "@mui/material";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { FC, MouseEvent, useState } from "react";
@@ -9,6 +10,7 @@ import { addErrorSnackbar, addSnackbar } from "@apps/pyconkr-admin/utils/snackba
 
 const SignedInMenu: FC<{ id: number; username: string; email: string }> = ({ id, username, email }) => {
   const navigate = useNavigate();
+  const { accountsDomain } = useCommonContext();
   const backendAdminAPIClient = useBackendAdminClient();
   const signOutMutation = useSignOutMutation(backendAdminAPIClient);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
@@ -21,9 +23,9 @@ const SignedInMenu: FC<{ id: number; username: string; email: string }> = ({ id,
     navigate(`/user/userext/${id}`);
   };
 
-  const handleManageAccount = () => {
+  const handleOpenAccountsPortal = () => {
     handleClose();
-    navigate("/account/manage");
+    window.open(accountsDomain, "_blank", "noopener,noreferrer");
   };
 
   const handleSignOut = () => {
@@ -49,11 +51,11 @@ const SignedInMenu: FC<{ id: number; username: string; email: string }> = ({ id,
           <ListItemText primary={username} secondary={email || "이메일 없음"} />
         </MenuItem>
         <Divider />
-        <MenuItem onClick={handleManageAccount}>
+        <MenuItem onClick={handleOpenAccountsPortal}>
           <ListItemIcon>
-            <ManageAccounts fontSize="small" />
+            <OpenInNew fontSize="small" />
           </ListItemIcon>
-          <ListItemText>계정 관리</ListItemText>
+          <ListItemText primary="PyCon 계정 관리" secondary="accounts.pycon.kr" />
         </MenuItem>
         <MenuItem onClick={handleSignOut} disabled={signOutMutation.isPending}>
           <ListItemIcon>

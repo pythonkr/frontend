@@ -1,5 +1,5 @@
 import { retrieve } from "@frontend/common/apis/admin_api";
-import { LottieDebugPanel, MDXRenderer, MarkdownEditor } from "@frontend/common/components";
+import { LottieDebugPanel, MarkdownEditor, MDXRenderer } from "@frontend/common/components";
 import { useBackendAdminClient, useCreateMutation, useRemoveMutation, useSchemaQuery, useUpdateMutation } from "@frontend/common/hooks/useAdminAPI";
 import { useCommonContext } from "@frontend/common/hooks/useCommonContext";
 import {
@@ -31,7 +31,19 @@ import { Field, RJSFSchema, UiSchema } from "@rjsf/utils";
 import { customizeValidator } from "@rjsf/validator-ajv8";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import AjvDraft04 from "ajv-draft-04";
-import { ChangeEvent, FC, FormEvent, MouseEventHandler, PropsWithChildren, SyntheticEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ChangeEvent,
+  FC,
+  FormEvent,
+  MouseEventHandler,
+  PropsWithChildren,
+  ReactNode,
+  SyntheticEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { isArray, isNonNullish, isObjectType, isString } from "remeda";
 
@@ -59,6 +71,7 @@ type AdminEditorPropsType = PropsWithChildren<{
   afterSubmit?: onSubmitType;
   notModifiable?: boolean;
   notDeletable?: boolean;
+  extraReadOnlyData?: Record<string, ReactNode>;
   extraActions?: ButtonProps[];
   /**
    * For each field, render an "open in new tab" link next to the value pointing at the editor route
@@ -238,6 +251,7 @@ const InnerAdminEditor: FC<AppResourceIdType & AdminEditorPropsType> = ErrorBoun
       beforeSubmit,
       afterSubmit,
       extraActions,
+      extraReadOnlyData,
       notModifiable,
       notDeletable,
       fieldLinks,
@@ -404,6 +418,12 @@ const InnerAdminEditor: FC<AppResourceIdType & AdminEditorPropsType> = ErrorBoun
                           </TableRow>
                         );
                       })}
+                      {Object.entries(extraReadOnlyData ?? {}).map(([key, value]) => (
+                        <TableRow key={`additional-${key}`}>
+                          <TableCell>{key}</TableCell>
+                          <TableCell>{value}</TableCell>
+                        </TableRow>
+                      ))}
                     </TableBody>
                   </Table>
                   <br />

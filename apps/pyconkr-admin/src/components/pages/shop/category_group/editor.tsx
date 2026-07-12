@@ -1,4 +1,4 @@
-import { useBackendAdminClient, useListAutoQuery, useRetrieveQuery } from "@frontend/common/hooks/useAdminAPI";
+import { useBackendAdminClient, useListPaginatedQuery, useRetrieveQuery } from "@frontend/common/hooks/useAdminAPI";
 import { Add, Delete, Edit } from "@mui/icons-material";
 import {
   Button,
@@ -66,7 +66,7 @@ type CategoryDialogProps = {
 
 const CategoryDialog: FC<CategoryDialogProps> = ({ open, onClose, group, category }) => {
   const client = useBackendAdminClient();
-  const { data: events } = useListAutoQuery<{ id: string; str_repr: string }>(client, "event", "event");
+  const { data: events } = useListPaginatedQuery<{ id: string; str_repr: string }>(client, "event", "event", { page_size: "200" });
 
   const [values, setValues] = useState<CategoryFormValues>({
     name: category?.name ?? "",
@@ -155,7 +155,7 @@ const CategoryDialog: FC<CategoryDialogProps> = ({ open, onClose, group, categor
               <MenuItem value="">
                 <em>연결 안 함</em>
               </MenuItem>
-              {events.items.map((event) => (
+              {events.results.map((event) => (
                 <MenuItem key={event.id} value={event.id}>
                   {event.str_repr}
                 </MenuItem>

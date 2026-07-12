@@ -89,7 +89,7 @@ const SessionItem: FC<{
 });
 
 type SessionListPropType = {
-  /** 세션을 조회할 이벤트(연도) slug. 미지정 시 기본 이벤트를 사용한다. */
+  /** 세션을 조회할 이벤트 이름(name_ko 또는 name_en). 미지정 시 최신 활성 이벤트를 사용한다. */
   event?: string;
   /** 필터할 세션 유형. 단일 문자열 또는 배열(내부에서 콤마로 join). */
   types?: string | string[];

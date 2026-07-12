@@ -1,12 +1,12 @@
 import { BackendAPIClientError } from "@frontend/common/apis";
+import { useCommonContext } from "@frontend/common/hooks/useCommonContext";
 import { useParticipantPortalClient, useSignedInUserQuery, useUpdateMeMutation } from "@frontend/common/hooks/useParticipantPortalAPI";
-import { Key, SendAndArchive } from "@mui/icons-material";
-import { Button, SelectChangeEvent, Stack } from "@mui/material";
+import { SendAndArchive } from "@mui/icons-material";
+import { Alert, Button, Link as MuiLink, SelectChangeEvent, Stack } from "@mui/material";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { enqueueSnackbar, OptionsObject } from "notistack";
 import { FC, ReactNode, useState } from "react";
 
-import { ChangePasswordDialog } from "@apps/pyconkr-participant-portal/components/dialogs/change_password";
 import { SubmitConfirmDialog } from "@apps/pyconkr-participant-portal/components/dialogs/submit_confirm";
 import { ErrorPage } from "@apps/pyconkr-participant-portal/components/elements/error_page";
 import { LoadingPage } from "@apps/pyconkr-participant-portal/components/elements/loading_page";
@@ -26,7 +26,6 @@ export type ProfileSchema = {
 };
 
 type ProfileEditorState = ProfileSchema & {
-  openChangePasswordDialog: boolean;
   openSubmitConfirmDialog: boolean;
 };
 
@@ -39,11 +38,11 @@ const DummyProfile: ProfileSchema = {
 
 const InnerProfileEditor: FC = () => {
   const { language } = useAppContext();
+  const { accountsDomain } = useCommonContext();
   const participantPortalClient = useParticipantPortalClient();
   const { data: profile } = useSignedInUserQuery(participantPortalClient);
   const updateMeMutation = useUpdateMeMutation(participantPortalClient);
   const [editorState, setEditorState] = useState<ProfileEditorState>({
-    openChangePasswordDialog: false,
     openSubmitConfirmDialog: false,
     ...(profile || DummyProfile),
   });
@@ -51,7 +50,6 @@ const InnerProfileEditor: FC = () => {
   const titleStr = language === "ko" ? "프로필 정보 수정" : "Edit Profile Information";
   const submitStr = language === "ko" ? "제출" : "Submit";
   const speakerImageStr = language === "ko" ? "프로필 이미지" : "Profile Image";
-  const changePasswordStr = language === "ko" ? "비밀번호 변경" : "Change Password";
   const submitSucceedStr =
     language === "ko"
       ? "프로필 정보 수정을 요청했어요. 검토 후 반영될 예정이에요."
@@ -59,9 +57,6 @@ const InnerProfileEditor: FC = () => {
 
   const openSubmitConfirmDialog = () => setEditorState((ps) => ({ ...ps, openSubmitConfirmDialog: true }));
   const closeSubmitConfirmDialog = () => setEditorState((ps) => ({ ...ps, openSubmitConfirmDialog: false }));
-
-  const openChangePasswordDialog = () => setEditorState((ps) => ({ ...ps, openChangePasswordDialog: true }));
-  const closeChangePasswordDialog = () => setEditorState((ps) => ({ ...ps, openChangePasswordDialog: false }));
 
   const addSnackbar = (c: string | ReactNode, variant: OptionsObject["variant"]) =>
     enqueueSnackbar(c, { variant, anchorOrigin: { vertical: "bottom", horizontal: "center" } });
@@ -98,9 +93,16 @@ const InnerProfileEditor: FC = () => {
   const modificationAuditId = profile?.requested_modification_audit_id || "";
   const formDisabled = profile?.has_requested_modification_audit || updateMeMutation.isPending;
 
+  const accountsLink = accountsDomain ? (
+    <MuiLink href={accountsDomain} target="_blank" rel="noopener noreferrer">
+      accounts.pycon.kr
+    </MuiLink>
+  ) : (
+    "accounts.pycon.kr"
+  );
+
   return (
     <>
-      <ChangePasswordDialog open={editorState.openChangePasswordDialog} onClose={closeChangePasswordDialog} />
       <SubmitConfirmDialog
         open={editorState.openSubmitConfirmDialog}
         onClose={closeSubmitConfirmDialog}
@@ -127,25 +129,21 @@ const InnerProfileEditor: FC = () => {
             name="nickname"
             fullWidth
           />
-          <Stack direction="row" spacing={2} sx={{ width: "100%" }}>
-            <Button
-              variant="contained"
-              fullWidth
-              startIcon={<Key />}
-              color="error"
-              onClick={openChangePasswordDialog}
-              children={changePasswordStr}
-              disabled={formDisabled}
-            />
-            <Button
-              variant="contained"
-              fullWidth
-              startIcon={<SendAndArchive />}
-              onClick={openSubmitConfirmDialog}
-              children={submitStr}
-              disabled={formDisabled}
-            />
-          </Stack>
+          <Alert severity="info">
+            {language === "ko" ? (
+              <>소셜 로그인 및 비밀번호 변경 등 로그인 계정 관리는 {accountsLink} 에서 수정해주세요.</>
+            ) : (
+              <>Login account management such as social login and password change can be done at {accountsLink}.</>
+            )}
+          </Alert>
+          <Button
+            variant="contained"
+            fullWidth
+            startIcon={<SendAndArchive />}
+            onClick={openSubmitConfirmDialog}
+            children={submitStr}
+            disabled={formDisabled}
+          />
         </Stack>
       </Page>
     </>

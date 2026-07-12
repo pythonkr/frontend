@@ -55,17 +55,6 @@ export type UserSchema = {
   str_repr: string;
 };
 
-export type UserSignInSchema = {
-  identity: string; // username or email
-  password: string;
-};
-
-export type UserChangePasswordSchema = {
-  old_password: string;
-  new_password: string;
-  new_password_confirm: string;
-};
-
 export type UserResetPasswordResponseSchema = {
   password: string;
 };
@@ -127,7 +116,48 @@ export type PresentationSchema = {
   description_en: string;
   slideshow_url: string | null;
   image: string | null;
+  str_repr: string;
 };
+
+export type PresentationTypeSchema = {
+  id: string; // UUID
+  event: string; // Event UUID
+  name_ko: string;
+  name_en: string | null;
+  str_repr: string;
+};
+
+export type EventSchema = {
+  id: string; // UUID
+  name_ko: string;
+  name_en: string | null;
+  event_start_at: string | null;
+  event_end_at: string | null;
+  str_repr: string;
+};
+
+// event/presentation/timetable 벌크 API (op 기반 부분반영).
+export type TimetableRoomSchema = { id: string; name_ko: string; name_en: string | null; order: number };
+export type TimetableScheduleSchema = {
+  id: string; // 미저장 신규는 temp-*
+  room_id: string; // 기존 Room id 또는 신규 방의 ref(=temp id)
+  presentation: string;
+  start_at: string;
+  end_at: string;
+};
+export type TimetableSchema = { rooms: TimetableRoomSchema[]; schedules: TimetableScheduleSchema[] };
+export type TimetableReadResult = TimetableSchema & { version: string };
+export type TimetableSaveResult = TimetableReadResult & { conflict: boolean };
+
+export type TimetableRoomOp =
+  | { op: "create"; ref: string; name_ko: string; name_en: string | null; order: number }
+  | { op: "update"; id: string; name_ko: string; name_en: string | null; order: number }
+  | { op: "delete"; id: string };
+export type TimetableScheduleOp =
+  | { op: "create"; room_id: string; presentation: string; start_at: string; end_at: string }
+  | { op: "update"; id: string; room_id: string; presentation: string; start_at: string; end_at: string }
+  | { op: "delete"; id: string };
+export type TimetableSavePayload = { rooms: TimetableRoomOp[]; schedules: TimetableScheduleOp[] };
 
 export type ModificationAuditSchema = {
   id: string; // UUID
@@ -160,6 +190,44 @@ export type ModificationAuditPreviewSchema<T> = {
   modification_audit: ModificationAuditSchema;
   original: T;
   modified: T;
+};
+
+export type UserMergeUserSchema = {
+  id: number;
+  username: string;
+  email: string;
+  nickname: string;
+  is_active: boolean;
+  str_repr: string;
+};
+
+export type UserMergeObjectSchema = {
+  id: string; // UUID
+  target_type_app: string;
+  target_type_resource: string;
+  target_id: string;
+  field_names: string[];
+};
+
+export type UserMergeHistoryListSchema = {
+  id: string; // UUID
+  source: UserMergeUserSchema;
+  target: UserMergeUserSchema;
+  is_self_merge: boolean;
+  created_by: string;
+  created_at: string; // ISO 8601 timestamp
+  updated_at: string; // ISO 8601 timestamp
+  reverted_at: string | null; // ISO 8601 timestamp
+  str_repr: string;
+};
+
+export type UserMergeHistoryDetailSchema = UserMergeHistoryListSchema & {
+  merged_objects: UserMergeObjectSchema[];
+};
+
+export type UserMergeRequestSchema = {
+  source: number;
+  target: number;
 };
 
 export type OpenAPIParameterSchema = {

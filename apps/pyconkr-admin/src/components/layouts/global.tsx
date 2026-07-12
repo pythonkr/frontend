@@ -22,6 +22,7 @@ import { CSSProperties, FC, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 
 import { AppBarAccountMenu } from "@apps/pyconkr-admin/components/elements/app_bar_account_menu";
+import { useAppContext } from "@apps/pyconkr-admin/contexts/app_context";
 
 import { MiniVariantAppBar, MiniVariantDrawer } from "./sidebar";
 
@@ -80,6 +81,7 @@ const PageInnerContainer = styled(Box)(({ theme }) => ({
 
 export const Layout: FC<{ routes: RouteDef[] }> = ({ routes }) => {
   const navigate = useNavigate();
+  const { confirmLeaveIfUnsaved } = useAppContext();
   const [state, dispatch] = useState<LayoutState>({ showDrawer: false });
   const toggleDrawer = () => dispatch((ps) => ({ ...ps, showDrawer: !ps.showDrawer }));
 
@@ -115,7 +117,10 @@ export const Layout: FC<{ routes: RouteDef[] }> = ({ routes }) => {
                 px: 2.5,
                 justifyContent: state.showDrawer ? "initial" : "center",
               }}
-              onClick={() => navigate(routeInfo.type === "autoAdminRouteDefinition" ? `/${routeInfo.app}/${routeInfo.resource}` : routeInfo.route)}
+              onClick={() => {
+                if (!confirmLeaveIfUnsaved()) return;
+                navigate(routeInfo.type === "autoAdminRouteDefinition" ? `/${routeInfo.app}/${routeInfo.resource}` : routeInfo.route);
+              }}
             >
               <ListItemIcon
                 sx={{
@@ -195,7 +200,7 @@ export const Layout: FC<{ routes: RouteDef[] }> = ({ routes }) => {
             <Outlet />
           </PageInnerContainer>
         </PageOuterContainer>
-        <Backdrop open={state.showDrawer} onClick={toggleDrawer} />
+        <Backdrop open={state.showDrawer} onClick={toggleDrawer} sx={{ zIndex: 100 }} />
       </Box>
     </Box>
   );

@@ -1,7 +1,16 @@
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useContext } from "react";
 
-import { listEvents, listSessions, listSiteMaps, listSponsors, retrievePage, retrieveSession } from "@frontend/common/apis";
+import {
+  listEvents,
+  listSessions,
+  listSiteMaps,
+  listSponsors,
+  retrievePage,
+  retrieveSession,
+  retrieveSocialSession,
+  signInWithSNS,
+} from "@frontend/common/apis";
 import { BackendAPIClient } from "@frontend/common/apis/client";
 import { context as backendContext } from "@frontend/common/contexts";
 import { SessionQueryParameterSchema, SponsorQueryParameterSchema } from "@frontend/common/schemas/backendAPI";
@@ -20,9 +29,22 @@ export const useBackendContext = () => {
 };
 
 export const useBackendClient = () => {
-  const { language, backendApiDomain, backendApiTimeout } = useBackendContext();
-  return new BackendAPIClient(backendApiDomain, backendApiTimeout, "", "", false, language);
+  const { language, backendApiDomain, backendApiTimeout, backendApiCSRFCookieName, backendApiSessionCookieName } = useBackendContext();
+  return new BackendAPIClient(backendApiDomain, backendApiTimeout, backendApiCSRFCookieName, backendApiSessionCookieName, true, language);
 };
+
+export const useSignInWithSNSMutation = (client: BackendAPIClient) =>
+  useMutation({
+    mutationKey: ["mutation", "sign-in", "sns"],
+    mutationFn: signInWithSNS(client),
+    meta: { invalidates: [] },
+  });
+
+export const useSocialSessionQuery = (client: BackendAPIClient) =>
+  useQuery({
+    queryKey: ["query", "social-session", client.language],
+    queryFn: retrieveSocialSession(client),
+  });
 
 export const useFlattenSiteMapQuery = (client: BackendAPIClient) =>
   useSuspenseQuery({

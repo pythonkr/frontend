@@ -30,7 +30,7 @@ const MaxContentWidth: CSSProperties["maxWidth"] = "1366px";
 export default function Header() {
   const { title, language, siteMapNode, currentSiteMapDepth, shouldShowTitleBanner } = useAppContext();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
   const [navState, setNavState] = useState<NavigationStateType>({});
 
   const resetDepths = () => setNavState({});
@@ -68,7 +68,7 @@ export default function Header() {
             </Link>
           </NavSideElementContainer>
           {siteMapNode ? (
-            <Stack direction="row" alignItems="center" justifyContent="center" spacing={0.5}>
+            <Stack direction="row" alignItems="center" justifyContent="center" spacing={0.5} sx={{ minWidth: 0 }}>
               {Object.values(siteMapNode.children)
                 .filter((s) => !s.hide)
                 .map((r) => (
@@ -229,21 +229,26 @@ const HeaderContainer = styled("header")(({ theme }) => ({
 
 const HeaderInner = styled("div")(({ theme }) => ({
   display: "grid",
-  gridTemplateColumns: "1fr auto 1fr",
+  gridTemplateColumns: "auto minmax(0, 1fr) auto",
   alignItems: "center",
+  columnGap: theme.spacing(2),
   width: "100%",
   height: "100%",
   maxWidth: MaxContentWidth,
   marginInline: "auto",
-  ...ResponsivePaddingDefinition({ theme }),
+  paddingRight: theme.spacing(2),
+  paddingLeft: theme.spacing(2),
+  whiteSpace: "nowrap",
 }));
 
 const NavButton = styled(Button)<{ isActive?: boolean }>(({ theme, isActive }) => ({
   color: isActive ? theme.palette.primary.main : theme.palette.text.primary,
   minWidth: 0,
+  paddingInline: theme.spacing(0.75),
   textTransform: "none",
-  fontSize: "0.9rem",
+  fontSize: "0.75rem",
   fontWeight: isActive ? 700 : 400,
+  whiteSpace: "nowrap",
   transition: "color 0.2s ease",
   "&:hover": { color: theme.palette.primary.main, backgroundColor: "transparent" },
 }));

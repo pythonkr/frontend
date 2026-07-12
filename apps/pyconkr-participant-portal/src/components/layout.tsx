@@ -1,9 +1,10 @@
+import { useCommonContext } from "@frontend/common/hooks/useCommonContext";
 import { useParticipantPortalClient, useSignOutMutation, useSignedInUserQuery } from "@frontend/common/hooks/useParticipantPortalAPI";
 import { AccountCircle } from "@mui/icons-material";
 import { AppBar, ButtonBase, CircularProgress, IconButton, Menu, MenuItem, Stack, styled, Toolbar, Tooltip, Typography } from "@mui/material";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
 import { FC, MouseEventHandler, useState } from "react";
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import { Link, Outlet } from "react-router-dom";
 
 import { LOCAL_STORAGE_LANGUAGE_KEY } from "@apps/pyconkr-participant-portal/consts/local_stroage";
 import { useAppContext } from "@apps/pyconkr-participant-portal/contexts/app_context";
@@ -59,27 +60,25 @@ type ProfileMenuButtonState = {
 };
 
 const InnerProfileMenuButton: FC<ProfileMenuButtonProps> = ({ loading, signedIn }) => {
-  const navigate = useNavigate();
   const participantPortalClient = useParticipantPortalClient();
   const [btnState, setBtnState] = useState<ProfileMenuButtonState>({});
   const openMenu: MouseEventHandler<HTMLButtonElement> = (evt) => setBtnState((ps) => ({ ...ps, anchorEl: evt.currentTarget }));
   const closeMenu = () => setBtnState((ps) => ({ ...ps, anchorEl: undefined }));
   const { language } = useAppContext();
+  const { accountsDomain } = useCommonContext();
   const accountStr = language === "ko" ? "계정" : "Account";
   const signInStr = language === "ko" ? "로그인" : "Sign In";
   const signOutStr = language === "ko" ? "로그아웃" : "Sign Out";
   const editProfileStr = language === "ko" ? "프로필 편집" : "Edit Profile";
+  const manageAccountStr = language === "ko" ? "계정 관리" : "Manage Account";
 
-  const goToProfileEditor = () => {
-    navigate("/user");
+  const goToAccounts = () => {
+    window.open(accountsDomain, "_blank", "noopener,noreferrer");
     closeMenu();
   };
-  const goToSignIn = () => navigate("/signin");
   const signOutMutation = useSignOutMutation(participantPortalClient);
-  const onSignInOutClick = () => {
-    if (signedIn) signOutMutation.mutate();
-    else goToSignIn();
-
+  const handleSignOut = () => {
+    signOutMutation.mutate();
     closeMenu();
   };
 
@@ -89,8 +88,13 @@ const InnerProfileMenuButton: FC<ProfileMenuButtonProps> = ({ loading, signedIn 
         <IconButton children={loading ? <CircularProgress size={24} /> : <AccountCircle />} disabled={loading} onClick={openMenu} />
       </Tooltip>
       <Menu open={!!btnState.anchorEl} anchorEl={btnState.anchorEl} onClose={closeMenu}>
-        {signedIn && <MenuItem children={editProfileStr} onClick={goToProfileEditor} />}
-        <MenuItem children={signedIn ? signOutStr : signInStr} onClick={onSignInOutClick} />
+        {signedIn && <MenuItem children={editProfileStr} component={Link} to="/user" onClick={closeMenu} />}
+        {signedIn && <MenuItem children={manageAccountStr} onClick={goToAccounts} />}
+        {signedIn ? (
+          <MenuItem children={signOutStr} onClick={handleSignOut} />
+        ) : (
+          <MenuItem children={signInStr} component={Link} to="/signin" onClick={closeMenu} />
+        )}
       </Menu>
     </>
   );

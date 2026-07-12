@@ -20,7 +20,7 @@ const InnerAdminModificationAuditEditor: FC = () => {
   const backendAdminClient = useBackendAdminClient();
   const { data } = useModificationAuditPreviewQuery<Record<string, string>>(backendAdminClient, id || "");
 
-  if (!data) return <Navigate to="/admin/modification-audit" replace />;
+  if (!data) return <Navigate to="/participant_portal_api/modificationaudit" replace />;
 
   const { modification_audit } = data;
   const { status, instance } = modification_audit;

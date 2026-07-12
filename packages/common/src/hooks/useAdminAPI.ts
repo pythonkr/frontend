@@ -1,14 +1,16 @@
-import { useMutation, useQuery, useSuspenseQueries, useSuspenseQuery } from "@tanstack/react-query";
+import { MutationMeta, useMutation, useQuery, useSuspenseQueries, useSuspenseQuery } from "@tanstack/react-query";
 
 import {
   approveModificationAudit,
   bulkUpdateSections,
-  changePassword,
   create,
+  exportOrders,
   fetchDashboardChartData,
+  getTimetable,
+  getTimetableVersion,
   issueGoogleOAuth2AccessToken,
-  list,
-  listAuto,
+  previewUserMerge,
+  listAll,
   listDashboardCharts,
   listPaginated,
   listSections,
@@ -24,9 +26,9 @@ import {
   retrieve,
   retryHistory,
   retrySentTo,
+  revertUserMerge,
   schema,
   selectables,
-  signIn,
   signOut,
   update,
   updatePrepared,
@@ -51,9 +53,7 @@ const QUERY_KEYS = {
 };
 
 const MUTATION_KEYS = {
-  ADMIN_SIGN_IN: ["mutation", "admin", "sign-in"],
   ADMIN_SIGN_OUT: ["mutation", "admin", "sign-out"],
-  ADMIN_CHANGE_PASSWORD: ["mutation", "admin", "change-password"],
   ADMIN_RESET_PASSWORD: ["mutation", "admin", "reset-password"],
   ADMIN_CREATE: ["mutation", "admin", "create"],
   ADMIN_UPDATE: ["mutation", "admin", "update"],
@@ -64,6 +64,9 @@ const MUTATION_KEYS = {
   ADMIN_RETRY_HISTORY: ["mutation", "admin", "retry-history"],
   ADMIN_RETRY_SENT_TO: ["mutation", "admin", "retry-sent-to"],
   ADMIN_ISSUE_GOOGLE_OAUTH2_ACCESS_TOKEN: ["mutation", "admin", "google-oauth2-access-token"],
+  ADMIN_EXPORT_ORDERS: ["mutation", "admin", "export-orders"],
+  ADMIN_PREVIEW_USER_MERGE: ["mutation", "admin", "preview", "user-merge"],
+  ADMIN_REVERT_USER_MERGE: ["mutation", "admin", "revert", "user-merge"],
 };
 
 export const useBackendAdminClient = () => {
@@ -77,22 +80,10 @@ export const useSignedInUserQuery = (client: BackendAPIClient) =>
     queryFn: me(client),
   });
 
-export const useSignInMutation = (client: BackendAPIClient) =>
-  useMutation({
-    mutationKey: [...MUTATION_KEYS.ADMIN_SIGN_IN],
-    mutationFn: signIn(client),
-  });
-
 export const useSignOutMutation = (client: BackendAPIClient) =>
   useMutation({
     mutationKey: [...MUTATION_KEYS.ADMIN_SIGN_OUT],
     mutationFn: signOut(client),
-  });
-
-export const useChangePasswordMutation = (client: BackendAPIClient) =>
-  useMutation({
-    mutationKey: [...MUTATION_KEYS.ADMIN_CHANGE_PASSWORD],
-    mutationFn: changePassword(client),
   });
 
 export const useResetUserPasswordMutation = (client: BackendAPIClient, id: string) =>
@@ -145,22 +136,19 @@ export const useOpenApiSchemaQuery = (client: BackendAPIClient) =>
     staleTime: Infinity,
   });
 
-export const useListQuery = <T>(client: BackendAPIClient, app: string, resource: string, params?: Record<string, string>) =>
-  useSuspenseQuery({
-    queryKey: [...QUERY_KEYS.ADMIN_LIST, app, resource, JSON.stringify(params)],
-    queryFn: list<T>(client, app, resource, params),
-  });
-
 export const useListPaginatedQuery = <T>(client: BackendAPIClient, app: string, resource: string, params?: Record<string, string>) =>
   useSuspenseQuery({
     queryKey: [...QUERY_KEYS.ADMIN_LIST, app, resource, "paginated", JSON.stringify(params)],
     queryFn: listPaginated<T>(client, app, resource, params),
   });
 
-export const useListAutoQuery = <T>(client: BackendAPIClient, app: string, resource: string, params?: Record<string, string>) =>
+export const adminListAllQueryKey = (app: string, resource: string, params?: Record<string, string>) =>
+  [...QUERY_KEYS.ADMIN_LIST, app, resource, "all", JSON.stringify(params)] as const;
+
+export const useListAllQuery = <T>(client: BackendAPIClient, app: string, resource: string, params?: Record<string, string>) =>
   useSuspenseQuery({
-    queryKey: [...QUERY_KEYS.ADMIN_LIST, app, resource, "auto", JSON.stringify(params)],
-    queryFn: listAuto<T>(client, app, resource, params),
+    queryKey: adminListAllQueryKey(app, resource, params),
+    queryFn: listAll<T>(client, app, resource, params),
   });
 
 export const useRetrieveQuery = <T>(client: BackendAPIClient, app: string, resource: string, id: string) =>
@@ -169,10 +157,28 @@ export const useRetrieveQuery = <T>(client: BackendAPIClient, app: string, resou
     queryFn: retrieve<T>(client, app, resource, id),
   });
 
-export const useCreateMutation = <T>(client: BackendAPIClient, app: string, resource: string) =>
+export const adminTimetableQueryKey = (eventId: string) => [...QUERY_KEYS.ADMIN_LIST, "event", "timetable", eventId] as const;
+
+export const useTimetableQuery = (client: BackendAPIClient, eventId: string) =>
+  useSuspenseQuery({
+    queryKey: adminTimetableQueryKey(eventId),
+    queryFn: getTimetable(client, eventId),
+  });
+
+// 다른 관리자의 변경을 감지하기 위한 경량 버전 폴링 (본문 없이 count+max(updated_at) 해시만 반환).
+export const useTimetableVersionQuery = (client: BackendAPIClient, eventId: string, refetchInterval: number) =>
+  useQuery({
+    queryKey: [...adminTimetableQueryKey(eventId), "version"],
+    queryFn: getTimetableVersion(client, eventId),
+    refetchInterval,
+    refetchIntervalInBackground: false,
+  });
+
+export const useCreateMutation = <T>(client: BackendAPIClient, app: string, resource: string, options?: { meta?: MutationMeta }) =>
   useMutation({
     mutationKey: [...MUTATION_KEYS.ADMIN_CREATE, app, resource],
     mutationFn: create<T>(client, app, resource),
+    ...options,
   });
 
 export const useUpdateMutation = <T>(client: BackendAPIClient, app: string, resource: string, id: string) =>
@@ -181,10 +187,16 @@ export const useUpdateMutation = <T>(client: BackendAPIClient, app: string, reso
     mutationFn: update<T>(client, app, resource, id),
   });
 
-export const useUpdatePreparedMutation = <T extends { id: string }>(client: BackendAPIClient, app: string, resource: string) =>
+export const useUpdatePreparedMutation = <T extends { id: string }>(
+  client: BackendAPIClient,
+  app: string,
+  resource: string,
+  options?: { meta?: MutationMeta }
+) =>
   useMutation({
     mutationKey: [...MUTATION_KEYS.ADMIN_UPDATE, app, resource, "prepared"],
     mutationFn: updatePrepared<T>(client, app, resource),
+    ...options,
   });
 
 export const useRemoveMutation = (client: BackendAPIClient, app: string, resource: string, id: string) =>
@@ -193,10 +205,11 @@ export const useRemoveMutation = (client: BackendAPIClient, app: string, resourc
     mutationFn: remove(client, app, resource, id),
   });
 
-export const useRemovePreparedMutation = (client: BackendAPIClient, app: string, resource: string) =>
+export const useRemovePreparedMutation = (client: BackendAPIClient, app: string, resource: string, options?: { meta?: MutationMeta }) =>
   useMutation({
     mutationKey: [...MUTATION_KEYS.ADMIN_REMOVE, app, resource, "prepared"],
     mutationFn: removePrepared(client, app, resource),
+    ...options,
   });
 
 export const usePublicFileQuery = (client: BackendAPIClient, id: string) =>
@@ -272,6 +285,26 @@ export const useIssueGoogleOAuth2AccessTokenMutation = (client: BackendAPIClient
     mutationKey: [...MUTATION_KEYS.ADMIN_ISSUE_GOOGLE_OAUTH2_ACCESS_TOKEN, id],
     mutationFn: issueGoogleOAuth2AccessToken(client, id),
     meta: { invalidates: [] },
+  });
+
+export const useExportOrdersMutation = (client: BackendAPIClient) =>
+  useMutation({
+    mutationKey: [...MUTATION_KEYS.ADMIN_EXPORT_ORDERS],
+    mutationFn: exportOrders(client),
+    meta: { invalidates: [] },
+  });
+
+export const usePreviewUserMergeMutation = (client: BackendAPIClient) =>
+  useMutation({
+    mutationKey: [...MUTATION_KEYS.ADMIN_PREVIEW_USER_MERGE],
+    mutationFn: previewUserMerge(client),
+    meta: { invalidates: [] },
+  });
+
+export const useRevertUserMergeMutation = (client: BackendAPIClient, id: string) =>
+  useMutation({
+    mutationKey: [...MUTATION_KEYS.ADMIN_REVERT_USER_MERGE, id],
+    mutationFn: revertUserMerge(client, id),
   });
 
 // 정의 자체는 정적이지만 응답의 옵션(티켓/이벤트)은 DB에서 동적 주입 → 기본 staleTime 으로 갱신되게 둔다.

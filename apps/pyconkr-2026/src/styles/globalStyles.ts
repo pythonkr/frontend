@@ -112,6 +112,15 @@ export const muiTheme = createTheme({
       dark: "#388e3c",
     },
   },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textAlign: "center",
+        },
+      },
+    },
+  },
 });
 
 export const globalStyles = css`

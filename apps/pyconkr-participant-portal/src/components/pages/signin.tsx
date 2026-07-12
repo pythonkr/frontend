@@ -1,33 +1,16 @@
-import { BackendAPIClientError } from "@frontend/common/apis";
+import { SocialSignInPanel } from "@frontend/common/components";
 import { useEmail } from "@frontend/common/hooks/useEmail";
-import { useParticipantPortalClient, useSignInMutation, useSignedInUserQuery } from "@frontend/common/hooks/useParticipantPortalAPI";
-import { getFormValue, isFormValid } from "@frontend/common/utils";
-import { Button, Stack, TextField, Typography } from "@mui/material";
-import { enqueueSnackbar, OptionsObject } from "notistack";
-import { FC, ReactNode, useRef } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Stack, Typography } from "@mui/material";
+import { FC } from "react";
 
 import { Page } from "@apps/pyconkr-participant-portal/components/page";
 import { useAppContext } from "@apps/pyconkr-participant-portal/contexts/app_context";
 
 export const SignInPage: FC = () => {
-  const formRef = useRef<HTMLFormElement>(null);
-  const navigate = useNavigate();
   const { sendEmail } = useEmail();
   const { language } = useAppContext();
-  const participantPortalClient = useParticipantPortalClient();
-  const { data } = useSignedInUserQuery(participantPortalClient);
-  const signInMutation = useSignInMutation(participantPortalClient);
-  if (data) return <Navigate to="/" replace />;
-
-  const addSnackbar = (c: string | ReactNode, variant: OptionsObject["variant"]) =>
-    enqueueSnackbar(c, { variant, anchorOrigin: { vertical: "bottom", horizontal: "center" } });
 
   const signInStr = language === "ko" ? "로그인" : "Sign In";
-  const emailStr = language === "ko" ? "이메일" : "Email";
-  const passwordStr = language === "ko" ? "비밀번호" : "Password";
-  const signInSucceedStr = language === "ko" ? "로그인에 성공했습니다!" : "Sign in succeeded!";
-  const signInFailedStr = language === "ko" ? "로그인에 실패했습니다." : "Sign in failed.";
   const contactToTeamStr =
     language === "ko" ? (
       <>
@@ -48,45 +31,11 @@ export const SignInPage: FC = () => {
       </>
     );
 
-  const signIn = () => {
-    if (!isFormValid(formRef.current)) return;
-
-    const formData = getFormValue<{ identity: string; password: string }>({ form: formRef.current });
-    signInMutation.mutate(formData, {
-      onSuccess: () => {
-        addSnackbar(signInSucceedStr, "success");
-        navigate("/");
-      },
-      onError: (error) => {
-        console.error("Sign in failed:", error);
-
-        let errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-        if (error instanceof BackendAPIClientError) errorMessage = error.message;
-
-        addSnackbar(
-          <>
-            {signInFailedStr}
-            <br />
-            {errorMessage}
-          </>,
-          "error"
-        );
-      },
-    });
-  };
-  const disabled = signInMutation.isPending;
-
   return (
     <Page>
       <Stack spacing={4} style={{ width: "100%", flexGrow: 1 }} alignItems="center" justifyContent="center">
         <Typography variant="h4" component="h1" gutterBottom children={signInStr} />
-        <form style={{ width: "100%", maxWidth: "480px" }} ref={formRef}>
-          <Stack spacing={2}>
-            <TextField disabled={disabled} label={emailStr} type="email" name="identity" fullWidth />
-            <TextField disabled={disabled} label={passwordStr} type="password" name="password" fullWidth />
-          </Stack>
-        </form>
-        <Button variant="contained" children={signInStr} disabled={disabled} sx={{ width: "100%", maxWidth: "480px" }} onClick={signIn} />
+        <SocialSignInPanel dev={import.meta.env.DEV} maxWidth="480px" />
         <Typography variant="body2" color="textSecondary" style={{ marginTop: "1rem" }} children={contactToTeamStr} />
       </Stack>
     </Page>

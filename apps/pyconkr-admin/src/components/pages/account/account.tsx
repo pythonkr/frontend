@@ -12,6 +12,6 @@ export const AccountRedirectPage: FC = ErrorBoundary.with(
     const backendAdminAPIClient = useBackendAdminClient();
     const { data } = useSignedInUserQuery(backendAdminAPIClient);
 
-    return data ? <Navigate to="/account/manage" replace /> : <Navigate to="/account/sign-in" replace />;
+    return data ? <Navigate to="/" replace /> : <Navigate to="/account/sign-in" replace />;
   })
 );

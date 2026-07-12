@@ -1,5 +1,5 @@
-import { useBackendAdminClient, useListPaginatedQuery, useListQuery } from "@frontend/common/hooks/useAdminAPI";
-import { RestartAlt } from "@mui/icons-material";
+import { useBackendAdminClient, useListPaginatedQuery } from "@frontend/common/hooks/useAdminAPI";
+import { FileDownload, RestartAlt } from "@mui/icons-material";
 import {
   Button,
   Chip,
@@ -24,6 +24,7 @@ import { AdminPagination } from "@apps/pyconkr-admin/components/elements/admin_p
 import { BackendAdminSignInGuard } from "@apps/pyconkr-admin/components/elements/admin_signin_guard";
 import { ErrorFallback } from "@apps/pyconkr-admin/components/elements/error_fallback";
 import { PAYMENT_STATUS_LABEL } from "@apps/pyconkr-admin/components/pages/shop/_common/status_labels";
+import { OrderExportDialog } from "@apps/pyconkr-admin/components/pages/shop/order/export_dialog";
 import { CategoryGroupAdminWithCategories } from "@apps/pyconkr-admin/components/pages/shop/product/types";
 
 import { OrderAdmin, PaymentStatus } from "./types";
@@ -97,6 +98,7 @@ const InnerOrderList: FC = ErrorBoundary.with(
     }
 
     const [filters, setFilters] = useState<FilterState>(() => readFilters(searchParams));
+    const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
     // Re-sync local form state when the URL changes externally (browser back/forward, pagination).
     useEffect(() => {
@@ -104,9 +106,9 @@ const InnerOrderList: FC = ErrorBoundary.with(
     }, [searchParams]);
 
     const ordersQuery = useListPaginatedQuery<OrderAdmin>(client, "shop", "order", apiParams);
-    const groupsQuery = useListQuery<CategoryGroupAdminWithCategories>(client, "shop", "categorygroup", {});
+    const groupsQuery = useListPaginatedQuery<CategoryGroupAdminWithCategories>(client, "shop", "categorygroup", { page_size: "200" });
     const { count = 0, results: orders = [] } = ordersQuery.data ?? {};
-    const groups = useMemo(() => groupsQuery.data ?? [], [groupsQuery.data]);
+    const groups = useMemo(() => groupsQuery.data.results, [groupsQuery.data]);
 
     const setFilter = <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
       setFilters((prev) => ({ ...prev, [key]: value }));
@@ -267,14 +269,19 @@ const InnerOrderList: FC = ErrorBoundary.with(
           </AdminFilterFieldset>
         </Stack>
 
-        <Stack direction="row" spacing={1}>
+        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" sx={{ rowGap: 1 }}>
           <Button variant="contained" onClick={handleApply} size="small">
             검색
           </Button>
           <Button variant="text" onClick={handleReset} size="small" startIcon={<RestartAlt />}>
             초기화
           </Button>
+          <Button variant="outlined" size="small" startIcon={<FileDownload />} onClick={() => setExportDialogOpen(true)} sx={{ ml: "auto" }}>
+            내보내기
+          </Button>
         </Stack>
+
+        <OrderExportDialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)} />
 
         <Table>
           <TableHead>

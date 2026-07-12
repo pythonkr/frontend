@@ -1,11 +1,13 @@
 export { buildFlatSiteMap, buildNestedSiteMap, parseCss } from "./api";
 export { isChunkLoadError, registerChunkLoadErrorReloadHandler, reloadForChunkLoadError } from "./chunk_load_error";
 export { captureSessionTokenFromURL, getCookie } from "./cookie";
+export { timestampedFilename, triggerBlobDownload } from "./download";
 export { getFaro, initFaro } from "./faro";
 export type { InitFaroOptions } from "./faro";
 export { getFormValue, isFormValid } from "./form";
 export { filterPropertiesByLanguageInJsonSchema, filterReadOnlyPropertiesInJsonSchema, filterWritablePropertiesInJsonSchema } from "./json_schema";
+export { clamp, snapToStep, stepsBetween } from "./math";
 export { extractQueryParameters } from "./openapi";
 export { getSessionDetailUrl } from "./session";
 export { isFilledString, isValidHttpUrl, rtrim } from "./string";
-export { ceilToGranularity, floorToGranularity, minutesToGridLine, toMinutesOfDay } from "./time";
+export { ceilToGranularity, dayBoundsMs, dayTabLabel, eachDayISO, floorToGranularity, floorToMinute, formatMs, isoDateOf, minutesToGridLine, toMinutesOfDay, toMs, toNaiveISO } from "./time";

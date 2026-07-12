@@ -11,6 +11,7 @@ export type ContextOptions = {
   debug?: boolean;
   backendApiDomain: string;
   backendApiAbsoluteDomain?: string;
+  accountsDomain: string;
   backendApiTimeout: number;
   backendApiCSRFCookieName?: string;
   backendApiSessionCookieName?: string;
@@ -25,6 +26,7 @@ export const context = createContext<ContextOptions>({
   debug: false,
   backendApiDomain: "",
   backendApiAbsoluteDomain: "",
+  accountsDomain: "",
   backendApiTimeout: 10000,
   backendApiCSRFCookieName: "",
   backendApiSessionCookieName: "",

@@ -1,5 +1,5 @@
 import { Fieldset } from "@frontend/common/components";
-import { useBackendAdminClient, useCreateMutation, useListQuery, useRenderTemplateMutation } from "@frontend/common/hooks/useAdminAPI";
+import { useBackendAdminClient, useCreateMutation, useListPaginatedQuery, useRenderTemplateMutation } from "@frontend/common/hooks/useAdminAPI";
 import { Add, Close, Delete, Send, Visibility } from "@mui/icons-material";
 import {
   Box,
@@ -208,9 +208,9 @@ const InnerAdminNotificationHistoryCreate: FC<AdminNotificationHistoryCreateProp
     const [templateContext, setTemplateContext] = useState<Record<string, string>>({});
     const [globalVarFlags, setGlobalVarFlags] = useState<Record<string, boolean>>({});
 
-    const templateListQuery = useListQuery<NotificationTemplateSchema>(backendAdminClient, app, templateResource);
+    const templateListQuery = useListPaginatedQuery<NotificationTemplateSchema>(backendAdminClient, app, templateResource, { page_size: "200" });
     const renderTemplateMutation = useRenderTemplateMutation(backendAdminClient, app, templateResource);
-    const selectedTemplate = templateListQuery.data?.find((t) => t.id === formData.template) ?? null;
+    const selectedTemplate = templateListQuery.data.results.find((t) => t.id === formData.template) ?? null;
     const templateVariables = selectedTemplate?.template_variables ?? [];
 
     const isGlobalVar = (varName: string) => globalVarFlags[varName] ?? !NotAppliableToAllRecipientsFieldList.includes(varName);
@@ -324,7 +324,7 @@ const InnerAdminNotificationHistoryCreate: FC<AdminNotificationHistoryCreateProp
                   <MenuItem value="">
                     <em>(없음)</em>
                   </MenuItem>
-                  {(templateListQuery.data ?? []).map((t) => (
+                  {templateListQuery.data.results.map((t) => (
                     <MenuItem key={t.id} value={t.id}>
                       {t.str_repr}
                     </MenuItem>

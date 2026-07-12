@@ -66,9 +66,7 @@ export const getCannotAddMoreOptionGroupReason = (
   if (info.option_group_max_quantity_per_user !== null && info.option_group_max_quantity_per_user === userLeftover) {
     return language === "ko" ? "이 옵션의 사용자당 구매 한도에 도달했어요." : "You've reached the per-user limit for this option.";
   }
-  if (info.product_max_quantity_per_user !== null && info.product_max_quantity_per_user === userLeftover) {
-    return language === "ko" ? "이 상품의 사용자당 구매 한도에 도달했어요." : "You've reached the per-user limit for this product.";
-  }
+  // product_max_quantity_per_user(상품 인당 한도)는 백엔드 leftover_stock_per_user 에서 제외돼 여기 binding 이 될 수 없음.
   return language === "ko" ? "더 이상 선택할 수 없어요." : "Cannot select more.";
 };
 

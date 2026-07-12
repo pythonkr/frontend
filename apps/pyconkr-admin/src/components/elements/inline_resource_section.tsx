@@ -2,7 +2,7 @@ import { BackendAPIClientError } from "@frontend/common/apis/client";
 import {
   useBackendAdminClient,
   useCreateMutation,
-  useListAutoQuery,
+  useListPaginatedQuery,
   useRemovePreparedMutation,
   useUpdatePreparedMutation,
 } from "@frontend/common/hooks/useAdminAPI";
@@ -280,17 +280,17 @@ export const InlineResourceSection: FC<InlineResourceSectionProps> = ErrorBounda
   { fallback: ErrorFallback },
   Suspense.with({ fallback: <CircularProgress /> }, ({ app, resource, filter, label, columns, hideCreatedAt, orderField, dialogChildren }) => {
     const client = useBackendAdminClient();
-    const listQuery = useListAutoQuery<ResourceRow>(client, app, resource, { [filter.key]: filter.value, page_size: "100" });
+    const listQuery = useListPaginatedQuery<ResourceRow>(client, app, resource, { [filter.key]: filter.value, page_size: "100" });
     const removeMutation = useRemovePreparedMutation(client, app, resource);
     const updateMutation = useUpdatePreparedMutation<ResourceRow & { id: string }>(client, app, resource);
     const [dialog, setDialog] = useState<{ open: boolean; item?: ResourceRow }>({ open: false });
     const [reordering, setReordering] = useState(false);
 
     const items = useMemo(() => {
-      const raw = listQuery.data.items ?? [];
+      const raw = listQuery.data.results ?? [];
       if (!orderField) return raw;
       return [...raw].sort((a, b) => Number(a[orderField] ?? 0) - Number(b[orderField] ?? 0));
-    }, [listQuery.data.items, orderField]);
+    }, [listQuery.data.results, orderField]);
 
     const handleDelete = (item: ResourceRow) => {
       const itemLabel = firstTranslatedName(columns, item);

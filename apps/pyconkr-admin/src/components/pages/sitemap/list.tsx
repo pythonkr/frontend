@@ -1,6 +1,6 @@
 import {
   useBackendAdminClient,
-  useListQuery,
+  useListAllQuery,
   useSelectablesQuery,
   useRemovePreparedMutation,
   useUpdatePreparedMutation,
@@ -111,7 +111,7 @@ const InnerSiteMapList: FC<InnerSiteMapListProps> = ErrorBoundary.with(
   { fallback: ErrorFallback },
   Suspense.with({ fallback: <CircularProgress /> }, ({ domainGroupId, headerSlot }: InnerSiteMapListProps) => {
     const backendAdminAPIClient = useBackendAdminClient();
-    const { data } = useListQuery<FlatSiteMap>(backendAdminAPIClient, "cms", "sitemap", { domain_group: domainGroupId });
+    const { data } = useListAllQuery<FlatSiteMap>(backendAdminAPIClient, "cms", "sitemap", { domain_group: domainGroupId });
     const deleteMutation = useRemovePreparedMutation(backendAdminAPIClient, "cms", "sitemap");
     const { mutateAsync: updateMutationAsync } = useUpdatePreparedMutation(backendAdminAPIClient, "cms", "sitemap");
 

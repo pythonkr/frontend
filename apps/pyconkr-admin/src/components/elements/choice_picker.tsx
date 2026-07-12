@@ -1,6 +1,12 @@
-import { useBackendAdminClient, usePublicFileQuery, useSelectablesQuery, useSignedInUserQuery } from "@frontend/common/hooks/useAdminAPI";
+import {
+  useBackendAdminClient,
+  usePublicFileQuery,
+  useSelectablesQuery,
+  useSignedInUserQuery,
+  useUploadPublicFileMutation,
+} from "@frontend/common/hooks/useAdminAPI";
 import { ChoiceItem, ChoiceMetaFieldDef, ChoiceMetaSchema, ChoiceMetaValue } from "@frontend/common/schemas/backendAdminAPI";
-import { OpenInNew } from "@mui/icons-material";
+import { CloudUpload, PermMedia } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -17,19 +23,22 @@ import {
   MenuItem,
   Select,
   Stack,
+  Tab,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  Tabs,
   TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
 import { ErrorBoundary, Suspense } from "@suspensive/react";
-import { FC, useDeferredValue, useEffect, useMemo, useState } from "react";
-import { Link as RouterLink } from "react-router-dom";
+import { DragEvent, FC, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+
+import { addErrorSnackbar, addSnackbar } from "@apps/pyconkr-admin/utils/snackbar";
 
 export type ChoicePickerOption = {
   value: string | number | null;
@@ -46,6 +55,11 @@ type BaseProps = {
   required?: boolean;
   disabled?: boolean;
 };
+
+// 공개 파일 리소스. source 가 이것이면 ChoicePicker 가 썸네일 미리보기 + 업로드 탭을 제공한다.
+const PUBLIC_FILE_SOURCE = { app: "file", resource: "publicfile" };
+const isPublicFileSource = (source?: { app: string; resource: string }) =>
+  source?.app === PUBLIC_FILE_SOURCE.app && source?.resource === PUBLIC_FILE_SOURCE.resource;
 
 type SingleProps = BaseProps & {
   multiple?: false;
@@ -157,6 +171,7 @@ type ImplProps = {
   options: ChoicePickerOption[];
   metaSchema?: ChoiceMetaSchema;
   persistKey?: string;
+  publicFile?: boolean;
   required?: boolean;
   disabled?: boolean;
   multiple: boolean;
@@ -164,13 +179,25 @@ type ImplProps = {
   onCommit: (values: (string | number | null)[]) => void;
 };
 
-const ChoicePickerImpl: FC<ImplProps> = ({ id, label, options, metaSchema, persistKey, required, disabled, multiple, selectedValues, onCommit }) => {
-  // "내가 추가한 항목만" 필터: 로그인 사용자(created_by) 기준
+const ChoicePickerImpl: FC<ImplProps> = ({
+  id,
+  label,
+  options,
+  metaSchema,
+  persistKey,
+  publicFile,
+  required,
+  disabled,
+  multiple,
+  selectedValues,
+  onCommit,
+}) => {
   const client = useBackendAdminClient();
   const { data: me } = useSignedInUserQuery(client);
   const meStr = me?.str_repr;
 
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState(0);
   const [draft, setDraft] = useState<(string | number | null)[]>(selectedValues);
   const [titleQuery, setTitleQuery] = useState("");
   const [metaValues, setMetaValues] = useState<Record<string, string>>({});
@@ -184,6 +211,7 @@ const ChoicePickerImpl: FC<ImplProps> = ({ id, label, options, metaSchema, persi
   const openDialog = () => {
     if (disabled) return;
     const saved = loadPersistedFilters(persistKey);
+    setTab(0);
     setDraft(selectedValues);
     setTitleQuery("");
     setMetaValues(saved?.metaValues ?? {});
@@ -192,11 +220,15 @@ const ChoicePickerImpl: FC<ImplProps> = ({ id, label, options, metaSchema, persi
     setOpen(true);
   };
 
+  const commitFromTab = (value: string | number) => {
+    onCommit(multiple ? [...selectedValues.filter((v) => !sameValue(v, value)), value] : [value]);
+    setOpen(false);
+  };
+
   useEffect(() => {
     if (open && persistKey) savePersistedFilters(persistKey, { metaValues, ranges, ownerOnly });
   }, [open, persistKey, metaValues, ranges, ownerOnly]);
 
-  // "select" 필터용 distinct 값 목록 (meta 에 실제로 존재하는 값만).
   const selectValuesByKey = useMemo(() => {
     const map: Record<string, string[]> = {};
     for (const [key, def] of metaEntries) {
@@ -241,7 +273,6 @@ const ChoicePickerImpl: FC<ImplProps> = ({ id, label, options, metaSchema, persi
         } else if (kind === "boolean") {
           if (String(raw ?? "") !== fv) return false;
         } else if (displayedString(def, raw) !== fv) {
-          // select: 표시값(연도 변환 등) 기준 일치
           return false;
         }
       }
@@ -251,7 +282,6 @@ const ChoicePickerImpl: FC<ImplProps> = ({ id, label, options, metaSchema, persi
 
   const visible = filtered.slice(0, MAX_VISIBLE_ROWS);
 
-  // 행마다 .some() 대신 Set 으로 O(1) 조회
   const checkedSet = useMemo(() => new Set((multiple ? draft : selectedValues).map((v) => String(v))), [multiple, draft, selectedValues]);
   const isChecked = (value: ChoicePickerOption["value"]) => checkedSet.has(String(value));
 
@@ -274,6 +304,56 @@ const ChoicePickerImpl: FC<ImplProps> = ({ id, label, options, metaSchema, persi
   const selectedOptions = options.filter((o) => selectedValues.some((v) => sameValue(v, o.value)));
   const selectedSingleLabel = selectedOptions[0]?.label;
 
+  const trigger = (
+    <Box
+      id={id}
+      onClick={openDialog}
+      sx={{
+        border: 1,
+        borderColor: "divider",
+        borderRadius: 1,
+        px: 1.5,
+        py: 1,
+        minHeight: 40,
+        display: "flex",
+        alignItems: "center",
+        gap: 0.5,
+        flexWrap: "wrap",
+        cursor: disabled ? "default" : "pointer",
+        opacity: disabled ? 0.6 : 1,
+        "&:hover": { borderColor: disabled ? "divider" : "text.primary" },
+      }}
+    >
+      {multiple ? (
+        selectedOptions.length ? (
+          selectedOptions.map((o) => (
+            <Chip
+              key={String(o.value)}
+              size="small"
+              label={o.label}
+              onMouseDown={(e) => e.stopPropagation()}
+              onDelete={disabled ? undefined : () => removeSelected(o.value)}
+            />
+          ))
+        ) : (
+          <Typography variant="body2" color="text.secondary">
+            선택 안 함
+          </Typography>
+        )
+      ) : (
+        <Typography variant="body2" color={selectedSingleLabel ? "text.primary" : "text.secondary"}>
+          {selectedSingleLabel ?? "선택 안 함"}
+        </Typography>
+      )}
+      <Box sx={{ flexGrow: 1 }} />
+      <Typography variant="body2" color="primary" sx={{ flexShrink: 0 }}>
+        {multiple ? "선택/검색" : "변경"}
+      </Typography>
+    </Box>
+  );
+
+  const selectedFileId = selectedValues[0] != null && selectedValues[0] !== "" ? String(selectedValues[0]) : null;
+
   return (
     <Box>
       {label && (
@@ -282,194 +362,175 @@ const ChoicePickerImpl: FC<ImplProps> = ({ id, label, options, metaSchema, persi
           {required ? " *" : ""}
         </Typography>
       )}
-      <Box
-        id={id}
-        onClick={openDialog}
-        sx={{
-          border: 1,
-          borderColor: "divider",
-          borderRadius: 1,
-          px: 1.5,
-          py: 1,
-          minHeight: 40,
-          display: "flex",
-          alignItems: "center",
-          gap: 0.5,
-          flexWrap: "wrap",
-          cursor: disabled ? "default" : "pointer",
-          opacity: disabled ? 0.6 : 1,
-          "&:hover": { borderColor: disabled ? "divider" : "text.primary" },
-        }}
-      >
-        {multiple ? (
-          selectedOptions.length ? (
-            selectedOptions.map((o) => (
-              <Chip
-                key={String(o.value)}
-                size="small"
-                label={o.label}
-                onMouseDown={(e) => e.stopPropagation()}
-                onDelete={disabled ? undefined : () => removeSelected(o.value)}
-              />
-            ))
-          ) : (
-            <Typography variant="body2" color="text.secondary">
-              선택 안 함
-            </Typography>
-          )
-        ) : (
-          <Typography variant="body2" color={selectedSingleLabel ? "text.primary" : "text.secondary"}>
-            {selectedSingleLabel ?? "선택 안 함"}
-          </Typography>
-        )}
-        <Box sx={{ flexGrow: 1 }} />
-        <Typography variant="body2" color="primary" sx={{ flexShrink: 0 }}>
-          {multiple ? "선택/검색" : "변경"}
-        </Typography>
-      </Box>
+      {publicFile && !multiple ? (
+        <Stack direction="row" spacing={2} alignItems="center">
+          {selectedFileId ? <ImagePreview id={selectedFileId} /> : <Box sx={previewBoxSx} />}
+          <Box sx={{ flexGrow: 1, minWidth: 0 }}>{trigger}</Box>
+        </Stack>
+      ) : (
+        trigger
+      )}
 
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle>
           {label ?? "선택"}
-          {multiple && ` (${draft.length}개 선택됨)`}
+          {multiple && tab === 0 && ` (${draft.length}개 선택됨)`}
         </DialogTitle>
-        <DialogContent dividers>
-          <Stack spacing={1.5}>
-            <TextField autoFocus size="small" fullWidth label="이름 검색" value={titleQuery} onChange={(e) => setTitleQuery(e.target.value)} />
-            {meStr && metaSchema?.created_by && (
-              <FormControlLabel
-                control={<Checkbox size="small" checked={ownerOnly} onChange={(e) => setOwnerOnly(e.target.checked)} />}
-                label="내가 추가한 항목만 표시"
-              />
-            )}
-            {metaEntries.length > 0 && (
-              <Stack direction="row" spacing={1.5} useFlexGap flexWrap="wrap">
-                {metaEntries.map(([key, def]) => {
-                  const kind = filterKindFor(def);
-                  if (kind === "none") return null;
-                  if (kind === "range") {
-                    const range = ranges[key] ?? { min: "", max: "" };
-                    return (
-                      <Stack key={key} direction="row" spacing={0.5} alignItems="center">
+        {publicFile ? (
+          <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ px: 2, borderBottom: 1, borderColor: "divider" }}>
+            <Tab label="선택" />
+            <Tab label="새 파일 업로드" />
+          </Tabs>
+        ) : null}
+        <DialogContent dividers sx={{ height: "80vh", display: "flex", flexDirection: "column" }}>
+          {publicFile && tab === 1 ? (
+            <PublicFileUploadPanel onUploaded={commitFromTab} />
+          ) : (
+            <Stack spacing={1.5} sx={{ flex: 1, minHeight: 0 }}>
+              <TextField autoFocus size="small" fullWidth label="이름 검색" value={titleQuery} onChange={(e) => setTitleQuery(e.target.value)} />
+              {meStr && metaSchema?.created_by && (
+                <FormControlLabel
+                  control={<Checkbox size="small" checked={ownerOnly} onChange={(e) => setOwnerOnly(e.target.checked)} />}
+                  label="내가 추가한 항목만 표시"
+                />
+              )}
+              {metaEntries.length > 0 && (
+                <Stack direction="row" spacing={1.5} useFlexGap flexWrap="wrap">
+                  {metaEntries.map(([key, def]) => {
+                    const kind = filterKindFor(def);
+                    if (kind === "none") return null;
+                    if (kind === "range") {
+                      const range = ranges[key] ?? { min: "", max: "" };
+                      return (
+                        <Stack key={key} direction="row" spacing={0.5} alignItems="center">
+                          <TextField
+                            size="small"
+                            type="number"
+                            label={`${def.label} 최소`}
+                            value={range.min}
+                            onChange={(e) => setRanges((p) => ({ ...p, [key]: { ...range, min: e.target.value } }))}
+                            sx={{ width: 110 }}
+                          />
+                          <TextField
+                            size="small"
+                            type="number"
+                            label={`${def.label} 최대`}
+                            value={range.max}
+                            onChange={(e) => setRanges((p) => ({ ...p, [key]: { ...range, max: e.target.value } }))}
+                            sx={{ width: 110 }}
+                          />
+                        </Stack>
+                      );
+                    }
+                    if (kind === "search") {
+                      return (
                         <TextField
+                          key={key}
                           size="small"
-                          type="number"
-                          label={`${def.label} 최소`}
-                          value={range.min}
-                          onChange={(e) => setRanges((p) => ({ ...p, [key]: { ...range, min: e.target.value } }))}
-                          sx={{ width: 110 }}
+                          label={def.label}
+                          value={metaValues[key] ?? ""}
+                          onChange={(e) => setMetaValues((p) => ({ ...p, [key]: e.target.value }))}
+                          sx={{ width: 180 }}
                         />
-                        <TextField
-                          size="small"
-                          type="number"
-                          label={`${def.label} 최대`}
-                          value={range.max}
-                          onChange={(e) => setRanges((p) => ({ ...p, [key]: { ...range, max: e.target.value } }))}
-                          sx={{ width: 110 }}
-                        />
-                      </Stack>
-                    );
-                  }
-                  if (kind === "search") {
+                      );
+                    }
+                    // boolean / select 는 드롭다운
+                    const items =
+                      kind === "boolean"
+                        ? [
+                            { v: "true", l: "예" },
+                            { v: "false", l: "아니오" },
+                          ]
+                        : (selectValuesByKey[key] ?? []).map((v) => ({ v, l: v }));
                     return (
-                      <TextField
-                        key={key}
-                        size="small"
-                        label={def.label}
-                        value={metaValues[key] ?? ""}
-                        onChange={(e) => setMetaValues((p) => ({ ...p, [key]: e.target.value }))}
-                        sx={{ width: 180 }}
-                      />
-                    );
-                  }
-                  // boolean / select 는 드롭다운
-                  const items =
-                    kind === "boolean"
-                      ? [
-                          { v: "true", l: "예" },
-                          { v: "false", l: "아니오" },
-                        ]
-                      : (selectValuesByKey[key] ?? []).map((v) => ({ v, l: v }));
-                  return (
-                    <FormControl key={key} size="small" sx={{ minWidth: 150 }}>
-                      <InputLabel>{def.label}</InputLabel>
-                      <Select
-                        label={def.label}
-                        value={metaValues[key] ?? ""}
-                        onChange={(e) => setMetaValues((p) => ({ ...p, [key]: e.target.value }))}
-                      >
-                        <MenuItem value="">
-                          <em>전체</em>
-                        </MenuItem>
-                        {items.map((it) => (
-                          <MenuItem key={it.v} value={it.v}>
-                            {it.l}
+                      <FormControl key={key} size="small" sx={{ minWidth: 150 }}>
+                        <InputLabel>{def.label}</InputLabel>
+                        <Select
+                          label={def.label}
+                          value={metaValues[key] ?? ""}
+                          onChange={(e) => setMetaValues((p) => ({ ...p, [key]: e.target.value }))}
+                        >
+                          <MenuItem value="">
+                            <em>전체</em>
                           </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  );
-                })}
-              </Stack>
-            )}
+                          {items.map((it) => (
+                            <MenuItem key={it.v} value={it.v}>
+                              {it.l}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    );
+                  })}
+                </Stack>
+              )}
 
-            <Typography variant="caption" color="text.secondary">
-              {filtered.length}건{filtered.length > MAX_VISIBLE_ROWS && ` 중 상위 ${MAX_VISIBLE_ROWS}건 표시 — 검색으로 좁혀주세요`}
-            </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {filtered.length}건{filtered.length > MAX_VISIBLE_ROWS && ` 중 상위 ${MAX_VISIBLE_ROWS}건 표시 — 검색으로 좁혀주세요`}
+              </Typography>
 
-            <TableContainer sx={{ maxHeight: "50vh" }}>
-              <Table stickyHeader size="small">
-                <TableHead>
-                  <TableRow>
-                    {multiple && <TableCell padding="checkbox" />}
-                    <TableCell>이름</TableCell>
-                    {columns.map(([key, def]) => (
-                      <TableCell key={key}>{def.label}</TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {visible.map((opt) => (
-                    <TableRow
-                      key={String(opt.value)}
-                      hover
-                      selected={isChecked(opt.value)}
-                      onClick={() => handleRowClick(opt.value)}
-                      sx={{ cursor: "pointer" }}
-                    >
-                      {multiple && (
-                        <TableCell padding="checkbox">
-                          <Checkbox checked={isChecked(opt.value)} tabIndex={-1} />
-                        </TableCell>
-                      )}
-                      <TableCell>{opt.label}</TableCell>
+              <TableContainer sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+                <Table stickyHeader size="small">
+                  <TableHead>
+                    <TableRow>
+                      {multiple && <TableCell padding="checkbox" />}
+                      <TableCell>이름</TableCell>
                       {columns.map(([key, def]) => (
-                        <TableCell key={key}>{renderMetaCell(def, opt.meta?.[key])}</TableCell>
+                        <TableCell key={key}>{def.label}</TableCell>
                       ))}
                     </TableRow>
-                  ))}
-                  {visible.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={columns.length + (multiple ? 2 : 1)}>
-                        <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 2 }}>
-                          결과가 없습니다.
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Stack>
+                  </TableHead>
+                  <TableBody>
+                    {visible.map((opt) => (
+                      <TableRow
+                        key={String(opt.value)}
+                        hover
+                        selected={isChecked(opt.value)}
+                        onClick={() => handleRowClick(opt.value)}
+                        sx={{ cursor: "pointer" }}
+                      >
+                        {multiple && (
+                          <TableCell padding="checkbox">
+                            <Checkbox checked={isChecked(opt.value)} tabIndex={-1} />
+                          </TableCell>
+                        )}
+                        <TableCell>{opt.label}</TableCell>
+                        {columns.map(([key, def]) => (
+                          <TableCell key={key}>{renderMetaCell(def, opt.meta?.[key])}</TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                    {visible.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={columns.length + (multiple ? 2 : 1)}>
+                          <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 2 }}>
+                            결과가 없습니다.
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Stack>
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)} color="inherit">
-            {multiple ? "취소" : "닫기"}
-          </Button>
-          {multiple && (
-            <Button onClick={applyMulti} variant="contained">
-              적용
+          {publicFile && tab === 1 ? (
+            <Button onClick={() => setOpen(false)} color="inherit">
+              닫기
             </Button>
+          ) : (
+            <>
+              <Button onClick={() => setOpen(false)} color="inherit">
+                {multiple ? "취소" : "닫기"}
+              </Button>
+              {multiple && (
+                <Button onClick={applyMulti} variant="contained">
+                  적용
+                </Button>
+              )}
+            </>
           )}
         </DialogActions>
       </Dialog>
@@ -477,14 +538,14 @@ const ChoicePickerImpl: FC<ImplProps> = ({ id, label, options, metaSchema, persi
   );
 };
 
-// metaSchema/persistKey 는 외부 prop 이 아니라 source 조회(SelectablesChoicePicker)에서만 주입되는 내부 값
-const ResolvedChoicePicker: FC<ChoicePickerProps & { metaSchema?: ChoiceMetaSchema; persistKey?: string }> = (props) => {
+const ResolvedChoicePicker: FC<ChoicePickerProps & { metaSchema?: ChoiceMetaSchema; persistKey?: string; publicFile?: boolean }> = (props) => {
   const base = {
     id: props.id,
     label: props.label,
     options: props.options ?? [],
     metaSchema: props.metaSchema,
     persistKey: props.persistKey,
+    publicFile: props.publicFile,
     required: props.required,
     disabled: props.disabled,
   };
@@ -525,6 +586,7 @@ const SelectablesChoicePicker: FC<ChoicePickerProps & { source: { app: string; r
       options={options}
       metaSchema={data.meta_schema}
       persistKey={`${props.source.app}.${props.source.resource}`}
+      publicFile={isPublicFileSource(props.source)}
     />
   );
 };
@@ -533,7 +595,6 @@ const SelectablesChoicePicker: FC<ChoicePickerProps & { source: { app: string; r
 export const ChoicePicker: FC<ChoicePickerProps> = (props) =>
   props.source ? <SelectablesChoicePicker {...props} source={props.source} /> : <ResolvedChoicePicker {...props} />;
 
-const FILE_SOURCE = { app: "file", resource: "publicfile" };
 const PREVIEW_SIZE = 56;
 const previewBoxSx = {
   width: PREVIEW_SIZE,
@@ -585,42 +646,111 @@ const ImagePreview: FC<{ id: string }> = ErrorBoundary.with(
   )
 );
 
-type PublicFilePickerProps = {
-  label?: string;
-  value: string;
-  onChange: (value: string) => void;
-  acceptExtensions?: string[];
-};
+const PublicFileUploadPanel: FC<{ onUploaded: (id: string) => void }> = ({ onUploaded }) => {
+  const client = useBackendAdminClient();
+  const upload = useUploadPublicFileMutation(client);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-export const PublicFilePicker: FC<PublicFilePickerProps> = ({ label = "이미지", value, onChange, acceptExtensions }) => {
-  const optionFilter = useMemo(() => {
-    if (!acceptExtensions?.length) return undefined;
-    const allowed = acceptExtensions.map((e) => e.toLowerCase());
-    return (o: ChoicePickerOption) => allowed.some((ext) => o.label.toLowerCase().endsWith(`.${ext}`));
-  }, [acceptExtensions]);
+  useEffect(() => {
+    if (!file || !file.type.startsWith("image/")) {
+      setPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  const pickFile = useCallback((f: File | null | undefined) => {
+    if (!f) return;
+    if (f.size === 0) {
+      addSnackbar("선택한 파일의 크기가 0입니다.", "error");
+      return;
+    }
+    if (!(f.type.startsWith("image/") || f.type === "application/json")) {
+      addSnackbar("이미지 또는 JSON 파일만 업로드할 수 있습니다.", "error");
+      return;
+    }
+    setFile(f);
+  }, []);
+
+  const onDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+    pickFile(e.dataTransfer.files?.[0]);
+  };
+
+  const onSubmit = () => {
+    if (!file) return;
+    upload.mutate(file, {
+      onSuccess: (data) => {
+        addSnackbar("파일 업로드 성공", "success");
+        onUploaded(data.id); // 업로드된 파일을 선택하고 다이얼로그를 닫는다
+      },
+      onError: (e) => addErrorSnackbar(e),
+    });
+  };
 
   return (
-    <Stack direction="row" spacing={2} alignItems="flex-end">
-      {value ? <ImagePreview id={value} /> : <Box sx={previewBoxSx} />}
-      <Box sx={{ flexGrow: 1, minWidth: 240 }}>
-        <ChoicePicker
-          label={label}
-          source={FILE_SOURCE}
-          optionFilter={optionFilter}
-          value={value || null}
-          onChange={(v) => onChange(v == null ? "" : String(v))}
-        />
-      </Box>
-      <Button
-        component={RouterLink}
-        to={`/${FILE_SOURCE.app}/${FILE_SOURCE.resource}/create`}
-        target="_blank"
-        variant="outlined"
-        size="small"
-        startIcon={<OpenInNew />}
-        sx={{ flexShrink: 0 }}
+    <Stack spacing={2} sx={{ flex: 1, minHeight: 0 }}>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*,application/json"
+        hidden
+        onChange={(e) => {
+          pickFile(e.target.files?.[0]);
+          e.target.value = ""; // 같은 파일 재선택 허용
+        }}
+      />
+      <Box
+        onClick={() => inputRef.current?.click()}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={onDrop}
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          textAlign: "center",
+          border: "2px dashed",
+          borderColor: dragOver ? "primary.main" : "divider",
+          borderRadius: 1,
+          bgcolor: dragOver ? "action.selected" : "action.hover",
+          cursor: "pointer",
+          transition: "background-color 0.2s, border-color 0.2s",
+          "&:hover": { bgcolor: "action.selected" },
+        }}
       >
-        새 파일 업로드
+        {previewUrl ? (
+          <Box component="img" src={previewUrl} alt="업로드 미리보기" sx={{ width: "100%", flex: 1, minHeight: 0, objectFit: "contain", mb: 1 }} />
+        ) : (
+          <PermMedia sx={{ fontSize: 40, color: "text.secondary", mb: 1 }} />
+        )}
+        <Typography variant="body2" color="text.secondary">
+          클릭해서 파일을 선택하거나 이 영역에 끌어다 놓으세요.
+        </Typography>
+        <Typography variant="caption" color="text.secondary" component="p">
+          이미지 또는 JSON 파일만 업로드할 수 있습니다.
+        </Typography>
+        {file && (
+          <Typography variant="body2" sx={{ mt: 1 }}>
+            선택된 파일: <b>{file.name}</b>
+          </Typography>
+        )}
+      </Box>
+      <Button variant="contained" startIcon={<CloudUpload />} disabled={!file || upload.isPending} onClick={onSubmit}>
+        업로드 후 선택
       </Button>
     </Stack>
   );

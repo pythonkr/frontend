@@ -14,11 +14,11 @@ import type {
   Patron,
   Product,
   ProductListQueryParams,
-  SocialSignInRequest,
   UserSignedInStatus,
 } from "@frontend/shop/schemas";
 
 export { BackendAPIClient, BackendAPIClientError, formatBackendErrorMessage } from "@frontend/common/apis/client";
+export { signInWithSNS } from "@frontend/common/apis";
 
 /**
  * 로그인합니다.
@@ -29,30 +29,6 @@ export const signInWithEmail = (client: BackendAPIClient) => (data: EmailSignInR
     csrfmiddlewaretoken: client.getCSRFToken() ?? "",
   };
   return client.post<UserSignedInStatus, EmailSignInRequest>("authn/social/browser/v1/auth/login", requestPayload);
-};
-
-/**
- * SNS로 로그인합니다.
- */
-export const signInWithSNS = (client: BackendAPIClient) => async (socialSignInInfo: SocialSignInRequest) => {
-  const form = document.createElement("form");
-  form.method = "POST";
-  form.action = `${client.baseURL}/authn/social/browser/v1/auth/provider/redirect`;
-
-  Object.entries({
-    ...socialSignInInfo,
-    csrfmiddlewaretoken: client.getCSRFToken() ?? "",
-    process: "login",
-  }).forEach(([key, value]) => {
-    const inputElement = document.createElement("input");
-    inputElement.type = "hidden";
-    inputElement.name = key;
-    inputElement.value = value;
-    form.appendChild(inputElement);
-  });
-  document.body.appendChild(form);
-  form.submit();
-  setTimeout(() => document.body.removeChild(form), 100);
 };
 
 /**

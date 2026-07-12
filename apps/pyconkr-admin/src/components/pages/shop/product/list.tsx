@@ -1,4 +1,4 @@
-import { useBackendAdminClient, useListQuery } from "@frontend/common/hooks/useAdminAPI";
+import { useBackendAdminClient, useListPaginatedQuery } from "@frontend/common/hooks/useAdminAPI";
 import { Add, Delete, Edit } from "@mui/icons-material";
 import {
   Button,
@@ -23,6 +23,8 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { BackendAdminSignInGuard } from "@apps/pyconkr-admin/components/elements/admin_signin_guard";
 import { ErrorFallback } from "@apps/pyconkr-admin/components/elements/error_fallback";
+import { ListPagination } from "@apps/pyconkr-admin/components/elements/list_pagination";
+import { usePaginationParams } from "@apps/pyconkr-admin/components/elements/pagination";
 import { PRODUCT_STATUS_LABEL } from "@apps/pyconkr-admin/components/pages/shop/_common/status_labels";
 import { addErrorSnackbar, addSnackbar } from "@apps/pyconkr-admin/utils/snackbar";
 
@@ -48,17 +50,23 @@ const InnerProductList: FC = ErrorBoundary.with(
     const categoryQuery = searchParams.get("category") ?? "";
     const statusQuery = (searchParams.get("status") ?? "all") as StatusFilter;
 
+    const { page, pageSize } = usePaginationParams();
+
     const apiParams: Record<string, string> = {};
     if (nameQuery.trim()) apiParams.name = nameQuery.trim();
     if (categoryGroupQuery) apiParams.category_group = categoryGroupQuery;
     if (categoryQuery) apiParams.category = categoryQuery;
     if (statusQuery !== "all") apiParams.status = statusQuery;
+    apiParams.page = String(page);
+    apiParams.page_size = String(pageSize);
 
-    const productsQuery = useListQuery<ProductAdmin>(client, "shop", "product", apiParams);
-    const groupsQuery = useListQuery<CategoryGroupAdminWithCategories>(client, "shop", "categorygroup", {});
+    const productsQuery = useListPaginatedQuery<ProductAdmin>(client, "shop", "product", apiParams);
+    // 카테고리 매핑·필터에 전체 그룹이 필요하므로 그룹은 한 번에 받는다.
+    const groupsQuery = useListPaginatedQuery<CategoryGroupAdminWithCategories>(client, "shop", "categorygroup", { page_size: "200" });
 
-    const products = productsQuery.data ?? [];
-    const groups = useMemo(() => groupsQuery.data ?? [], [groupsQuery.data]);
+    const products = productsQuery.data.results;
+    const totalCount = productsQuery.data.count;
+    const groups = useMemo(() => groupsQuery.data.results, [groupsQuery.data]);
 
     const categoryToGroup: Record<string, { groupId: string; groupName: string; categoryName: string }> = useMemo(() => {
       const map: Record<string, { groupId: string; groupName: string; categoryName: string }> = {};
@@ -74,6 +82,7 @@ const InnerProductList: FC = ErrorBoundary.with(
       const next = new URLSearchParams(searchParams);
       if (value) next.set(key, value);
       else next.delete(key);
+      next.delete("page"); // 필터가 바뀌면 1페이지로
       setSearchParams(next, { replace: true });
     };
 
@@ -108,6 +117,7 @@ const InnerProductList: FC = ErrorBoundary.with(
               if (e.target.value) next.set("category_group", e.target.value);
               else next.delete("category_group");
               next.delete("category"); // 그룹 바꾸면 카테고리 선택 초기화
+              next.delete("page"); // 필터가 바뀌면 1페이지로
               setSearchParams(next, { replace: true });
             }}
             displayEmpty
@@ -145,7 +155,7 @@ const InnerProductList: FC = ErrorBoundary.with(
             <MenuItem value="out_of_orderable_period">판매 기간 아님</MenuItem>
           </Select>
           <Typography variant="body2" color="text.secondary" sx={{ ml: "auto" }}>
-            {products.length} 건
+            {totalCount} 건
           </Typography>
         </Stack>
 
@@ -201,6 +211,7 @@ const InnerProductList: FC = ErrorBoundary.with(
             })}
           </TableBody>
         </Table>
+        <ListPagination totalCount={totalCount} />
       </Stack>
     );
   })

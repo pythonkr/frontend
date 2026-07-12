@@ -1,9 +1,9 @@
 import { MarkdownEditor, MDXRenderer } from "@frontend/common/components";
 import { useCommonContext } from "@frontend/common/hooks/useCommonContext";
 import { Autocomplete, Box, Chip, Divider, MenuItem, Stack, styled, Tab, Tabs, TextField, Typography } from "@mui/material";
-import { FC, useState } from "react";
+import { FC, useMemo, useState } from "react";
 
-import { PublicFilePicker } from "@apps/pyconkr-admin/components/elements/choice_picker";
+import { ChoicePicker, ChoicePickerOption } from "@apps/pyconkr-admin/components/elements/choice_picker";
 import { ProductFormValues, SetField } from "@apps/pyconkr-admin/components/pages/shop/product/form";
 import { CategoryGroupAdminWithCategories, TagAdmin } from "@apps/pyconkr-admin/components/pages/shop/product/types";
 import { IMAGE_FILE_EXTENSIONS } from "@apps/pyconkr-admin/consts/file_extensions";
@@ -41,9 +41,17 @@ export const BasicInfoTab: FC<Props> = ({ values, setField, disabled, groups, ta
   const nameKey = isKo ? "name_ko" : "name_en";
   const descKey = isKo ? "description_ko" : "description_en";
 
+  const imageOnly = useMemo(() => (o: ChoicePickerOption) => IMAGE_FILE_EXTENSIONS.some((ext) => o.label.toLowerCase().endsWith(`.${ext}`)), []);
+
   return (
     <Stack spacing={2}>
-      <PublicFilePicker label="대표 이미지" value={values.image} onChange={(v) => setField("image", v)} acceptExtensions={IMAGE_FILE_EXTENSIONS} />
+      <ChoicePicker
+        label="대표 이미지"
+        source={{ app: "file", resource: "publicfile" }}
+        optionFilter={imageOnly}
+        value={values.image || null}
+        onChange={(v) => setField("image", v == null ? "" : String(v))}
+      />
 
       <TextField select label="카테고리" required value={values.category} onChange={(e) => setField("category", e.target.value)} fullWidth>
         {groups.flatMap((group) => [

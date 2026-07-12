@@ -1,6 +1,17 @@
 import { isArray, isPlainObject, isString } from "remeda";
 export type EmptyObject = Record<string, never>;
 
+export type SocialSignInProvider = "google" | "naver" | "kakao";
+export type SocialSignInRequest = {
+  provider: SocialSignInProvider;
+  callback_url: string;
+};
+
+export type SocialSessionStatus = {
+  meta: { is_authenticated: boolean };
+  data: { user?: { username?: string; display?: string } };
+};
+
 export type DetailedErrorSchema = {
   code: string;
   detail: string;
@@ -113,6 +124,7 @@ export type SessionSchema = {
   room_schedules: {
     id: string;
     room_name: string;
+    room_order: number;
     start_at: string;
     end_at: string;
   }[];

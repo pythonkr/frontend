@@ -55,6 +55,7 @@ const CommonOptions: ContextOptions = {
   baseUrl: ".",
   backendApiDomain,
   backendApiAbsoluteDomain: import.meta.env.VITE_PYCONKR_BACKEND_API_DOMAIN,
+  accountsDomain: import.meta.env.VITE_PYCONKR_ACCOUNTS_DOMAIN,
   backendApiCSRFCookieName: import.meta.env.VITE_PYCONKR_BACKEND_CSRF_COOKIE_NAME,
   backendApiSessionCookieName: import.meta.env.VITE_PYCONKR_BACKEND_SESSION_COOKIE_NAME,
   backendApiTimeout: 10000,
