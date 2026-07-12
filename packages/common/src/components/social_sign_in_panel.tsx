@@ -15,42 +15,9 @@ type OAuthErrorType = { error: string; errorProcess: string | null };
 type SocialSignInPanelProps = {
   dev?: boolean;
   maxWidth?: number | string;
-  /** 지정하면 로그인 후 이 sessionStorage 키에 저장된 same-origin 경로로 복귀합니다. (open-redirect 방지) */
-  pendingRedirectKey?: string;
 };
 
-/** sessionStorage에 저장된 복귀 URL을 검증해 same-origin 라우터 경로로 변환합니다. (open-redirect 방지) */
-const toSafeRedirectPath = (raw: string | null): string | null => {
-  if (!raw) return null;
-  try {
-    const url = new URL(raw, window.location.origin);
-    if (url.origin !== window.location.origin) return null;
-    if (url.pathname === window.location.pathname) return null;
-    return `${url.pathname}${url.search}${url.hash}`;
-  } catch {
-    return null;
-  }
-};
-
-const readPending = (key?: string): string | null => {
-  if (!key) return null;
-  try {
-    return sessionStorage.getItem(key);
-  } catch {
-    return null;
-  }
-};
-
-const consumePending = (key?: string): void => {
-  if (!key) return;
-  try {
-    sessionStorage.removeItem(key);
-  } catch {
-    // sessionStorage 미지원/차단 시 무시
-  }
-};
-
-export const SocialSignInPanel: FC<SocialSignInPanelProps> = ({ dev, maxWidth = 400, pendingRedirectKey }) => {
+export const SocialSignInPanel: FC<SocialSignInPanelProps> = ({ dev, maxWidth = 400 }) => {
   const navigate = useNavigate();
   const client = useBackendClient();
   const { language, accountsDomain, backendApiAbsoluteDomain, backendApiSessionCookieName } = useCommonContext();
@@ -61,41 +28,29 @@ export const SocialSignInPanel: FC<SocialSignInPanelProps> = ({ dev, maxWidth = 
 
   useEffect(() => {
     if (!session) return;
-    const redirectPath = toSafeRedirectPath(readPending(pendingRedirectKey));
-    consumePending(pendingRedirectKey);
-    if (redirectPath) {
-      navigate(redirectPath, { replace: true });
-      return;
-    }
     const username = session.data.user?.username ?? "";
     enqueueSnackbar(language === "ko" ? `이미 ${username}님으로 로그인되어 있습니다!` : `You are already signed in as ${username}!`, {
       variant: "success",
       anchorOrigin: { vertical: "bottom", horizontal: "center" },
     });
     navigate("/");
-  }, [session, language, navigate, pendingRedirectKey]);
+  }, [session, language, navigate]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const error = params.get("error");
     if (!error) return;
-    // 로그인 실패 시 보류 중이던 복귀 위치를 폐기합니다. (stale redirect 방지)
-    consumePending(pendingRedirectKey);
     setOauthError({ error, errorProcess: params.get("error_process") });
     params.delete("error");
     params.delete("error_process");
     const clean = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
     window.history.replaceState({}, "", clean);
-  }, [pendingRedirectKey]);
+  }, []);
 
   const triggerSignIn = (provider: SocialSignInProvider) => {
     setOauthError(null);
     setOpenBackdrop(true);
-    // 복귀할 위치가 있으면 이 페이지로 되돌아와 stash를 소비한다(위 effect). 없으면 origin으로.
-    const callbackUrl = toSafeRedirectPath(readPending(pendingRedirectKey))
-      ? `${window.location.origin}${window.location.pathname}`
-      : window.location.origin;
-    signInMutation.mutate({ provider, callback_url: callbackUrl });
+    signInMutation.mutate({ provider, callback_url: window.location.origin });
   };
 
   const accountsLink = accountsDomain ? (
